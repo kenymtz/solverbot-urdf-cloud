@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+  ros2_control para SIMULACIÓN. No hay hardware real en este archivo: nunca habla con CAN, el ESP32,
+  los Dynamixel ni el hoverboard.
+    mode = mock   -> mock_components/GenericSystem: el estado sigue al comando (sin física).
+    mode = gazebo -> ign_ros2_control/IgnitionSystem (Ignition Gazebo Fortress, ROS 2 Humble).
+  El hardware real se integra por /joint_states (launch/real_state.launch.py), no por este archivo.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="position_joint" params="name initial:=0.0">
+    <joint name="${name}">
+      <command_interface name="position"/>
+      <state_interface name="position"><param name="initial_value">${initial}</param></state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="robot_v3_ros2_control" params="mode">
+    <ros2_control name="robot_v3_sim" type="system">
+      <hardware>
+        <xacro:if value="${mode == 'mock'}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+        <xacro:if value="${mode == 'gazebo'}">
+          <plugin>ign_ros2_control/IgnitionSystem</plugin>
+        </xacro:if>
+      </hardware>
+
+      <!-- Ruedas: en Gazebo las mueve diff_drive_controller; en mock solo publican estado (0) -->
+      <xacro:macro name="wheel" params="side">
+        <joint name="${side}_wheel_joint">
+          <xacro:if value="${mode == 'gazebo'}"><command_interface name="velocity"/></xacro:if>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+        </joint>
+      </xacro:macro>
+      <xacro:wheel side="left"/>
+      <xacro:wheel side="right"/>
+
+      <xacro:position_joint name="torso_lift_joint"/>
+      <xacro:position_joint name="joint1"/>
+      <xacro:position_joint name="joint2"/>
+      <xacro:position_joint name="joint3"/>
+      <xacro:position_joint name="joint4"/>
+      <xacro:position_joint name="joint5"/>
+      <xacro:position_joint name="joint6"/>
+      <xacro:position_joint name="joint7"/>
+      <xacro:position_joint name="joint8"/>
+      <xacro:position_joint name="pan_joint"/>
+      <xacro:position_joint name="tilt_joint"/>
+    </ros2_control>
+  </xacro:macro>
+
+</robot>

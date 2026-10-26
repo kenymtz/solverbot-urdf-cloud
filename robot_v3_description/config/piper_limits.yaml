@@ -1,0 +1,36 @@
+# =====================================================================================
+#  Límites articulares del Piper (rad, m). Se elige el perfil con el argumento xacro arm_limits.
+#  La cinemática (orígenes y ejes) es SIEMPRE la oficial; solo cambian los límites.
+# =====================================================================================
+
+# official (por defecto): agilexrobotics/agx_arm_urdf @ 680fa92, piper/urdf/piper_description.urdf
+#   (submódulo de agx_arm_ros, rama ros2 @ 286633e). Coinciden con piper_sdk ROBOT_JOINT_LIMIT_PRESET["piper"]
+#   salvo joint6 (SDK: ±2.0944 por compatibilidad con firmware antiguo).
+#   Effort/velocity: valores del URDF oficial (genéricos del exportador, no son datos de los motores).
+official:
+  joint1: {lower: -2.6179938, upper: 2.6179938, effort: 100.0, velocity: 5.0}
+  joint2: {lower: 0.0,        upper: 3.1415926, effort: 100.0, velocity: 5.0}
+  joint3: {lower: -2.9670597, upper: 0.0,       effort: 100.0, velocity: 5.0}
+  joint4: {lower: -1.7453292, upper: 1.7453292, effort: 100.0, velocity: 5.0}
+  joint5: {lower: -1.2217304, upper: 1.2217304, effort: 100.0, velocity: 5.0}
+  joint6: {lower: -2.9670597, upper: 2.9670597, effort: 100.0, velocity: 5.0}
+
+# base_athome: límites del URDF del equipo (robot_piper.urdf.xacro), MÁS AMPLIOS que los oficiales.
+#   Las poses que usa la Jetson los requieren: DEFAULT_READY joint2 = 182.68°, home joint4 = 102.62°.
+#   Que el brazo real alcance esas poses indica que el firmware lo permite, pero el fabricante no lo
+#   documenta para la variante estándar. Verificar en el robot (lectura de límites del firmware) antes de
+#   usarlos para planificar.
+base_athome:
+  joint1: {lower: -2.688, upper: 2.688, effort: 100.0, velocity: 5.0}
+  joint2: {lower: 0.0,    upper: 3.403, effort: 100.0, velocity: 5.0}
+  joint3: {lower: -3.054, upper: 0.0,   effort: 100.0, velocity: 5.0}
+  joint4: {lower: -1.920, upper: 1.920, effort: 100.0, velocity: 5.0}
+  joint5: {lower: -1.396, upper: 1.396, effort: 100.0, velocity: 5.0}
+  joint6: {lower: -3.142, upper: 3.142, effort: 100.0, velocity: 3.0}
+
+# Pinza estándar del Piper (piper_ros, rama humble @ 017ffef): dos dedos prismáticos de 0 a 35 mm cada uno
+# (70 mm de apertura total = gripper_range de piper_sdk). La Jetson publica joint7 = +apertura/2 y
+# joint8 = -apertura/2, recortado a 0.035 m.
+gripper:
+  joint7: {lower: 0.0,    upper: 0.035, effort: 10.0, velocity: 1.0}
+  joint8: {lower: -0.035, upper: 0.0,   effort: 10.0, velocity: 1.0}

@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot_v3_description</name>
+  <version>0.3.0</version>
+  <description>
+    URDF/Xacro simplificado de SolverBot v3 (Base@Home): base diferencial, elevador prismático, brazo AgileX Piper
+    articulado (cinemática oficial), cabezal pan-tilt con RealSense D435 y Hokuyo UST-05LX.
+    Visualización en RViz, simulación con ros2_control (mock) e Ignition Gazebo Fortress. ROS 2 Humble.
+  </description>
+  <maintainer email="augusto.calfani@estudiantes.utec.edu.uy">Augusto Calfani</maintainer>
+  <license>Apache-2.0</license>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Descripción y visualización -->
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <!-- Simulación con ros2_control (mock y Gazebo) -->
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>hardware_interface</exec_depend>
+
+  <!-- Ignition Gazebo Fortress (solo launch/gazebo.launch.py) -->
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ign_ros2_control</exec_depend>
+
+  <!-- Scripts de demostración y validación -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>liburdfdom-tools</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

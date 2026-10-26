@@ -1,0 +1,84 @@
+# Controladores ros2_control para SIMULACIÓN (mock o Ignition Gazebo Fortress). ROS 2 Humble.
+# Ningún controlador de este archivo se conecta al hardware real.
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    lift_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    head_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    diff_drive_controller:          # solo se activa en Gazebo
+      type: diff_drive_controller/DiffDriveController
+
+arm_controller:
+  ros__parameters:
+    joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    allow_partial_joints_goal: false
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    constraints:
+      stopped_velocity_tolerance: 0.05
+      goal_time: 1.0
+
+gripper_controller:
+  ros__parameters:
+    # Dedos independientes, igual que el /joint_states de la Jetson (joint7 = +a/2, joint8 = -a/2)
+    joints: [joint7, joint8]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.05
+      goal_time: 1.0
+
+lift_controller:
+  ros__parameters:
+    joints: [torso_lift_joint]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    constraints:
+      stopped_velocity_tolerance: 0.02
+      goal_time: 2.0
+
+head_controller:
+  ros__parameters:
+    joints: [pan_joint, tilt_joint]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    allow_partial_joints_goal: true
+    constraints:
+      stopped_velocity_tolerance: 0.05
+      goal_time: 1.0
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+    # Geometría del MODELO simulado (no la calibración de odometría del robot real: 0.562 / 0.0853)
+    wheel_separation: 0.5621      # 0.2835 + 0.2786 (geometry_v3.yaml)
+    wheel_radius: 0.0829          # radio de colisión (altura del eje)
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    enable_odom_tf: true
+    use_stamped_vel: false        # comando en /diff_drive_controller/cmd_vel_unstamped (no /cmd_vel)
+    cmd_vel_timeout: 0.5
+    linear.x.has_velocity_limits: true
+    linear.x.max_velocity: 0.4
+    linear.x.min_velocity: -0.4
+    angular.z.has_velocity_limits: true
+    angular.z.max_velocity: 1.0
+    angular.z.min_velocity: -1.0

@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!--
+  Extensiones para Ignition Gazebo Fortress (ROS 2 Humble: ros_gz 0.244, ign_ros2_control 0.7).
+  Sensores SIMULADOS, separados del driver real:
+    * RGB-D en camera_color_frame, mensajes con frame_id camera_color_optical_frame (requiere camera_frames:=true).
+    * LiDAR 2D en "laser".
+  El mundo debe cargar el sistema Sensors (worlds/robot_v3_test.sdf). Parámetros: config/sim_provisional.yaml.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="robot_v3_gazebo">
+    <xacro:property name="SG" value="${S['gazebo']}"/>
+
+    <gazebo>
+      <plugin filename="libign_ros2_control-system.so" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+        <parameters>$(find robot_v3_description)/config/ros2_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="left_wheel"><mu1>${SG['wheel_mu']}</mu1><mu2>${SG['wheel_mu']}</mu2></gazebo>
+    <gazebo reference="right_wheel"><mu1>${SG['wheel_mu']}</mu1><mu2>${SG['wheel_mu']}</mu2></gazebo>
+    <gazebo reference="rear_left_caster"><mu1>${SG['caster_mu']}</mu1><mu2>${SG['caster_mu']}</mu2></gazebo>
+    <gazebo reference="rear_right_caster"><mu1>${SG['caster_mu']}</mu1><mu2>${SG['caster_mu']}</mu2></gazebo>
+
+    <!-- Cámara RGB-D: el sensor de Gazebo mira por +X de su link (camera_color_frame), los mensajes salen
+         en el frame óptico. Tópicos Gazebo: camera/rgbd/{image,depth_image,points,camera_info} -->
+    <gazebo reference="camera_color_frame">
+      <sensor name="d435_rgbd" type="rgbd_camera">
+        <always_on>true</always_on>
+        <update_rate>${SG['rgbd']['update_rate']}</update_rate>
+        <visualize>false</visualize>
+        <topic>camera/rgbd</topic>
+        <ignition_frame_id>camera_color_optical_frame</ignition_frame_id>
+        <camera name="d435">
+          <horizontal_fov>${SG['rgbd']['horizontal_fov']}</horizontal_fov>
+          <image>
+            <width>${SG['rgbd']['width']}</width>
+            <height>${SG['rgbd']['height']}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>${SG['rgbd']['near']}</near>
+            <far>${SG['rgbd']['far']}</far>
+          </clip>
+          <depth_camera>
+            <clip>
+              <near>${SG['rgbd']['near']}</near>
+              <far>${SG['rgbd']['far']}</far>
+            </clip>
+          </depth_camera>
+        </camera>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="laser">
+      <sensor name="hokuyo" type="gpu_lidar">
+        <always_on>true</always_on>
+        <update_rate>${SG['lidar']['update_rate']}</update_rate>
+        <visualize>false</visualize>
+        <topic>scan</topic>
+        <ignition_frame_id>laser</ignition_frame_id>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>${SG['lidar']['samples']}</samples>
+              <resolution>1</resolution>
+              <min_angle>${SG['lidar']['min_angle']}</min_angle>
+              <max_angle>${SG['lidar']['max_angle']}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>${SG['lidar']['range_min']}</min>
+            <max>${SG['lidar']['range_max']}</max>
+            <resolution>0.01</resolution>
+          </range>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+</robot>

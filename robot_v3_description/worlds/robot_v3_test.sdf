@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!-- Mundo de prueba para Ignition Gazebo Fortress: piso, luz, una mesa y dos objetos frente al robot.
+     Carga el sistema Sensors (necesario para la cámara RGB-D y el LiDAR simulados). -->
+<sdf version="1.8">
+  <world name="robot_v3_test">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="ignition-gazebo-physics-system" name="ignition::gazebo::systems::Physics"/>
+    <plugin filename="ignition-gazebo-user-commands-system" name="ignition::gazebo::systems::UserCommands"/>
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="ignition::gazebo::systems::SceneBroadcaster"/>
+    <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>40 40</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>40 40</size></plane></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Mesa de 0.74 m (altura de las mesas medida en el escaneo v2), a 0.9 m frente al robot -->
+    <model name="table">
+      <static>true</static>
+      <pose>0.9 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="top_c"><pose>0 0 0.72 0 0 0</pose><geometry><box><size>0.6 1.0 0.04</size></box></geometry></collision>
+        <visual name="top_v"><pose>0 0 0.72 0 0 0</pose><geometry><box><size>0.6 1.0 0.04</size></box></geometry>
+          <material><ambient>0.55 0.35 0.2 1</ambient><diffuse>0.55 0.35 0.2 1</diffuse></material></visual>
+        <collision name="base_c"><pose>0 0 0.35 0 0 0</pose><geometry><box><size>0.1 0.1 0.7</size></box></geometry></collision>
+        <visual name="base_v"><pose>0 0 0.35 0 0 0</pose><geometry><box><size>0.1 0.1 0.7</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <model name="can">
+      <pose>0.75 0.15 0.80 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.2</mass><inertia><ixx>2e-4</ixx><iyy>2e-4</iyy><izz>1e-4</izz></inertia></inertial>
+        <collision name="c"><geometry><cylinder><radius>0.035</radius><length>0.12</length></cylinder></geometry></collision>
+        <visual name="v"><geometry><cylinder><radius>0.035</radius><length>0.12</length></cylinder></geometry>
+          <material><ambient>0.8 0.1 0.1 1</ambient><diffuse>0.8 0.1 0.1 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="box">
+      <pose>0.80 -0.20 0.79 0 0 0.4</pose>
+      <link name="link">
+        <inertial><mass>0.3</mass><inertia><ixx>3e-4</ixx><iyy>3e-4</iyy><izz>3e-4</izz></inertia></inertial>
+        <collision name="c"><geometry><box><size>0.08 0.08 0.10</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.08 0.08 0.10</size></box></geometry>
+          <material><ambient>0.1 0.4 0.8 1</ambient><diffuse>0.1 0.4 0.8 1</diffuse></material></visual>
+      </link>
+    </model>
+  </world>
+</sdf>

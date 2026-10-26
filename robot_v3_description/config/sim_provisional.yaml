@@ -1,0 +1,63 @@
+# =====================================================================================
+#  VALORES PROVISIONALES — SOLO SIMULACIÓN / VISUALIZACIÓN. NO VERIFICADOS EN EL ROBOT REAL.
+#  No usar para control del hardware, planificación sobre el robot real ni seguridad.
+#  Cada valor indica por qué existe. Reemplazar cuando haya mediciones (ver README, "Pendientes").
+# =====================================================================================
+
+lift:
+  # Carrera real DESCONOCIDA: el firmware (nema23_esp32.ino) la mide en cada calibración
+  # (max_travel_steps) y no la guarda en el repositorio; los pasos/mm tampoco están documentados
+  # (solo un comentario "250 pasos (~1 mm)").
+  # Límites = envolvente geométrica del escaneo v2 (estimated_parameters.yaml de robot_v2):
+  #   upper: distancia entre el borde superior de la caja (1.253 m) y la placa superior del perfil (1.321 m)
+  #   lower: el brazo en pose de reposo toca la rueda izquierda
+  lower: -0.19
+  upper: 0.068
+  velocity: 0.05      # PROVISIONAL: orden de magnitud con 5000 pasos/s y ~250 pasos/mm (comentario del firmware)
+                      # Las trayectorias deben respetarlo: en Gazebo, ign_ros2_control sigue la posición con un comando
+                      # de velocidad y DART descarta los que superan este límite (el carro cae al tope y queda trabado).
+  effort: 1000.0      # PROVISIONAL: solo para que Gazebo no bloquee la articulación (effort=0 la inmoviliza)
+
+head:
+  # Límites de base_athome (robot_piper.urdf.xacro); el XL430 en sí permite 360°.
+  # El cero del tilt (3932 ticks) no está verificado contra la horizontal.
+  pan:  {lower: -1.5708, upper: 1.5708, effort: 2.5, velocity: 3.14}
+  tilt: {lower: -0.7854, upper: 0.7854, effort: 2.5, velocity: 3.14}
+
+# Masas de MARCADOR para que Gazebo pueda simular (inercias de sólidos homogéneos sobre la geometría
+# de colisión). Brazo y pinza usan las inercias oficiales de AgileX (no figuran aquí).
+masses_kg:
+  base_link: 12.0          # valor del URDF de base_athome, no verificado
+  wheel: 1.0
+  caster: 0.2
+  laser_mount: 0.13
+  torso_column: 3.5        # base_athome (torso_column)
+  torso_lift_link: 0.2
+  mounting_cube_link: 4.0  # base_athome (mounting_cube_link)
+  screen_link: 1.2         # base_athome (screen_link)
+  pan_tilt_base_link: 0.25 # base_athome
+  pan_link: 0.15           # base_athome
+  tilt_link: 0.15          # base_athome
+  camera_link: 0.072       # realsense2_description (marcado allí como "no confiable")
+  arm_camera_link: 0.08    # base_athome
+
+gazebo:
+  wheel_mu: 1.0
+  caster_mu: 0.0           # ruedas locas modeladas como esferas fijas: sin fricción para que no frenen
+  rgbd:
+    update_rate: 15
+    # Resolución / FOV NOMINALES del D435 (hoja de datos de Intel): color 69° x 42°, profundidad 87° x 58°.
+    # El simulador usa una única cámara RGB-D con el FOV de color. No son calibraciones del dispositivo.
+    width: 640
+    height: 480
+    horizontal_fov: 1.2043
+    near: 0.105            # rango mínimo nominal del D435 (~0.1 m)
+    far: 10.0
+  lidar:
+    # Hokuyo UST-05LX, valores NOMINALES de la hoja de datos (270°, 0.25°, 0.06-5 m) y 40 Hz (README base_athome)
+    update_rate: 40
+    samples: 1081
+    min_angle: -2.3562
+    max_angle: 2.3562
+    range_min: 0.06
+    range_max: 5.0

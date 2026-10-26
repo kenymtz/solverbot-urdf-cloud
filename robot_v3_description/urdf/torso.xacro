@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  Torso: columna fija (perfil del elevador) + carro móvil (torso_lift_joint, prismático en +Z).
+  Se mueven con el elevador: torso_lift_link, mounting_cube_link (caja), screen_link y el brazo Piper.
+  El cabezal también, solo si head_mount:=lift (por defecto está sobre la columna fija).
+  Cero del elevador = altura del escaneo v2. Límites/velocidad/esfuerzo: PROVISIONALES (config/sim_provisional.yaml).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="torso">
+    <xacro:property name="T" value="${G['torso']}"/>
+    <xacro:property name="SL" value="${S['lift']}"/>
+
+    <!-- Nombres de base_athome (torso_column, torso_lift_link, mounting_cube_link, screen_link) -->
+    <xacro:box_link name="torso_column" size="${T['column']['box_size']}" center="${T['column']['box_center']}"
+                    material="column_aluminum" mass="${S['masses_kg']['torso_column']}"/>
+    <joint name="torso_column_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="torso_column"/>
+      <origin xyz="${xyz_str(T['column']['origin'])}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Carro del elevador: referencia del movimiento, sobre el eje de la columna -->
+    <link name="torso_lift_link">
+      <xacro:box_inertial m="${S['masses_kg']['torso_lift_link']}" size="${[0.05, 0.05, 0.05]}"/>
+    </link>
+    <joint name="torso_lift_joint" type="prismatic">
+      <parent link="torso_column"/>
+      <child link="torso_lift_link"/>
+      <origin xyz="${xyz_str(T['lift']['origin_in_column'])}" rpy="0 0 0"/>
+      <axis xyz="${xyz_str(T['lift']['axis'])}"/>
+      <limit lower="${SL['lower']}" upper="${SL['upper']}" effort="${SL['effort']}" velocity="${SL['velocity']}"/>
+    </joint>
+
+    <!-- Caja superior (bandeja + monitor + carro), dimensiones medidas -->
+    <xacro:box_link name="mounting_cube_link" size="${T['box']['size']}" center="${[0, 0, 0]}"
+                    material="cube_metallic" mass="${S['masses_kg']['mounting_cube_link']}"/>
+    <joint name="torso_lift_to_cube_joint" type="fixed">
+      <parent link="torso_lift_link"/>
+      <child link="mounting_cube_link"/>
+      <origin xyz="${xyz_str(T['box']['center_in_lift'])}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Pantalla HRI en la cara frontal de la caja (solo visual, 1 cm por delante de la caja medida para que se vea; su colisión está incluida en la caja) -->
+    <link name="screen_link">
+      <visual>
+        <origin xyz="${T['screen']['size'][0]/2} 0 0" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(T['screen']['size'])}"/></geometry>
+        <material name="screen_black"/>
+      </visual>
+      <xacro:box_inertial m="${S['masses_kg']['screen_link']}" size="${T['screen']['size']}"
+                          xyz="${T['screen']['size'][0]/2} 0 0"/>
+    </link>
+    <joint name="torso_lift_to_screen_joint" type="fixed">
+      <parent link="mounting_cube_link"/>
+      <child link="screen_link"/>
+      <origin xyz="${xyz_str(T['screen']['center_in_box'])}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

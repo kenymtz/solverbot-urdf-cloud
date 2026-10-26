@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!-- Propiedades, materiales y macros comunes de robot_v3 -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="pkg" value="package://robot_v3_description"/>
+  <xacro:property name="G" value="${xacro.load_yaml('$(find robot_v3_description)/config/geometry_v3.yaml')}"/>
+  <xacro:property name="S" value="${xacro.load_yaml('$(find robot_v3_description)/config/sim_provisional.yaml')}"/>
+  <xacro:property name="PL" value="${xacro.load_yaml('$(find robot_v3_description)/config/piper_limits.yaml')}"/>
+
+  <!-- Lista [x, y, z] -> "x y z" -->
+  <xacro:property name="xyz_str" value="${lambda v: ' '.join(str(float(c)) for c in v)}"/>
+
+  <material name="chassis_blue"><color rgba="0.15 0.45 0.85 1.0"/></material>
+  <material name="wheel_black"><color rgba="0.10 0.10 0.10 1.0"/></material>
+  <material name="caster_gray"><color rgba="0.35 0.35 0.35 1.0"/></material>
+  <material name="column_aluminum"><color rgba="0.65 0.65 0.70 1.0"/></material>
+  <material name="cube_metallic"><color rgba="0.28 0.30 0.35 1.0"/></material>
+  <material name="screen_black"><color rgba="0.06 0.07 0.09 1.0"/></material>
+  <material name="pantilt_dark"><color rgba="0.18 0.18 0.18 1.0"/></material>
+  <material name="hokuyo_dark"><color rgba="0.12 0.12 0.12 1.0"/></material>
+  <material name="realsense_aluminum"><color rgba="0.75 0.75 0.75 1.0"/></material>
+  <material name="piper_gray"><color rgba="0.75 0.78 0.88 1.0"/></material>
+  <material name="orbbec_black"><color rgba="0.08 0.08 0.08 1.0"/></material>
+
+  <!-- Inercias de sólidos homogéneos (masa provisional de config/sim_provisional.yaml) -->
+  <xacro:macro name="box_inertial" params="m size xyz:='0 0 0'">
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(size[1]**2+size[2]**2)/12}" ixy="0" ixz="0"
+               iyy="${m*(size[0]**2+size[2]**2)/12}" iyz="0" izz="${m*(size[0]**2+size[1]**2)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cilindro con eje Y (ruedas) -->
+  <xacro:macro name="cylinder_y_inertial" params="m r h">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3*r**2+h**2)/12}" ixy="0" ixz="0" iyy="${m*r**2/2}" iyz="0" izz="${m*(3*r**2+h**2)/12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="sphere_inertial" params="m r">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${m}"/>
+      <inertia ixx="${2*m*r**2/5}" ixy="0" ixz="0" iyy="${2*m*r**2/5}" iyz="0" izz="${2*m*r**2/5}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Link con una caja como visual y colisión -->
+  <xacro:macro name="box_link" params="name size center material mass">
+    <link name="${name}">
+      <visual>
+        <origin xyz="${xyz_str(center)}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(size)}"/></geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="${xyz_str(center)}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(size)}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${mass}" size="${size}" xyz="${xyz_str(center)}"/>
+    </link>
+  </xacro:macro>
+
+</robot>
