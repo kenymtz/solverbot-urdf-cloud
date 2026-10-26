@@ -13,7 +13,7 @@ Es un paquete nuevo, independiente de `robot_v2_description`, que no se modific�
 | Elevador | prismático, sin controlador | prismático + controlador de trayectoria (mock y Gazebo) |
 | Cabezal | soporte rígido | pan_joint + tilt_joint (nombres de base_athome) |
 | Cámara | `camera_link` + 1 frame óptico | D435 completa: rosca, `camera_link`, depth/infra1/infra2/color con sus frames ópticos |
-| Visual | mallas escaneadas con texturas (37 MB) | primitivas + mallas STL del Piper (12.5 MB, sin texturas) |
+| Visual | mallas escaneadas con texturas (37 MB) | estructura reconstruida con primitivas medidas sobre el escaneo + Piper con su malla oficial a color (12.4 MB en total, sin texturas) |
 | Simulación | no | ros2_control mock, Gazebo Fortress con cámara RGB-D y LiDAR |
 
 ---
@@ -49,7 +49,7 @@ source install/setup.bash
 
 | Launch | Qué hace | Hardware |
 |---|---|---|
-| `display.launch.py` | RViz + sliders (`joint_state_publisher_gui`) | ninguno |
+| `display.launch.py` | RViz + sliders (`joint_state_publisher_gui`); el brazo arranca en la pose de reposo de la Jetson (`arm_pose:=home`, o `zero`) | ninguno |
 | `sim_mock.launch.py` | `ros2_control` con `mock_components/GenericSystem` + controladores de trayectoria + RViz | ninguno |
 | `gazebo.launch.py` | Ignition Gazebo Fortress + `ign_ros2_control` + cámara RGB-D y LiDAR simulados + RViz | ninguno |
 | `real_state.launch.py` | TF del robot real a partir de los `/joint_states` que publica la Jetson | **solo lee** |
@@ -139,6 +139,29 @@ coinciden a 0.02 mm con `GetArmEndPoseMsgs()` del firmware, son los del **Piper 
 Descartan Piper H (d4 = 255.75, d6 = 96.3), Piper L (a3 = 338.23) y Piper X (otra cadena).
 La validación compara la cadena del URDF con los MDH de `piper_sdk` para el Piper estándar: coinciden con un error máximo de 0.09 mm en 202 poses.
 
+## 4b. Geometría visual
+
+La geometría visual es una versión intermedia entre el escaneo y un modelo de cajas. Solo cambia lo que se ve: las colisiones, inercias, joints y frames son los mismos (la única transformada que cambió es la de `screen_link`, que es fija y solo visual, ver abajo).
+
+* **Fuente:** `config/visual_v3.yaml`, con cada pieza medida sobre el escaneo métrico de v2 (`tools/measure_v2_scan.py`; ±1–2 cm y ±3 % de escala).
+* **Chasis:** marco de perfiles 20×20 en dos niveles (z ≈ 0.175 y 0.303 m), esquinas achaflanadas, montantes, placa inferior, traviesas bajo la columna, volumen de electrónica entre niveles y placa del Hokuyo.
+* **Columna:** módulo lineal (paredes, alma, dos guías frontales, husillo, placas de base y superior) más el **carro** que se mueve con `torso_lift_joint`.
+* **Parte superior:** bandeja, carcasa, **monitor inclinado 12.8°** (ajuste lineal de su cara frontal en el escaneo) con pantalla azul, y bloque superior.
+* **Ruedas:** neumático con radio y ancho calibrados, llanta y un radio marcador para ver el giro. Las ruedas locas tienen horquilla y color naranja, como en el escaneo.
+* **Cabezal:** servos XL430 y soporte. El micrófono está en la posición escaneada, suponiendo que va montado en el soporte de la cámara.
+* **D435:** carcasa de 90×25×25 mm con extremos redondeados, frente negro y lentes en las posiciones de los extrínsecos nominales de Intel. La malla oficial de Intel pesa 15.8 MB y se descartó.
+* **Piper:** malla visual oficial (DAE de `agx_arm_urdf`) con sus colores: eslabones blancos, articulaciones negras y detalles rojos. Está simplificada con un desvío p95 < 1 mm respecto de la oficial (`tools/make_piper_visuals.py`). La escala es la real (`link2` mide 0.348 m) y en la pose de reposo calza con el brazo escaneado.
+
+Cada link tiene **un solo `<visual>` con un DAE** (`meshes/structure/`, generado con `tools/make_structure_visuals.py`). RViz2 aplica a todas las `<visual>` de un link el material de la primera, así que con varias primitivas por link la columna se veía negra y las ruedas no mostraban la llanta. El validador comprueba que cada DAE coincide (±1 mm) con sus primitivas del YAML.
+
+**`screen_link`:** antes estaba en la cara frontal de la caja envolvente (x = 0.283), sin inclinación. Ahora está en el centro de la cara del monitor real (x = 0.1815, z = 1.09) e inclinado −12.8°. Es un frame fijo, hijo de `mounting_cube_link`, sin hijos ni joints móviles. No lo usa el software de base_athome, y no afecta a la cinemática ni a las colisiones.
+
+Comparación con v2 desde 5 vistas: `docs/evidencias/visual/` (v3, v2 y ambos superpuestos).
+
+### "No Image" en RViz
+
+El panel de imagen que aparecía en la configuración anterior de RViz mostraba "No Image" porque **nadie publicaba** `/camera/camera/color/image_raw`. Con `display.launch.py` no hay simulador ni driver, y el tópico no existe (`docs/evidencias/no_image_diagnostico.txt`). La cámara está bien representada en el URDF (frames y geometría), pero eso no significa que haya una cámara funcionando. Con `gazebo.launch.py` el tópico tiene 1 publicador y entrega imágenes `rgb8` en `camera_color_optical_frame`. En el robot real lo publica el driver de la Jetson. El panel se quitó de la configuración por defecto.
+
 ## 5. Brazo Piper: límites y estados reales
 
 * **Límites `official`** (por defecto): los de `agx_arm_urdf`, iguales a los de `piper_sdk` salvo joint6 (el SDK usa ±120° por firmware antiguo).
@@ -203,11 +226,11 @@ Ignition Gazebo 6.16). No se tocó la NUC, la Jetson ni el robot. Evidencias: [`
 | Prueba | Resultado |
 |---|---|
 | `colcon build` + `colcon test` | OK (2 tests, 0 fallas) |
-| `tools/validate_v3.py`: xacro en 24 combinaciones, `check_urdf`, árbol, límites, cinemática (brazo contra MDH de `piper_sdk`: 0.088 mm), D435, recursos, inercias, ros2_control, v2 sin cambios | 58/58 OK |
+| `tools/validate_v3.py`: xacro en 24 combinaciones (sin salida por stderr), `check_urdf`, árbol, límites, cinemática (brazo contra MDH de `piper_sdk`: 0.088 mm), D435, recursos, inercias, DAE visuales = primitivas, ros2_control, v2 sin cambios | 62/62 OK |
 | `sim_mock.launch.py` + `runtime_checks.py` (TF real, controladores reales), también con `head_mount:=lift` | 22/22 y 22/22 OK |
 | `demo_motion.py` y guardia de dominio (aborta con `ROS_DOMAIN_ID=10`) | OK |
 | `real_state.launch.py` con `/joint_states` en el formato de la Jetson (`check_real_state.py`) | 9/9 OK |
-| `gazebo.launch.py` (Fortress, headless) + `runtime_checks.py --sensors` (física, RGB-D, nube, LiDAR) | 28/28 OK |
+| `gazebo.launch.py` (Fortress, headless) + `runtime_checks.py --sensors` (física, RGB-D, nube, LiDAR) | 28/28 OK (dos corridas seguidas) |
 | `tools/nuc_validate.sh` completo (sin `--gazebo`) | 9/9 etapas OK |
 
 Durante la validación aparecieron y se corrigieron errores reales (remapeo en `real_state`, `set -u` en el script de
@@ -234,18 +257,20 @@ Comprobación visual recomendada: `display.launch.py`, mover cada slider y verif
 6. **Escala del escaneo v2** (±3 %): medir con cinta una cota, por ejemplo la placa superior del perfil (1.321 m).
 7. **Masas reales** (todas las de `sim_provisional.yaml` son marcadores).
 8. **Visión del cabezal:** con la geometría medida, la caja con el monitor tapa la vista de la cámara si baja más de unos 26° (ver la imagen simulada en `docs/VALIDACION.md`). Verificar en el robot.
-9. Diferencias del README de base_athome: indica ROS 2 Jazzy en la NUC; este paquete apunta a Humble (CONTEXTO_SOLVERBOT.md).
+9. **Geometría visual no verificada en el robot:** ubicación del motor NEMA23 (no se distingue en el escaneo, no se modeló), diámetro del husillo, montaje del micrófono y contenido del volumen de electrónica.
+10. Diferencias del README de base_athome: indica ROS 2 Jazzy en la NUC; este paquete apunta a Humble (CONTEXTO_SOLVERBOT.md).
 
 ## 10. Estructura
 
 ```
-config/   geometry_v3.yaml (medido/derivado) · sim_provisional.yaml (solo simulación) · piper_limits.yaml
+config/   geometry_v3.yaml (medido/derivado) · visual_v3.yaml (geometría visual) · sim_provisional.yaml (solo simulación) · piper_limits.yaml
           ros2_controllers.yaml · gz_bridge.yaml
 urdf/     robot_v3.urdf.xacro · common · base · torso · piper · head · realsense_d435 · ros2_control · gazebo
 launch/   display · real_state · sim_mock · gazebo (+ robot_v3_common.py)
-meshes/   piper/collision (oficiales) · piper/visual (simplificadas)
+meshes/   piper/collision (STL oficiales) · piper/visual (DAE oficiales a color, simplificados) · structure (DAE generados del YAML)
 scripts/  demo_motion.py
-tools/    validate_v3.py · runtime_checks.py · check_real_state.py · nuc_validate.sh · fit_arm_mount.py · simplify_piper_meshes.py
+tools/    validate_v3.py · runtime_checks.py · check_real_state.py · nuc_validate.sh · fit_arm_mount.py
+          measure_v2_scan.py · make_structure_visuals.py · make_piper_visuals.py
 docs/     VALIDACION.md · evidencias/ (informes, capturas de RViz y Gazebo, árbol TF)
 test/     prueba de colcon test
 worlds/   robot_v3_test.sdf (mesa y objetos frente al robot)

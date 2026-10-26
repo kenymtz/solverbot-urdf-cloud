@@ -135,7 +135,8 @@ def run_xacro(pkg, args):
     exe = shutil.which('xacro')
     if exe:
         res = subprocess.run([exe, xacro_file, *argv], capture_output=True, text=True)
-        if res.returncode != 0:
+        # Cualquier salida por stderr hace fallar a launch (Command) aunque xacro termine bien
+        if res.returncode != 0 or res.stderr.strip():
             raise RuntimeError(res.stderr.strip())
         return res.stdout
     import xacro  # módulo de Python (pip install xacro)
@@ -382,8 +383,10 @@ def validate(pkg, rep, repo_root=None, v2_base='9401da9'):
     used = {m.replace('package://robot_v3_description/meshes/', '') for m in meshes}
     rep.check('sin mallas sin usar en el paquete', files == used, f'sin usar: {sorted(files - used)}' if files - used else '')
     size = sum(os.path.getsize(os.path.join(mesh_dir, f)) for f in files)
-    rep.check('paquete liviano: mallas < 15 MB, sin texturas', size < 15e6 and not any(f.endswith(('.jpg', '.png', '.dae')) for f in files),
-              f'{size / 1e6:.1f} MB')
+    textured = [f for f in files if f.endswith(('.jpg', '.jpeg', '.png'))]
+    textured += [f for f in files if f.endswith('.dae') and '<init_from>' in open(os.path.join(mesh_dir, f)).read()]
+    rep.check('paquete liviano: mallas < 15 MB, sin texturas de imagen', size < 15e6 and not textured,
+              f'{size / 1e6:.1f} MB' + (f'; con texturas: {textured}' if textured else ''))
     uses_package_uri = all(m.startswith('package://') for m in meshes)
     rep.check('rutas de mallas con package:// (portables)', uses_package_uri)
     ok = True
@@ -405,6 +408,58 @@ def validate(pkg, rep, repo_root=None, v2_base='9401da9'):
     rep.check('inercias: masa > 0, tensor definido positivo y desigualdad triangular', ok, f'mal: {bad}' if bad else '')
     no_inertia = [n for n, link in u.links.items() if link.find('inertial') is None and link.find('visual') is not None]
     rep.check('todo link con geometría tiene inercia (requisito de Gazebo)', not no_inertia, str(no_inertia))
+
+    # ---- 9b. geometría visual de la estructura: DAE = primitivas de config/visual_v3.yaml
+    vis = yaml.safe_load(open(os.path.join(pkg, 'config', 'visual_v3.yaml')))
+    groups = [g for g in vis if g != 'materials']
+    col = np.array(geo['torso']['column']['origin'], float)
+    lift = col + np.array(geo['torso']['lift']['origin_in_column'], float)
+    origins = {'chassis': np.zeros(3), 'column': col, 'carriage': lift,
+               'upper_box': lift + np.array(geo['torso']['box']['center_in_lift'], float)}
+    bad = []
+    for g in groups:
+        origin = origins.get(g, np.zeros(3)) if vis[g]['frame'] == 'world' else np.zeros(3)
+        pts = []
+        for part in vis[g]['parts']:
+            if 'box' in part:
+                lo, hi = np.array(part['box']['min'], float), np.array(part['box']['max'], float)
+                c, half, rot = (lo + hi) / 2, (hi - lo) / 2, np.eye(3)
+            elif 'box_c' in part:
+                c, half = np.array(part['box_c']['center'], float), np.array(part['box_c']['size'], float) / 2
+                rot = rpy_matrix(*part['box_c'].get('rpy', [0, 0, 0]))
+            else:
+                cy = part['cyl']
+                c, rot = np.array(cy['center'], float), rpy_matrix(*cy.get('rpy', [0, 0, 0]))
+                ang = np.linspace(0, 2 * math.pi, 64, endpoint=False)
+                for z in (-cy['length'] / 2, cy['length'] / 2):
+                    for a in ang:
+                        pts.append(c - origin + rot @ np.array([cy['radius'] * math.cos(a), cy['radius'] * math.sin(a), z]))
+                continue
+            for sx in (-1, 1):
+                for sy in (-1, 1):
+                    for sz in (-1, 1):
+                        pts.append(c - origin + rot @ (half * [sx, sy, sz]))
+        exp = np.array(pts)
+        dae = open(os.path.join(pkg, 'meshes', 'structure', f'{g}.dae')).read()
+        arrays = [np.array(a.split(), float).reshape(-1, 3)
+                  for a in __import__('re').findall(r'<float_array id="g\d+pa"[^>]*>([^<]*)</float_array>', dae)]
+        got = np.vstack(arrays) if arrays else np.zeros((1, 3))
+        ncolors = len({tuple(vis['materials'][p['material']]) for p in vis[g]['parts']})
+        if (np.abs(got.min(0) - exp.min(0)).max() > 1e-3 or np.abs(got.max(0) - exp.max(0)).max() > 1e-3
+                or dae.count('<lambert>') != ncolors):
+            bad.append(g)
+    referenced = {m.get('filename').split('/')[-1][:-4] for m in u.root.iter('mesh') if '/structure/' in m.get('filename')}
+    rep.check(f'visual: los {len(groups)} DAE de estructura coinciden con sus primitivas (±1 mm) y colores del YAML',
+              not bad, f'distintos: {bad} (regenerar con tools/make_structure_visuals.py)' if bad else '')
+    rep.check('visual: todos los grupos de visual_v3.yaml se usan en el URDF', set(groups) == referenced,
+              str(sorted(set(groups) ^ referenced)))
+    one_visual = [n for n, link in u.links.items() if len(link.findall('visual')) > 1]
+    rep.check('visual: un solo <visual> por link (RViz2 aplica el material de la primera a todas)', not one_visual,
+              str(one_visual))
+    # Las ruedas siguen teniendo radio y ancho calibrados en la colisión y en lo visual
+    w = vis['wheel']['parts'][0]['cyl']
+    rep.check('visual: neumático con radio y ancho calibrados (0.084 / 0.055)',
+              abs(w['radius'] - geo['base']['wheels']['visual_radius']) < 1e-9 and abs(w['length'] - geo['base']['wheels']['width']) < 1e-9)
 
     # ---- 10. ros2_control y Gazebo
     for mode in ('mock', 'gazebo'):

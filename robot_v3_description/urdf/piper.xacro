@@ -11,7 +11,8 @@
     * base_link -> arm_base_link (base_link es la base del robot; mismo nombre que base_athome).
     * se elimina el link "world"; el brazo cuelga de "parent" con el origen recibido.
     * límites según el perfil "limits" de config/piper_limits.yaml.
-    * visual: mallas simplificadas (meshes/piper/visual, tools/simplify_piper_meshes.py); colisión: oficiales.
+    * visual: mallas visuales oficiales (DAE con colores) simplificadas, desvío p95 < 1 mm
+      (meshes/piper/visual, tools/make_piper_visuals.py); colisión: STL oficiales sin cambios.
     * tcp_link y cámara de muñeca (arm_camera_link) como en base_athome.
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -25,8 +26,8 @@
       </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry><mesh filename="${pkg}/meshes/piper/visual/${'base_link' if name == 'arm_base_link' else name}.stl"/></geometry>
-        <material name="piper_gray"/>
+        <!-- DAE con los colores oficiales (blanco, negro, rojo); sin material para no sobrescribirlos -->
+        <geometry><mesh filename="${pkg}/meshes/piper/visual/${'base_link' if name == 'arm_base_link' else name}.dae"/></geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>

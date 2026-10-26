@@ -42,11 +42,7 @@
       <child link="${name}_link"/>
     </joint>
     <link name="${name}_link">
-      <visual>
-        <origin xyz="0 ${-D['depth_py']} 0" rpy="0 0 0"/>
-        <geometry><box size="${D['cam_depth']} ${D['cam_width']} ${D['cam_height']}"/></geometry>
-        <material name="realsense_aluminum"/>
-      </visual>
+      <xacro:visual_parts group="d435"/>
       <collision>
         <origin xyz="0 ${-D['depth_py']} 0" rpy="0 0 0"/>
         <geometry><box size="${D['cam_depth']} ${D['cam_width']} ${D['cam_height']}"/></geometry>

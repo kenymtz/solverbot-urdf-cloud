@@ -46,17 +46,21 @@
 | 44 | D435: extrínsecos nominales de Intel (color +15 mm, infra2 -50 mm en Y) | OK |  |
 | 45 | D435: camera_link mira hacia adelante del robot con el cabezal en cero | OK |  |
 | 46 | camera_frames:=false: quedan camera_link y la rosca; se quitan los 8 frames del driver | OK |  |
-| 47 | todas las mallas referenciadas existen dentro del paquete | OK | 20 referencias |
+| 47 | todas las mallas referenciadas existen dentro del paquete | OK | 34 referencias |
 | 48 | sin mallas sin usar en el paquete | OK |  |
-| 49 | paquete liviano: mallas < 15 MB, sin texturas | OK | 12.5 MB |
+| 49 | paquete liviano: mallas < 15 MB, sin texturas de imagen | OK | 12.9 MB |
 | 50 | rutas de mallas con package:// (portables) | OK |  |
 | 51 | inercias: masa > 0, tensor definido positivo y desigualdad triangular | OK |  |
 | 52 | todo link con geometría tiene inercia (requisito de Gazebo) | OK | [] |
-| 53 | ros2_control mock: todas las articulaciones móviles declaradas (mock_components/GenericSystem) | OK |  |
-| 54 | ros2_control gazebo: todas las articulaciones móviles declaradas (ign_ros2_control/IgnitionSystem) | OK |  |
-| 55 | controladores de trayectoria cubren brazo, pinza, elevador y cabezal | OK |  |
-| 56 | Gazebo: plugin ign_ros2_control, cámara RGB-D y LiDAR presentes | OK |  |
-| 57 | modo none: sin etiquetas ros2_control ni gazebo (descripción pura) | OK |  |
-| 58 | robot_v2_description idéntico al commit 9401da9 (git diff + status vacíos) | OK |  |
+| 53 | visual: los 12 DAE de estructura coinciden con sus primitivas (±1 mm) y colores del YAML | OK |  |
+| 54 | visual: todos los grupos de visual_v3.yaml se usan en el URDF | OK | [] |
+| 55 | visual: un solo <visual> por link (RViz2 aplica el material de la primera a todas) | OK | [] |
+| 56 | visual: neumático con radio y ancho calibrados (0.084 / 0.055) | OK |  |
+| 57 | ros2_control mock: todas las articulaciones móviles declaradas (mock_components/GenericSystem) | OK |  |
+| 58 | ros2_control gazebo: todas las articulaciones móviles declaradas (ign_ros2_control/IgnitionSystem) | OK |  |
+| 59 | controladores de trayectoria cubren brazo, pinza, elevador y cabezal | OK |  |
+| 60 | Gazebo: plugin ign_ros2_control, cámara RGB-D y LiDAR presentes | OK |  |
+| 61 | modo none: sin etiquetas ros2_control ni gazebo (descripción pura) | OK |  |
+| 62 | robot_v2_description idéntico al commit 9401da9 (git diff + status vacíos) | OK |  |
 
-**58/58 comprobaciones OK**
+**62/62 comprobaciones OK**

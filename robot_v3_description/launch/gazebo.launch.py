@@ -54,11 +54,15 @@ def generate_launch_description():
     spawn = Node(package='ros_gz_sim', executable='create', output='screen',
                  arguments=['-name', 'robot_v3', '-topic', 'robot_description', '-z', LaunchConfiguration('spawn_z')])
 
-    spawners = [
-        Node(package='controller_manager', executable='spawner', output='screen',
-             arguments=[name, '--controller-manager', '/controller_manager', '--controller-manager-timeout', '120'])
-        for name in CONTROLLERS
-    ]
+    # Al arrancar, Gazebo puede tardar en ejecutar ciclos de control (carga de sensores/render) y el cambio de estado
+    # de un controlador expira a los 5 s: se espera hasta 60 s (--switch-timeout) y se activa primero
+    # joint_state_broadcaster y después el resto, en un solo spawner.
+    spawn_args = ['--controller-manager', '/controller_manager', '--controller-manager-timeout', '120',
+                  '--switch-timeout', '60']
+    spawn_jsb = Node(package='controller_manager', executable='spawner', output='screen',
+                     arguments=[CONTROLLERS[0], *spawn_args])
+    spawn_rest = Node(package='controller_manager', executable='spawner', output='screen',
+                      arguments=[*CONTROLLERS[1:], *spawn_args])
 
     return LaunchDescription([
         DeclareLaunchArgument('world', default_value=PathJoinSubstitution([pkg, 'worlds', 'robot_v3_test.sdf'])),
@@ -80,7 +84,8 @@ def generate_launch_description():
              parameters=[{'config_file': PathJoinSubstitution([pkg, 'config', 'gz_bridge.yaml']),
                           'use_sim_time': True}]),
         # Los controladores se cargan cuando el modelo (y su controller_manager) ya existe en Gazebo
-        RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=spawners)),
+        RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[spawn_jsb])),
+        RegisterEventHandler(OnProcessExit(target_action=spawn_jsb, on_exit=[spawn_rest])),
         Node(package='rviz2', executable='rviz2', output='screen', condition=IfCondition(LaunchConfiguration('rviz')),
              arguments=['-d', PathJoinSubstitution([pkg, 'rviz', 'robot_v3.rviz'])],
              parameters=[{'use_sim_time': True}]),

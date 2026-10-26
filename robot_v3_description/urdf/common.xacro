@@ -10,17 +10,16 @@
   <!-- Lista [x, y, z] -> "x y z" -->
   <xacro:property name="xyz_str" value="${lambda v: ' '.join(str(float(c)) for c in v)}"/>
 
-  <material name="chassis_blue"><color rgba="0.15 0.45 0.85 1.0"/></material>
-  <material name="wheel_black"><color rgba="0.10 0.10 0.10 1.0"/></material>
-  <material name="caster_gray"><color rgba="0.35 0.35 0.35 1.0"/></material>
-  <material name="column_aluminum"><color rgba="0.65 0.65 0.70 1.0"/></material>
-  <material name="cube_metallic"><color rgba="0.28 0.30 0.35 1.0"/></material>
-  <material name="screen_black"><color rgba="0.06 0.07 0.09 1.0"/></material>
-  <material name="pantilt_dark"><color rgba="0.18 0.18 0.18 1.0"/></material>
-  <material name="hokuyo_dark"><color rgba="0.12 0.12 0.12 1.0"/></material>
-  <material name="realsense_aluminum"><color rgba="0.75 0.75 0.75 1.0"/></material>
-  <material name="piper_gray"><color rgba="0.75 0.78 0.88 1.0"/></material>
   <material name="orbbec_black"><color rgba="0.08 0.08 0.08 1.0"/></material>
+
+  <!-- Geometría visual de la estructura: un DAE por link (meshes/structure/<grupo>.dae), generado desde las primitivas
+       de config/visual_v3.yaml con tools/make_structure_visuals.py. Un único <visual> por link porque RViz2 aplica el
+       material de la primera <visual> a todas las del link. Los colores van dentro del DAE. -->
+  <xacro:macro name="visual_parts" params="group">
+    <visual>
+      <geometry><mesh filename="${pkg}/meshes/structure/${group}.dae"/></geometry>
+    </visual>
+  </xacro:macro>
 
   <!-- Inercias de sólidos homogéneos (masa provisional de config/sim_provisional.yaml) -->
   <xacro:macro name="box_inertial" params="m size xyz:='0 0 0'">
@@ -47,22 +46,6 @@
       <mass value="${m}"/>
       <inertia ixx="${2*m*r**2/5}" ixy="0" ixz="0" iyy="${2*m*r**2/5}" iyz="0" izz="${2*m*r**2/5}"/>
     </inertial>
-  </xacro:macro>
-
-  <!-- Link con una caja como visual y colisión -->
-  <xacro:macro name="box_link" params="name size center material mass">
-    <link name="${name}">
-      <visual>
-        <origin xyz="${xyz_str(center)}" rpy="0 0 0"/>
-        <geometry><box size="${xyz_str(size)}"/></geometry>
-        <material name="${material}"/>
-      </visual>
-      <collision>
-        <origin xyz="${xyz_str(center)}" rpy="0 0 0"/>
-        <geometry><box size="${xyz_str(size)}"/></geometry>
-      </collision>
-      <xacro:box_inertial m="${mass}" size="${size}" xyz="${xyz_str(center)}"/>
-    </link>
   </xacro:macro>
 
 </robot>

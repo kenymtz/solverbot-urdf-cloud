@@ -17,7 +17,7 @@ ROS 2 Humble real se usó un contenedor Docker efímero con paquetes de **RoboSt
 Las diferencias con la NUC (binarios apt) son de empaquetado; el código de ROS es el mismo. En la NUC hay que repetir
 las pruebas con `tools/nuc_validate.sh` (§4).
 
-## 1. Validación estática — 58/58
+## 1. Validación estática — 62/62
 
 `tools/validate_v3.py` (detalle: [`evidencias/estatica_humble.md`](evidencias/estatica_humble.md)):
 
@@ -53,9 +53,10 @@ las pruebas con `tools/nuc_validate.sh` (§4).
 Evidencias: [`runtime_mock.txt`](evidencias/runtime_mock.txt), [`runtime_mock_lift.txt`](evidencias/runtime_mock_lift.txt),
 árbol TF de `view_frames`: [`arbol_tf.pdf`](evidencias/arbol_tf.pdf).
 
-| Estado cero | Brazo en DEFAULT_HOME, elevador −0.12 m |
-|---|---|
-| ![RViz](evidencias/rviz_cero.png) | ![RViz](evidencias/rviz_home_elevador.png) |
+Capturas de RViz desde 5 vistas y comparación con v2: [`evidencias/visual/`](evidencias/visual/).
+
+![v3](evidencias/visual/v3_cinco_vistas.jpg)
+![comparación](evidencias/visual/comparacion_5_perspectiva.jpg)
 
 ## 3. Estados "reales" — 9/9
 
@@ -64,7 +65,7 @@ Evidencias: [`runtime_mock.txt`](evidencias/runtime_mock.txt), [`runtime_mock_li
 elevador y ruedas en 0, y la TF de `tcp_link`, `link7`, `link8`, `camera_link` y `mounting_cube_link` coincide con la
 cinemática calculada **a partir de los valores publicados** ([`evidencias/real_state.txt`](evidencias/real_state.txt)).
 
-## 4. Ignition Gazebo Fortress — 28/28
+## 4. Ignition Gazebo Fortress — 28/28 (dos corridas seguidas)
 
 `gazebo.launch.py headless:=true` + `runtime_checks.py --use-sim-time --tolerance 0.01 --sensors`
 ([`evidencias/runtime_gazebo.txt`](evidencias/runtime_gazebo.txt)):
@@ -88,6 +89,10 @@ inclinación la caja con el monitor tapa la vista de la cámara. Hay que verific
 | `source_list` como sustitución de launch se convertía en `'/'` | Una lista con una `LaunchConfiguration` se concatena | Lista literal |
 | `nuc_validate.sh` fallaba al hacer `source install/setup.bash` | `set -u` con los scripts de colcon | Se quitó `set -u` |
 | El chequeo de profundidad miraba el centro de la imagen (cielo vacío) | Chequeo mal planteado | Fracción de píxeles válidos y mediana plausible |
+| Colores incorrectos en RViz (columna negra, ruedas sin llanta) con varias `<visual>` por link | RViz2 aplica a todas las `<visual>` de un link el material de la primera | Un DAE multicolor por link (`meshes/structure/`) |
+| `display.launch.py` abortaba con xacro 2.1 | `range()` en expresiones xacro genera avisos por stderr y `launch` aborta ante cualquier salida por stderr de `Command` | Sin `range()`; el validador falla si xacro escribe algo en stderr |
+| En Gazebo, `gripper_controller` no se activaba a veces | El primer cambio de estado expiraba (5 s) mientras Gazebo cargaba los sensores | `joint_state_broadcaster` primero, el resto después, con `--switch-timeout 60` |
+| "No Image" en RViz | Nadie publica la imagen en `display.launch.py` (sin simulador ni driver) | Diagnóstico en [`no_image_diagnostico.txt`](evidencias/no_image_diagnostico.txt); panel quitado de la configuración por defecto |
 
 ## 6. Qué NO se probó aquí
 

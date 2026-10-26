@@ -4,8 +4,7 @@
   mount = column: sobre la placa superior del perfil (lo que muestra el escaneo v2; no se mueve con el elevador).
   mount = lift:   colgado de torso_lift_link (árbol de base_athome); misma pose con el elevador en cero.
   Ejes: pan sobre +Z, tilt sobre +Y (positivo = cámara hacia abajo), como en base_athome.
-  Las piezas visuales son prismas simples del tamaño de un XL430 (28.5 x 34 x 46.5 mm, hoja de datos);
-  las posiciones de los ejes son las de config/geometry_v3.yaml (head).
+  Piezas visuales: config/visual_v3.yaml (servos XL430, soporte, micrófono); ejes: config/geometry_v3.yaml (head).
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
@@ -16,11 +15,7 @@
     </xacro:if>
 
     <link name="pan_tilt_base_link">
-      <visual>
-        <origin xyz="0 0 0.003" rpy="0 0 0"/>
-        <geometry><box size="0.06 0.06 0.006"/></geometry>
-        <material name="pantilt_dark"/>
-      </visual>
+      <xacro:visual_parts group="pan_tilt_base"/>
       <xacro:box_inertial m="${S['masses_kg']['pan_tilt_base_link']}" size="${[0.06, 0.06, 0.006]}" xyz="0 0 0.003"/>
     </link>
     <joint name="pan_tilt_base_joint" type="fixed">
@@ -32,11 +27,7 @@
     <!-- Servo de pan: ocupa el espacio entre la placa y el eje de tilt -->
     <xacro:property name="hz" value="${H['tilt_axis_above_pan']}"/>
     <link name="pan_link">
-      <visual>
-        <origin xyz="0 0 ${hz/2}" rpy="0 0 0"/>
-        <geometry><box size="0.034 0.0285 ${hz}"/></geometry>
-        <material name="pantilt_dark"/>
-      </visual>
+      <xacro:visual_parts group="pan"/>
       <collision>
         <origin xyz="0 0 ${hz/2}" rpy="0 0 0"/>
         <geometry><box size="0.034 0.0285 ${hz}"/></geometry>
@@ -54,11 +45,7 @@
 
     <!-- Soporte de tilt: une el eje de tilt con la cámara -->
     <link name="tilt_link">
-      <visual>
-        <origin xyz="0.012 0 0" rpy="0 0 0"/>
-        <geometry><box size="0.024 0.050 0.010"/></geometry>
-        <material name="pantilt_dark"/>
-      </visual>
+      <xacro:visual_parts group="tilt"/>
       <xacro:box_inertial m="${S['masses_kg']['tilt_link']}" size="${[0.024, 0.05, 0.01]}" xyz="0.012 0 0"/>
     </link>
     <joint name="tilt_joint" type="revolute">

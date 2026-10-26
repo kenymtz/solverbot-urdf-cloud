@@ -12,8 +12,15 @@
     <xacro:property name="SL" value="${S['lift']}"/>
 
     <!-- Nombres de base_athome (torso_column, torso_lift_link, mounting_cube_link, screen_link) -->
-    <xacro:box_link name="torso_column" size="${T['column']['box_size']}" center="${T['column']['box_center']}"
-                    material="column_aluminum" mass="${S['masses_kg']['torso_column']}"/>
+    <!-- Columna: módulo lineal (paredes, guías, husillo, placas); colisión = caja medida -->
+    <link name="torso_column">
+      <xacro:visual_parts group="column"/>
+      <collision>
+        <origin xyz="${xyz_str(T['column']['box_center'])}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(T['column']['box_size'])}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['torso_column']}" size="${T['column']['box_size']}" xyz="${xyz_str(T['column']['box_center'])}"/>
+    </link>
     <joint name="torso_column_joint" type="fixed">
       <parent link="base_link"/>
       <child link="torso_column"/>
@@ -22,6 +29,7 @@
 
     <!-- Carro del elevador: referencia del movimiento, sobre el eje de la columna -->
     <link name="torso_lift_link">
+      <xacro:visual_parts group="carriage"/>
       <xacro:box_inertial m="${S['masses_kg']['torso_lift_link']}" size="${[0.05, 0.05, 0.05]}"/>
     </link>
     <joint name="torso_lift_joint" type="prismatic">
@@ -33,28 +41,30 @@
     </joint>
 
     <!-- Caja superior (bandeja + monitor + carro), dimensiones medidas -->
-    <xacro:box_link name="mounting_cube_link" size="${T['box']['size']}" center="${[0, 0, 0]}"
-                    material="cube_metallic" mass="${S['masses_kg']['mounting_cube_link']}"/>
+    <!-- Bandeja + carcasa + monitor inclinado (visual); colisión = caja envolvente medida -->
+    <link name="mounting_cube_link">
+      <xacro:visual_parts group="upper_box"/>
+      <collision>
+        <geometry><box size="${xyz_str(T['box']['size'])}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['mounting_cube_link']}" size="${T['box']['size']}"/>
+    </link>
     <joint name="torso_lift_to_cube_joint" type="fixed">
       <parent link="torso_lift_link"/>
       <child link="mounting_cube_link"/>
       <origin xyz="${xyz_str(T['box']['center_in_lift'])}" rpy="0 0 0"/>
     </joint>
 
-    <!-- Pantalla HRI en la cara frontal de la caja (solo visual, 1 cm por delante de la caja medida para que se vea; su colisión está incluida en la caja) -->
+    <!-- Pantalla HRI: frame en el centro de la cara frontal del monitor (x = normal hacia afuera), inclinado como en el escaneo.
+         Solo visual; su colisión está incluida en la caja. -->
     <link name="screen_link">
-      <visual>
-        <origin xyz="${T['screen']['size'][0]/2} 0 0" rpy="0 0 0"/>
-        <geometry><box size="${xyz_str(T['screen']['size'])}"/></geometry>
-        <material name="screen_black"/>
-      </visual>
-      <xacro:box_inertial m="${S['masses_kg']['screen_link']}" size="${T['screen']['size']}"
-                          xyz="${T['screen']['size'][0]/2} 0 0"/>
+      <xacro:visual_parts group="screen"/>
+      <xacro:box_inertial m="${S['masses_kg']['screen_link']}" size="${T['screen']['size']}"/>
     </link>
     <joint name="torso_lift_to_screen_joint" type="fixed">
       <parent link="mounting_cube_link"/>
       <child link="screen_link"/>
-      <origin xyz="${xyz_str(T['screen']['center_in_box'])}" rpy="0 0 0"/>
+      <origin xyz="${xyz_str(T['screen']['center_in_box'])}" rpy="${xyz_str(T['screen']['rpy'])}"/>
     </joint>
   </xacro:macro>
 

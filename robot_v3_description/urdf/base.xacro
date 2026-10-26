@@ -8,8 +8,15 @@
 
     <link name="base_footprint"/>
 
-    <xacro:box_link name="base_link" size="${B['chassis_box']['size']}" center="${B['chassis_box']['center']}"
-                    material="chassis_blue" mass="${S['masses_kg']['base_link']}"/>
+    <!-- Chasis: visual = estructura de perfiles en dos niveles (config/visual_v3.yaml); colisión = caja medida -->
+    <link name="base_link">
+      <xacro:visual_parts group="chassis"/>
+      <collision>
+        <origin xyz="${xyz_str(B['chassis_box']['center'])}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(B['chassis_box']['size'])}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['base_link']}" size="${B['chassis_box']['size']}" xyz="${xyz_str(B['chassis_box']['center'])}"/>
+    </link>
     <joint name="base_joint" type="fixed">
       <parent link="base_footprint"/>
       <child link="base_link"/>
@@ -19,11 +26,7 @@
     <!-- Ruedas motrices: origen en el eje medido, giro sobre +Y (como en base_athome) -->
     <xacro:macro name="drive_wheel" params="side">
       <link name="${side}_wheel">
-        <visual>
-          <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-          <geometry><cylinder radius="${W['visual_radius']}" length="${W['width']}"/></geometry>
-          <material name="wheel_black"/>
-        </visual>
+        <xacro:visual_parts group="wheel"/>
         <collision>
           <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
           <geometry><cylinder radius="${W['collision_radius']}" length="${W['width']}"/></geometry>
@@ -43,10 +46,7 @@
     <!-- Ruedas locas traseras: pivote pasivo no modelado (fijas, esfera sin fricción en simulación) -->
     <xacro:macro name="rear_caster" params="side">
       <link name="rear_${side}_caster">
-        <visual>
-          <geometry><sphere radius="${B['casters']['radius']}"/></geometry>
-          <material name="caster_gray"/>
-        </visual>
+        <xacro:visual_parts group="caster"/>
         <collision>
           <geometry><sphere radius="${B['casters']['radius']}"/></geometry>
         </collision>
@@ -64,11 +64,7 @@
     <!-- Hokuyo UST-05LX: laser_mount = base del cuerpo (centrada en XY); laser = punto focal (nombre usado por urg_node/Nav2) -->
     <xacro:property name="Ls" value="${G['laser']}"/>
     <link name="laser_mount">
-      <visual>
-        <origin xyz="0 0 ${Ls['body_size'][2]/2}" rpy="0 0 0"/>
-        <geometry><box size="${xyz_str(Ls['body_size'])}"/></geometry>
-        <material name="hokuyo_dark"/>
-      </visual>
+      <xacro:visual_parts group="hokuyo"/>
       <collision>
         <origin xyz="0 0 ${Ls['body_size'][2]/2}" rpy="0 0 0"/>
         <geometry><box size="${xyz_str(Ls['body_size'])}"/></geometry>
