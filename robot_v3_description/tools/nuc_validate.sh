@@ -10,7 +10,7 @@
 #      --gazebo      además prueba Ignition Gazebo Fortress en modo headless (sensores incluidos)
 #  Salida: resumen en pantalla y registros en <workspace>/log/robot_v3_validation/
 # =====================================================================================================
-set -u
+# (sin "set -u": los setup.bash de ROS 2 y colcon usan variables no definidas)
 WS="${1:?Indique el workspace, p. ej. ~/robot_v3_ws}"
 shift
 GAZEBO=0
@@ -51,7 +51,7 @@ run_step "colcon build" colcon build --packages-select robot_v3_description
 # shellcheck disable=SC1091
 source "$WS/install/setup.bash"
 PKG_SHARE="$(ros2 pkg prefix robot_v3_description)/share/robot_v3_description"
-SRC_DIR="$(dirname "$(find "$WS/src" -name package.xml -path '*robot_v3_description/*' | head -1)")"
+SRC_DIR="$(dirname "$(find -L "$WS/src" -name package.xml -path '*robot_v3_description/*' | head -1)")"
 
 run_step "xacro + check_urdf" bash -c "xacro '$PKG_SHARE/urdf/robot_v3.urdf.xacro' > '$OUT/robot_v3.urdf' && check_urdf '$OUT/robot_v3.urdf' > '$OUT/check_urdf.txt' && head -3 '$OUT/check_urdf.txt'"
 REPO_ARG=()

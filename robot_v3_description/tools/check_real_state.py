@@ -66,25 +66,28 @@ def main():
         results.append(ok)
         print(f"[{'OK' if ok else 'FALLA'}] {name}" + (f' — {detail}' if detail else ''), flush=True)
 
-    end = time.monotonic() + 30
+    end = time.monotonic() + 90   # joint_state_publisher espera /robot_description antes de publicar
     while time.monotonic() < end:
         publish()
         rclpy.spin_once(node, timeout_sec=0.05)
-        if 'u' in urdf and all(abs(merged.get(k, 1e9) - v) < 1e-9 for k, v in expected.items()):
+        if 'u' in urdf and all(abs(merged.get(k, 1e9) - v) < 1e-9 for k, v in expected.items()) \
+                and set(urdf['u'].movable()) <= set(merged):
             break
     u = urdf.get('u')
     check('/robot_description recibido', u is not None)
     if u is None:
         sys.exit(1)
     movable = sorted(u.movable())
-    check('/robot_v3/joint_states combina brazo + pinza + pan/tilt de la "Jetson"',
-          all(abs(merged.get(k, 1e9) - v) < 1e-9 for k, v in expected.items()))
+    diff = {k: (round(merged.get(k, float('nan')), 6), round(v, 6)) for k, v in expected.items()
+            if not abs(merged.get(k, 1e9) - v) < 1e-9}
+    check('/robot_v3/joint_states combina brazo + pinza + pan/tilt de la "Jetson"', not diff,
+          f'distintos (recibido, esperado): {diff}' if diff else '')
     check('elevador y ruedas completados por defecto (0) para que exista toda la TF',
           set(movable) <= set(merged) and all(merged[j] == 0.0 for j in ('torso_lift_joint', 'left_wheel_joint')))
     for _ in range(40):
         publish()
         rclpy.spin_once(node, timeout_sec=0.05)
-    q = {j: merged.get(j, 0.0) for j in movable}
+    q = {j: expected.get(j, 0.0) for j in movable}   # referencia: lo publicado por la "Jetson", no lo combinado
     for link in ('tcp_link', 'link7', 'link8', 'camera_link', 'mounting_cube_link'):
         try:
             t = buf.lookup_transform('base_footprint', link, Time())

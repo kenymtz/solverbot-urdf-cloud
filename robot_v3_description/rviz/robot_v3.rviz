@@ -39,16 +39,6 @@ Visualization Manager:
       Show Names: true
       Marker Scale: 0.3
       Value: false
-    - Class: rviz_default_plugins/Image
-      Name: D435 color (simulación / driver real)
-      Enabled: false
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Best Effort
-        Value: /camera/camera/color/image_raw
-      Value: false
     - Class: rviz_default_plugins/PointCloud2
       Name: D435 nube de puntos
       Enabled: false

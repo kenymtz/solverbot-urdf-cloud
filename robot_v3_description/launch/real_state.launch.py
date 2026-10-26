@@ -27,6 +27,7 @@ from launch_ros.substitutions import FindPackageShare
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from robot_v3_common import PACKAGE, description_arguments, robot_description  # noqa: E402,I100
 
+SOURCE_TOPIC = '/joint_states'          # estados reales (Jetson: brazo, pinza y pan-tilt)
 MERGED_TOPIC = '/robot_v3/joint_states'
 
 
@@ -34,14 +35,12 @@ def generate_launch_description():
     description = robot_description()
     return LaunchDescription([
         DeclareLaunchArgument('rviz', default_value='false', choices=['true', 'false']),
-        DeclareLaunchArgument('source_topic', default_value='/joint_states',
-                              description='Tópico con los estados reales (Jetson)'),
         *description_arguments(camera_frames_default='false'),
-        Node(package='joint_state_publisher', executable='joint_state_publisher', name='robot_v3_joint_state_merger',
-             parameters=[{'robot_description': description,
-                          'source_list': [LaunchConfiguration('source_topic')],
-                          'rate': 30}],
-             remappings=[('joint_states', MERGED_TOPIC)]),
+        # En el namespace robot_v3 su salida relativa "joint_states" es /robot_v3/joint_states. No se usa un remapeo:
+        # en ROS 2 también renombraría la fuente absoluta /joint_states y el nodo se escucharía a sí mismo.
+        Node(package='joint_state_publisher', executable='joint_state_publisher', name='joint_state_merger',
+             namespace='robot_v3', parameters=[{'source_list': [SOURCE_TOPIC], 'rate': 30}],
+             remappings=[('robot_description', '/robot_description')]),
         Node(package='robot_state_publisher', executable='robot_state_publisher', output='screen',
              parameters=[{'robot_description': description}],
              remappings=[('joint_states', MERGED_TOPIC)]),

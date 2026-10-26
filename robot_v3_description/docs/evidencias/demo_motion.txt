@@ -1,0 +1,9 @@
+[INFO] [1793052281.627822306] [robot_v3_demo_motion]: lift_controller: 3 puntos, 13.2 s
+[INFO] [1793052294.880006620] [robot_v3_demo_motion]: lift_controller: resultado 0 (0 = SUCCESSFUL)
+[INFO] [1793052294.882951802] [robot_v3_demo_motion]: head_controller: 3 puntos, 5.0 s
+[INFO] [1793052299.885828868] [robot_v3_demo_motion]: head_controller: resultado 0 (0 = SUCCESSFUL)
+[INFO] [1793052299.889342081] [robot_v3_demo_motion]: gripper_controller: 2 puntos, 3.0 s
+[INFO] [1793052302.942353775] [robot_v3_demo_motion]: gripper_controller: resultado 0 (0 = SUCCESSFUL)
+[INFO] [1793052302.945948997] [robot_v3_demo_motion]: arm_controller: 3 puntos, 10.0 s
+[INFO] [1793052312.998262893] [robot_v3_demo_motion]: arm_controller: resultado 0 (0 = SUCCESSFUL)
+rc=0

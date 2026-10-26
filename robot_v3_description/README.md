@@ -203,9 +203,15 @@ Ignition Gazebo 6.16). No se tocó la NUC, la Jetson ni el robot. Evidencias: [`
 | Prueba | Resultado |
 |---|---|
 | `colcon build` + `colcon test` | OK (2 tests, 0 fallas) |
-| `tools/validate_v3.py`: 59 comprobaciones estáticas (xacro en 24 combinaciones, `check_urdf`, árbol, límites, cinemática, D435, recursos, inercias, ros2_control, v2 sin cambios) | 59/59 OK |
-| `sim_mock.launch.py` + `tools/runtime_checks.py` (TF real de `robot_state_publisher`, controladores reales) | ver `docs/VALIDACION.md` |
-| `gazebo.launch.py` (Fortress, headless) + `runtime_checks.py --sensors` | ver `docs/VALIDACION.md` |
+| `tools/validate_v3.py`: xacro en 24 combinaciones, `check_urdf`, árbol, límites, cinemática (brazo contra MDH de `piper_sdk`: 0.088 mm), D435, recursos, inercias, ros2_control, v2 sin cambios | 58/58 OK |
+| `sim_mock.launch.py` + `runtime_checks.py` (TF real, controladores reales), también con `head_mount:=lift` | 22/22 y 22/22 OK |
+| `demo_motion.py` y guardia de dominio (aborta con `ROS_DOMAIN_ID=10`) | OK |
+| `real_state.launch.py` con `/joint_states` en el formato de la Jetson (`check_real_state.py`) | 9/9 OK |
+| `gazebo.launch.py` (Fortress, headless) + `runtime_checks.py --sensors` (física, RGB-D, nube, LiDAR) | 28/28 OK |
+| `tools/nuc_validate.sh` completo (sin `--gazebo`) | 9/9 etapas OK |
+
+Durante la validación aparecieron y se corrigieron errores reales (remapeo en `real_state`, `set -u` en el script de
+la NUC) y un comportamiento de Gazebo con el elevador (§6). El detalle está en `docs/VALIDACION.md`.
 
 ### Para repetir en la NUC
 
@@ -227,7 +233,8 @@ Comprobación visual recomendada: `display.launch.py`, mover cada slider y verif
 5. **Cámara de muñeca:** con la pose de base_athome, `arm_camera_link` mira hacia +X de `gripper_base` (de costado), no hacia el eje de la pinza. Se conservó por compatibilidad, pero conviene verificarlo.
 6. **Escala del escaneo v2** (±3 %): medir con cinta una cota, por ejemplo la placa superior del perfil (1.321 m).
 7. **Masas reales** (todas las de `sim_provisional.yaml` son marcadores).
-8. Diferencias del README de base_athome: indica ROS 2 Jazzy en la NUC; este paquete apunta a Humble (CONTEXTO_SOLVERBOT.md).
+8. **Visión del cabezal:** con la geometría medida, la caja con el monitor tapa la vista de la cámara si baja más de unos 26° (ver la imagen simulada en `docs/VALIDACION.md`). Verificar en el robot.
+9. Diferencias del README de base_athome: indica ROS 2 Jazzy en la NUC; este paquete apunta a Humble (CONTEXTO_SOLVERBOT.md).
 
 ## 10. Estructura
 
@@ -238,7 +245,8 @@ urdf/     robot_v3.urdf.xacro · common · base · torso · piper · head · rea
 launch/   display · real_state · sim_mock · gazebo (+ robot_v3_common.py)
 meshes/   piper/collision (oficiales) · piper/visual (simplificadas)
 scripts/  demo_motion.py
-tools/    validate_v3.py · runtime_checks.py · nuc_validate.sh · fit_arm_mount.py · simplify_piper_meshes.py
+tools/    validate_v3.py · runtime_checks.py · check_real_state.py · nuc_validate.sh · fit_arm_mount.py · simplify_piper_meshes.py
+docs/     VALIDACION.md · evidencias/ (informes, capturas de RViz y Gazebo, árbol TF)
 test/     prueba de colcon test
 worlds/   robot_v3_test.sdf (mesa y objetos frente al robot)
 ```
