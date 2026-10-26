@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot_v2_description</name>
+  <version>0.2.0</version>
+  <description>Descripción URDF/Xacro del robot @Home reconstruida desde nuevo.glb, el repositorio base_athome (hoverboard_base, urg_node) y fotografías. ROS 2 Humble.</description>
+  <maintainer email="augusto.calfani@estudiantes.utec.edu.uy">Augusto Calfani</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

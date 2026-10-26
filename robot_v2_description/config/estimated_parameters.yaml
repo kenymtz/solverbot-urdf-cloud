@@ -1,0 +1,28 @@
+# =====================================================================================
+#  PARÁMETROS ESTIMADOS — NO VERIFICADOS EN EL ROBOT REAL
+#  Solo para visualización con estados simulados o simulación PRELIMINAR.
+#  No usar para control, planificación de movimientos ni seguridad.
+#  Se cargan únicamente desde urdf/estimated.xacro.
+# =====================================================================================
+lift_joint:
+  # Envolvente geométrica medida en el escaneo, NO la carrera real del elevador:
+  #  upper: distancia entre el borde superior de la caja (1.253 m) y la placa superior del perfil (1.321 m)
+  #  lower: distancia hasta que el extremo inferior del brazo (≈0.36 m) toca la rueda izquierda (≈0.17 m)
+  lower: -0.19
+  upper: 0.068
+  effort: 0.0      # desconocido
+  velocity: 0.0    # desconocido
+inertials:
+  enabled_note: "Masas de marcador para simulación preliminar. Reemplazar por pesaje real."
+  # Inercias calculadas como sólidos homogéneos sobre la geometría de colisión de cada link.
+  masses_kg:
+    base_link: 12.0          # valor del URDF del repo (hoverboard_base), no verificado para este robot
+    left_wheel: 1.0          # MARCADOR
+    right_wheel: 1.0         # MARCADOR
+    rear_left_caster: 0.2    # MARCADOR
+    rear_right_caster: 0.2   # MARCADOR
+    column_link: 3.0         # MARCADOR
+    upper_box_link: 2.0      # MARCADOR
+    arm_link: 2.0            # MARCADOR
+    camera_mount_link: 0.5   # MARCADOR
+    laser_mount: 0.13        # MARCADOR (orden de magnitud de un Hokuyo UST)

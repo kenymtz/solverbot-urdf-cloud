@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!-- Perfil vertical, caja superior (monitor + bandeja + carro) sobre el elevador y brazo -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:scan_link name="column_link" mesh="column"/>
+  <joint name="column_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="column_link"/>
+    <xacro:rel_origin child="column_link" parent="base_link"/>
+  </joint>
+
+  <!-- Elevador: grado de libertad real (husillo del perfil). Posición 0 = posición escaneada.
+       Límites = envolvente geométrica ESTIMADA (config/estimated_parameters.yaml), no la carrera real. -->
+  <xacro:scan_link name="upper_box_link" mesh="upper_box"/>
+  <joint name="lift_joint" type="prismatic">
+    <parent link="column_link"/>
+    <child link="upper_box_link"/>
+    <xacro:rel_origin child="upper_box_link" parent="column_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${EST['lift_joint']['lower']}" upper="${EST['lift_joint']['upper']}"
+           effort="${EST['lift_joint']['effort']}" velocity="${EST['lift_joint']['velocity']}"/>
+  </joint>
+
+  <!-- Brazo: montado en el costado izquierdo de la caja superior (sube con el elevador).
+       Sus articulaciones no están identificadas: un único link rígido en la pose escaneada. -->
+  <xacro:scan_link name="arm_link" mesh="arm"/>
+  <joint name="arm_mount_joint" type="fixed">
+    <parent link="upper_box_link"/>
+    <child link="arm_link"/>
+    <xacro:rel_origin child="arm_link" parent="upper_box_link"/>
+  </joint>
+
+</robot>

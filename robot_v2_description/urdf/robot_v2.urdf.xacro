@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+  Robot @Home (base hoverboard + perfil elevador + monitor + brazo + cámara + Hokuyo).
+  Marco REP-103: X adelante, Y izquierda, Z arriba. base_footprint = base_link = centro del marco superior
+  del chasis proyectado al piso (misma convención que hoverboard_base/robot.urdf.xacro del repo base_athome).
+  Medidas: config/robot_geometry.yaml (generado; cada valor documentado con su procedencia).
+  Estimaciones NO verificadas: config/estimated_parameters.yaml (solo límites del elevador e inercias opcionales).
+-->
+<robot name="robot_v2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="use_estimated_inertials" default="false"/>
+  <xacro:arg name="with_camera_optical_frame" default="true"/>
+  <xacro:property name="use_est" value="$(arg use_estimated_inertials)"/>
+  <xacro:property name="G" value="${xacro.load_yaml('$(find robot_v2_description)/config/robot_geometry.yaml')}"/>
+
+  <xacro:include filename="$(find robot_v2_description)/urdf/estimated.xacro"/>
+  <xacro:include filename="$(find robot_v2_description)/urdf/macros.xacro"/>
+  <xacro:include filename="$(find robot_v2_description)/urdf/base.xacro"/>
+  <xacro:include filename="$(find robot_v2_description)/urdf/upper_body.xacro"/>
+  <xacro:include filename="$(find robot_v2_description)/urdf/sensors.xacro"/>
+
+</robot>

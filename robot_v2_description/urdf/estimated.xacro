@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- Inercias ESTIMADAS (config/estimated_parameters.yaml). Solo se emiten con use_estimated_inertials:=true -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="EST" value="${xacro.load_yaml('$(find robot_v2_description)/config/estimated_parameters.yaml')}"/>
+  <xacro:macro name="estimated_inertial" params="link">
+    <xacro:if value="${use_est}">
+      <xacro:property name="m" value="${EST['inertials']['masses_kg'][link]}"/>
+      <xacro:property name="c" value="${G['collision'][link]}"/>
+      <xacro:property name="s" value="${c['size']}"/>
+      <inertial>
+        <origin xyz="${c['center'][0]} ${c['center'][1]} ${c['center'][2]}" rpy="0 0 0"/>
+        <mass value="${m}"/>
+        <xacro:if value="${c.get('shape', 'box') == 'cylinder_y'}">
+          <!-- cilindro sólido con eje Y: radio s[0]/2, ancho s[1] -->
+          <inertia ixx="${m*(3*(s[0]/2)**2 + s[1]**2)/12}" ixy="0" ixz="0" iyy="${m*(s[0]/2)**2/2}" iyz="0" izz="${m*(3*(s[0]/2)**2 + s[1]**2)/12}"/>
+        </xacro:if>
+        <xacro:unless value="${c.get('shape', 'box') == 'cylinder_y'}">
+          <inertia ixx="${m*(s[1]**2+s[2]**2)/12}" ixy="0" ixz="0" iyy="${m*(s[0]**2+s[2]**2)/12}" iyz="0" izz="${m*(s[0]**2+s[1]**2)/12}"/>
+        </xacro:unless>
+      </inertial>
+    </xacro:if>
+  </xacro:macro>
+</robot>

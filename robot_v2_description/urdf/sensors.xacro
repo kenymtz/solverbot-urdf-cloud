@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!-- Sensores: LiDAR Hokuyo UST (frame "laser", como en el repo) y cámara de profundidad (camera_link) -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="hokuyo_dark"><color rgba="0.12 0.12 0.12 1.0"/></material>
+
+  <!-- laser_mount: base del soporte (malla CAD hokuyo_ust10.stl de urg_node, BSD) apoyada en la placa medida -->
+  <link name="laser_mount">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="${pkg}/meshes/sensors/hokuyo_ust10.stl"/></geometry>
+      <material name="hokuyo_dark"/>
+    </visual>
+    <xacro:box_collision key="laser_mount"/>
+    <xacro:estimated_inertial link="laser_mount"/>
+  </link>
+  <joint name="laser_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_mount"/>
+    <xacro:rel_origin child="laser_mount" parent="base_link"/>
+  </joint>
+  <!-- laser: punto focal del plano de escaneo, 0.0474 m sobre la base del soporte (urg_node/hokuyo_ust10.urdf.xacro) -->
+  <link name="laser"/>
+  <joint name="laser_joint" type="fixed">
+    <parent link="laser_mount"/>
+    <child link="laser"/>
+    <origin xyz="0 0 ${G['sensors']['laser_focal_height']}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Soporte de la cámara (torreta + cámara + micrófono escaneados) sobre la placa superior del perfil -->
+  <xacro:scan_link name="camera_mount_link" mesh="camera_mount"/>
+  <joint name="camera_mount_joint" type="fixed">
+    <parent link="column_link"/>
+    <child link="camera_mount_link"/>
+    <xacro:rel_origin child="camera_mount_link" parent="column_link"/>
+  </joint>
+
+  <!-- camera_link: centro de la carcasa medida; X = dirección de observación (normal de la cara frontal) -->
+  <link name="camera_link"/>
+  <joint name="camera_joint" type="fixed">
+    <parent link="camera_mount_link"/>
+    <child link="camera_link"/>
+    <xacro:property name="c" value="${G['frames']['camera_link']}"/>
+    <xacro:property name="p" value="${G['frames']['camera_mount_link']}"/>
+    <origin xyz="${c[0]-p[0]} ${c[1]-p[1]} ${c[2]-p[2]}" rpy="0 ${G['sensors']['camera_pitch_rad']} ${G['sensors']['camera_yaw_rad']}"/>
+  </joint>
+
+  <!-- Frame óptico (REP-103: Z adelante, X derecha, Y abajo). Desactivar si un driver publica los suyos con este nombre -->
+  <xacro:if value="$(arg with_camera_optical_frame)">
+    <link name="camera_optical_frame"/>
+    <joint name="camera_optical_joint" type="fixed">
+      <parent link="camera_link"/>
+      <child link="camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+  </xacro:if>
+
+</robot>
