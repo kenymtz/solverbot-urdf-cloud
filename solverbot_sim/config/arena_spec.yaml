@@ -51,7 +51,7 @@ furniture:
   - {id: 7,  name: sofa,             room: living_room, kind: sofa,         xy: [1.80, 0.48], size: [1.68, 0.80, 0.85], placeable: true}   # respaldo hacia -Y
   - {id: 8,  name: coffee_table,     room: living_room, kind: table,        xy: [3.15, 0.40], size: [0.45, 0.45, 0.45], placeable: true}
   - {id: 9,  name: cabinet,          room: kitchen,     kind: cabinet_open, xy: [3.89, 3.48], size: [0.30, 0.80, 1.20], placeable: true}   # altura supuesto
-  - {id: 10, name: refrigerator,     room: kitchen,     kind: fridge,       xy: [7.02, 3.48], size: [0.60, 0.70, 1.80]}
+  - {id: 10, name: refrigerator,     room: kitchen,     kind: fridge,       xy: [7.10, 3.48], size: [0.44, 0.70, 1.80]}   # profundidad medida en el plano 10 (x 6.80-7.24)
   - {id: 15, name: kitchen_trash_bin, room: kitchen,    kind: bin,          xy: [6.96, 2.88], size: [0.30, 0.30, 0.45]}
   - {id: 16, name: dinner_table,     room: kitchen,     kind: round_table,  xy: [5.56, 2.18], size: [1.10, 1.10, 0.74], placeable: true}
   - {id: 11, name: counter,          room: kitchen,     kind: counter,      xy: [4.20, 0.38], size: [0.72, 0.60, 0.90], placeable: true}

@@ -172,6 +172,24 @@ def furniture_parts(kind, s):
     raise ValueError(kind)
 
 
+# Sillas de la mesa del comedor. El plano 10 muestra sillas alrededor; se dejan 2 (este y norte): con una silla al
+# oeste el robot (radio de giro 0.43 m) no puede girar tras cruzar la puerta sala-cocina (alineada con la mesa) y el
+# lado sur queda para la demo de Pick and Place. Decisión de simulación, no dato del plano.
+CHAIR_ANGLES = (0.0, math.pi / 2)
+
+
+def table_chairs(fu):
+    """(nombre, xy, yaw, partes) de cada silla de una mesa redonda (fuente única para el SDF y el mapa 2D)."""
+    out = []
+    for k, ang in enumerate(CHAIR_ANGLES):
+        cx, cy = fu['xy'][0] + 0.75 * math.cos(ang), fu['xy'][1] + 0.75 * math.sin(ang)
+        out.append((f'{fu["name"]}_chair{k}', [cx, cy], ang + math.pi, [
+            Part('seat', 'box', [0.42, 0.42, 0.04], [0, 0, 0.45], DARK),
+            Part('back', 'box', [0.04, 0.42, 0.45], [-0.19, 0, 0.70], DARK),
+            Part('legs', 'box', [0.36, 0.36, 0.43], [0, 0, 0.215], DARK)]))
+    return out
+
+
 # ---------------------------------------------------------------------------------------------- mundo
 def world_header(name, step):
     return f"""<?xml version="1.0"?>
@@ -249,13 +267,8 @@ def home_arena(spec):
         # superficie de apoyo: tapa del mueble, o el segundo estante en estanterías/armarios abiertos
         top[fu['name']] = (fu['xy'], 0.03 + (z - 0.04) / 3 if fu['kind'] in ('shelf', 'cabinet_open') else z)
         if fu['kind'] == 'round_table':
-            # 3 sillas (este, norte, oeste): el lado sur queda libre para el robot (demo de Pick and Place)
-            for k, ang in enumerate((0.0, math.pi / 2, math.pi)):
-                cx, cy = fu['xy'][0] + 0.75 * math.cos(ang), fu['xy'][1] + 0.75 * math.sin(ang)
-                out.append(static_model(f'{fu["name"]}_chair{k}', [cx, cy], ang + math.pi, [
-                    Part('seat', 'box', [0.42, 0.42, 0.04], [0, 0, 0.45], DARK),
-                    Part('back', 'box', [0.04, 0.42, 0.45], [-0.19, 0, 0.70], DARK),
-                    Part('legs', 'box', [0.36, 0.36, 0.43], [0, 0, 0.215], DARK)]))
+            for name, xy, yaw, parts in table_chairs(fu):
+                out.append(static_model(name, xy, yaw, parts))
     for o in spec['objects']:
         (fx, fy), h = top[o['place_on']]
         z = h + o['size'][2] / 2 + 0.005
