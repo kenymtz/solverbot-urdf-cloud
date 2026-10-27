@@ -1,0 +1,8 @@
+== display.launch.py (sin simulador ni driver)
+Unknown topic '/camera/camera/color/image_raw'
+0
+== gazebo.launch.py
+Type: sensor_msgs/msg/Image
+Publisher count: 1
+Subscription count: 0
+ok rgb8 camera_color_optical_frame 32FC1

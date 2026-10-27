@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solverbot_rl"
+version = "0.1.0"
+description = "Entorno Gymnasium de Pick and Place para SolverBot v3 (Gazebo Harmonic / backend cinemático). Solo simulación."
+requires-python = ">=3.10"
+dependencies = ["numpy", "pyyaml", "scipy", "gymnasium>=0.29", "stable-baselines3>=2.3"]
+
+[tool.setuptools]
+packages = ["solverbot_rl", "solverbot_rl.backends", "solverbot_rl.envs"]
+
+[tool.setuptools.package-data]
+solverbot_rl = ["data/*.urdf"]

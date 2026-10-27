@@ -1,0 +1,6 @@
+[INFO] [1793060636.442367253] [_ros2cli_286]: waiting for service /controller_manager/list_controllers to become available...
+gripper_controller      joint_trajectory_controller/JointTrajectoryController  active
+joint_state_broadcaster joint_state_broadcaster/JointStateBroadcaster          active
+lift_controller         joint_trajectory_controller/JointTrajectoryController  active
+head_controller         joint_trajectory_controller/JointTrajectoryController  active
+arm_controller          joint_trajectory_controller/JointTrajectoryController  active

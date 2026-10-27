@@ -1,0 +1,37 @@
+# =====================================================================================
+#  Cámaras y LiDAR SIMULADOS para Gazebo Harmonic (ros2_control:=gz). SOLO SIMULACIÓN.
+#  Perfil "demo": visualización. Perfil "train": entrenamiento headless (resolución y frecuencia bajas).
+#  Ninguno de estos valores es una calibración de un dispositivo real.
+# =====================================================================================
+
+# RealSense D435 del cabezal: FOV de color NOMINAL (hoja de datos de Intel, ver sim_provisional.yaml).
+# Profundidad alineada al color (un único punto de vista simulado).
+head:
+  horizontal_fov: 1.2043
+  near: 0.105
+  far: 10.0
+
+# Cámara próxima a la pinza: módulo VIRTUAL sobre arm_camera_link (el bloque de la Orbbec DaBai DC1 de
+# base_athome, encima de gripper_base). El modelo físico/óptica de esa cámara NO está confirmado:
+# FOV y orientación son elecciones de diseño para ver la zona de agarre, NO una calibración.
+wrist:
+  horizontal_fov: 1.40          # ~80°, elegido para que entren ambos dedos y el objeto a 5-15 cm
+  near: 0.02
+  far: 2.0
+  # Punto (en gripper_base) al que apunta el eje óptico: entre las puntas de los dedos.
+  # La cámara está en gripper_base + (0.025, 0, 0.080) (geometry_v3.yaml, wrist_camera.origin_in_gripper).
+  aim_point_in_gripper: [0.0, 0.0, 0.19]
+
+profiles:
+  demo:
+    head:  {width: 640, height: 480, update_rate: 15}
+    wrist: {width: 640, height: 480, update_rate: 15}
+    lidar: {update_rate: 40, samples: 1081}
+  train:
+    head:  {width: 160, height: 120, update_rate: 10}
+    wrist: {width: 96,  height: 96,  update_rate: 10}
+    lidar: {update_rate: 10, samples: 271}
+
+# Fricción de contacto de los dedos (Gazebo/DART). PROVISIONAL: almohadillas de goma supuestas.
+fingers:
+  mu: 1.5

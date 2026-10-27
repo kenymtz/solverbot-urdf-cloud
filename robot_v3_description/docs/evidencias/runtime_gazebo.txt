@@ -1,0 +1,34 @@
+[OK] /robot_description recibido
+[OK] /joint_states con las 13 articulaciones móviles (joint8 puede llegar como joint8_mimic en Gazebo) — ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7', 'joint8', 'joint8_mimic', 'left_wheel_joint', 'pan_joint', 'right_wheel_joint', 'tilt_joint', 'torso_lift_joint']
+[OK] estado inicial: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.000 mm (link8)
+[OK] lift_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.05]
+[OK] elevador en +0.05 m: caja se mueve +0.0503 m solo en Z; columna quieta; cámara quieta — Δcámara=[-0.  0.  0.]
+[OK] elevador +0.05 m: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.000 mm (link8)
+[OK] lift_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[-0.15]
+[OK] elevador en -0.15 m: caja se mueve -0.1497 m solo en Z; columna quieta; cámara quieta — Δcámara=[ 0.  0. -0.]
+[OK] elevador -0.15 m: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.001 mm (link8)
+[OK] lift_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[-0.0]
+[OK] elevador en +0.00 m: caja se mueve +0.0003 m solo en Z; columna quieta; cámara quieta — Δcámara=[0. 0. 0.]
+[OK] elevador +0.00 m: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.002 mm (link8)
+[OK] arm_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[1.5059, 3.0353, -2.8623, 1.169, 0.012, -2.5553]
+[OK] brazo en DEFAULT_HOME: tcp_link en TF = cinemática directa — 0.001 mm
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0175]
+[OK] pinza a mitad (solo joint7 = 17.5 mm): joint8 = -joint7 y dedos separados 35 mm — joint8 = -17.50 mm, separación 35.00 mm
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.035]
+[OK] pinza abierta (solo joint7 = 35.0 mm): joint8 = -joint7 y dedos separados 70 mm — joint8 = -35.00 mm, separación 69.99 mm
+[OK] brazo en DEFAULT_HOME, pinza abierta: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.001 mm (link7)
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0]
+[OK] pinza cerrada (solo joint7 = 0.0 mm): joint8 = -joint7 y dedos separados 0 mm — joint8 = -0.00 mm, separación 0.01 mm
+[OK] arm_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.0, -0.0, 0.0, 0.0, -0.0]
+[OK] head_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.3]
+[OK] tilt +0.3 rad: el eje óptico (z) apunta hacia adelante y abajo — z óptico = [ 0.955  0.    -0.295]
+[OK] camera_color_frame -> camera_color_optical_frame con convención REP-103
+[OK] head_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.0]
+[OK] sensor simulado color: recibido con frame_id=camera_color_optical_frame — frame_id=camera_color_optical_frame
+[OK] sensor simulado depth: recibido con frame_id=camera_color_optical_frame — frame_id=camera_color_optical_frame
+[OK] sensor simulado points: recibido con frame_id=camera_color_optical_frame — frame_id=camera_color_optical_frame
+[OK] sensor simulado scan: recibido con frame_id=laser — frame_id=laser
+[OK] profundidad simulada: >20 % de píxeles con distancia finita, mediana entre 0.3 y 10 m — encoding=32FC1, 36 % válidos, mediana 4.11 m
+[OK] LiDAR simulado: 1081 haces y alguna lectura dentro de rango — 1081 haces, mínimo 0.61 m
+
+32/32 chequeos en ejecución OK

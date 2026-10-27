@@ -1,0 +1,39 @@
+# Puente Ignition Gazebo Fortress <-> ROS 2 Humble (ros_gz_bridge parameter_bridge, config_file).
+# Nombres ROS iguales a los del driver real de la D435 en la Jetson (namespace camera, camera_name camera)
+# para probar el software de base_athome contra la simulación.
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: ignition.msgs.Clock
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera/color/image_raw
+  gz_topic_name: /camera/rgbd/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: ignition.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera/color/camera_info
+  gz_topic_name: /camera/rgbd/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: ignition.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# La cámara RGB-D simulada tiene un único punto de vista: su profundidad ya está alineada con el color.
+- ros_topic_name: /camera/camera/aligned_depth_to_color/image_raw
+  gz_topic_name: /camera/rgbd/depth_image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: ignition.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera/depth/color/points
+  gz_topic_name: /camera/rgbd/points
+  ros_type_name: sensor_msgs/msg/PointCloud2
+  gz_type_name: ignition.msgs.PointCloudPacked
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /scan
+  gz_topic_name: /scan
+  ros_type_name: sensor_msgs/msg/LaserScan
+  gz_type_name: ignition.msgs.LaserScan
+  direction: GZ_TO_ROS

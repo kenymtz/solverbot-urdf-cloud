@@ -1,0 +1,19 @@
+{
+ "episodes": 50,
+ "success_rate": 0.0,
+ "success_ci95": 8.765386471799177e-06,
+ "mean_return": -4.622887825877555,
+ "std_return": 1.4885580573494368,
+ "mean_length": 63.48,
+ "grasp_rate": 0.0,
+ "lift_rate": 0.0,
+ "stalled_rate": 0.98,
+ "collision_rate": 0.0,
+ "drop_rate": 0.0,
+ "policy": "random",
+ "backend": "kinematic",
+ "level": 0,
+ "level_name": "reach",
+ "object_source": "perception",
+ "physical": false
+}

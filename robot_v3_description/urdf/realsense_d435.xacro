@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<!--
+  Intel RealSense D435: misma estructura de frames que realsense2_description/urdf/_d435.urdf.xacro
+  (IntelRealSense/realsense-ros, ros2-master @ 7a87097, Apache-2.0) con geometría de caja (sin malla),
+  para no depender de realsense2_description (no instalado en la NUC).
+
+    tilt_link
+    └─ camera_joint ─ camera_bottom_screw_frame       rosca inferior de la carcasa
+       └─ camera_link_joint ─ camera_link             origen de profundidad (IR izquierda), X adelante
+          ├─ camera_depth_frame  ─ camera_depth_optical_frame       ┐
+          ├─ camera_infra1_frame ─ camera_infra1_optical_frame      │ solo si nominal_frames
+          ├─ camera_infra2_frame ─ camera_infra2_optical_frame      │ (extrínsecos NOMINALES)
+          └─ camera_color_frame  ─ camera_color_optical_frame       ┘
+
+  Con el driver real (realsense2_camera, camera_name:=camera, publish_tf:=true) el driver publica
+  camera_link -> *_frame / *_optical_frame con los extrínsecos CALIBRADOS de fábrica: usar camera_frames:=false
+  para que no haya dos publicadores de las mismas transformadas. camera_link existe siempre en el URDF.
+
+  Ubicación: el centro de la carcasa queda a CAMERA_LEVER_ARM del eje de tilt (base_athome: 0.035, 0, 0.015).
+  En la caja del D435, el centro está 17.5 mm a la derecha (-Y) de camera_link y la rosca inferior está
+  (mesh_x_offset, 0, alto/2) detrás/debajo de camera_link (valores de Intel).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="sensor_d435" params="parent name nominal_frames">
+    <xacro:property name="D" value="${G['realsense_d435']}"/>
+    <xacro:property name="lever" value="${G['head']['camera_lever_arm']}"/>
+    <xacro:property name="mesh_x" value="${D['mount_from_center_offset'] - D['glass_to_front'] - D['zero_depth_to_glass']}"/>
+    <xacro:property name="pz" value="${D['cam_height']/2}"/>
+
+    <!-- Rosca inferior = centro de la carcasa (= lever) - (mesh_x, 0, alto/2) -->
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}_bottom_screw_frame"/>
+      <origin xyz="${lever[0] - mesh_x} ${lever[1]} ${lever[2] - pz}" rpy="0 0 0"/>
+    </joint>
+    <link name="${name}_bottom_screw_frame"/>
+
+    <joint name="${name}_link_joint" type="fixed">
+      <origin xyz="${mesh_x} ${D['depth_py']} ${pz}" rpy="0 0 0"/>
+      <parent link="${name}_bottom_screw_frame"/>
+      <child link="${name}_link"/>
+    </joint>
+    <link name="${name}_link">
+      <xacro:visual_parts group="d435"/>
+      <collision>
+        <origin xyz="0 ${-D['depth_py']} 0" rpy="0 0 0"/>
+        <geometry><box size="${D['cam_depth']} ${D['cam_width']} ${D['cam_height']}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['camera_link']}" size="${[D['cam_depth'], D['cam_width'], D['cam_height']]}"
+                          xyz="0 ${-D['depth_py']} 0"/>
+    </link>
+
+    <xacro:if value="${nominal_frames}">
+      <xacro:macro name="d435_stream" params="stream y">
+        <joint name="${name}_${stream}_joint" type="fixed">
+          <origin xyz="0 ${y} 0" rpy="0 0 0"/>
+          <parent link="${name}_link"/>
+          <child link="${name}_${stream}_frame"/>
+        </joint>
+        <link name="${name}_${stream}_frame"/>
+        <joint name="${name}_${stream}_optical_joint" type="fixed">
+          <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+          <parent link="${name}_${stream}_frame"/>
+          <child link="${name}_${stream}_optical_frame"/>
+        </joint>
+        <link name="${name}_${stream}_optical_frame"/>
+      </xacro:macro>
+      <xacro:d435_stream stream="depth" y="0"/>
+      <xacro:d435_stream stream="infra1" y="${D['depth_to_infra1']}"/>
+      <xacro:d435_stream stream="infra2" y="${D['depth_to_infra2']}"/>
+      <xacro:d435_stream stream="color" y="${D['depth_to_color']}"/>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

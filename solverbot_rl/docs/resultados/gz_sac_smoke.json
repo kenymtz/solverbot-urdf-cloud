@@ -1,0 +1,19 @@
+{
+ "episodes": 3,
+ "success_rate": 0.0,
+ "success_ci95": 3.5784540423670856e-05,
+ "mean_return": -1.5910393357713684,
+ "std_return": 0.005515228451083161,
+ "mean_length": 51.333333333333336,
+ "grasp_rate": 0.0,
+ "lift_rate": 0.0,
+ "stalled_rate": 1.0,
+ "collision_rate": 0.0,
+ "drop_rate": 0.0,
+ "policy": "runs/sac_gz_smoke/model_final.zip",
+ "backend": "gazebo",
+ "level": 0,
+ "level_name": "reach",
+ "object_source": "perception",
+ "physical": true
+}

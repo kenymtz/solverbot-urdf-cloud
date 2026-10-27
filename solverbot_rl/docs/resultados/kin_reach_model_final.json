@@ -1,0 +1,19 @@
+{
+ "episodes": 50,
+ "success_rate": 1.0,
+ "success_ci95": 8.765386471799177e-06,
+ "mean_return": 10.029308295430893,
+ "std_return": 0.0014060310167044892,
+ "mean_length": 14.0,
+ "grasp_rate": 0.0,
+ "lift_rate": 0.0,
+ "stalled_rate": 0.0,
+ "collision_rate": 0.0,
+ "drop_rate": 0.0,
+ "policy": "runs/ppo_kin_reach/model_final.zip",
+ "backend": "kinematic",
+ "level": 0,
+ "level_name": "reach",
+ "object_source": "perception",
+ "physical": false
+}

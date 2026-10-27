@@ -1,0 +1,88 @@
+# =====================================================================================
+#  Tarea mínima de Pick and Place para RL. Fuente única para el mundo de entrenamiento
+#  (tools/make_worlds.py) y para el entorno Gymnasium (solverbot_rl).
+#  Frame: el robot se crea en el origen del mundo mirando a +X. El Piper está montado en el costado
+#  IZQUIERDO de la base (eje del brazo hacia +Y), por eso la mesa queda a la izquierda del robot.
+#  Dimensiones: mesa de 0.74 m = altura medida en el escaneo v2; el resto son supuestos de diseño.
+# =====================================================================================
+
+world:
+  name: pick_place_training
+  physics_step: 0.001
+  table: {xy: [0.15, 0.62], size: [0.80, 0.50, 0.74]}          # borde cercano en y = 0.37
+  object: {name: pick_object, shape: box, size: [0.04, 0.04, 0.04], mass: 0.06, rgb: [0.85, 0.10, 0.10],
+           xy: [0.22, 0.56], mu: 1.2}                           # 4 cm < apertura (7 cm); alto <= 4 cm: el bloque de la cámara de muñeca está 4 cm detrás de las puntas
+  target_zone: {xy: [0.33, 0.45], size: [0.12, 0.12]}
+
+robot:
+  spawn_xyz: [0.0, 0.0, 0.01]
+  arm_joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+  gripper_joint: joint7
+  gripper_open: 0.035
+  gripper_closed: 0.0
+  # Poses fijas durante la tarea (no las controla la política en esta fase)
+  # Elevador en su altura normal: con lift <= -0.10 la pinza ya no puede bajar vertical sobre la mesa (joint5 ±70°)
+  lift: 0.0
+  head: {pan_joint: 1.20, tilt_joint: 0.78}       # tilt positivo = mirar hacia abajo (FK + Gazebo)
+  # Pose inicial del brazo (rad): TCP ~0.24 m sobre la mesa con la cámara de muñeca mirando la zona de trabajo
+  # (búsqueda por FK). Aproximación de agarre factible: 0-20° respecto de la vertical en esta zona.
+  home: [1.753, 0.046, -0.671, -0.626, 0.918, 1.128]
+  tcp_link: tcp_link
+  finger_links: [link7, link8]
+
+control:
+  dt: 0.1                      # s de tiempo simulado por step del entorno (10 Hz)
+  arm_delta_max: 0.05          # rad por step por articulación (acción = ±1)
+  max_episode_steps: 150
+
+observation:
+  # object_source: perception  -> posición del objeto estimada por la cámara de cabeza (segmentación por color +
+  #                               profundidad) en Gazebo; en el backend cinemático, detector simulado con ruido.
+  #                (Gazebo: cámara de muñeca + plano de la mesa; la D435 de cabeza no ve la mesa de costado)
+  #                privileged  -> posición REAL del simulador. Solo para depuración / maestro. Una política
+  #                               entrenada así NO se declara "basada en visión".
+  #                none        -> sin información del objeto (solo propiocepción + cámaras).
+  object_source: perception
+  perception_noise_m: 0.01     # ruido del detector simulado (backend cinemático)
+  perception_dropout: 0.05     # probabilidad de no detectar en un paso
+  images: []                   # [] | [wrist] | [wrist, head]  (solo backend Gazebo)
+  image_size: [64, 64]
+
+task:
+  table_height: 0.74
+  pregrasp_height: 0.08        # sobre el centro del objeto
+  grasp_radius: 0.03           # TCP–objeto para considerar el objeto entre los dedos
+  lift_height: 0.06            # elevación sobre la mesa que cuenta como levantado
+  place_tolerance: 0.05        # radio en la zona objetivo
+  release_clearance: 0.05      # TCP debe alejarse del objeto tras soltar
+  drop_height_margin: 0.05     # objeto por debajo de la mesa - margen -> caído
+  no_progress_steps: 40        # pasos sin mejorar el potencial -> truncado
+
+# Curriculum: niveles de dificultad crecientes. Se avanza cuando la TASA DE ÉXITO real (no la recompensa)
+# en las últimas `window` evaluaciones supera `promote_at`.
+curriculum:
+  window: 50
+  promote_at: 0.8
+  levels:
+    - {name: reach,  goal: reach,  object_xy_range: 0.00, start: home}
+    - {name: reach_rand, goal: reach, object_xy_range: 0.05, start: home}
+    - {name: grasp,  goal: grasp,  object_xy_range: 0.03, start: pregrasp}
+    - {name: lift,   goal: lift,   object_xy_range: 0.05, start: pregrasp}
+    - {name: pick,   goal: lift,   object_xy_range: 0.05, start: home}
+    - {name: place,  goal: place,  object_xy_range: 0.05, start: home}
+
+reward:
+  gamma: 0.99                  # shaping basado en potencial: F = gamma*Phi(s') - Phi(s) (no altera la política óptima)
+  w_reach: 2.0                 # Phi: -w * distancia TCP-(pre)agarre
+  w_align: 0.5                 # Phi: +w * alineación vertical de la pinza (z del TCP hacia abajo)
+  w_lift: 2.0                  # Phi: +w * min(elevación, lift_height)/lift_height mientras está agarrado
+  w_transport: 2.0             # Phi: -w * distancia objeto-zona mientras está agarrado
+  bonus_grasp: 2.0             # una sola vez por episodio
+  bonus_lift: 3.0              # una sola vez por episodio
+  bonus_success: 10.0
+  pen_time: 0.01               # por paso
+  pen_action_rate: 0.05        # * ||a_t - a_{t-1}||^2 / dim
+  pen_limit: 0.1               # por articulación saturada en su límite
+  pen_collision: 2.0           # brazo por debajo del plano de la mesa (proxy geométrico) -> termina
+  pen_drop: 5.0                # objeto caído de la mesa -> termina
+  pen_no_progress: 1.0         # al truncar por falta de progreso

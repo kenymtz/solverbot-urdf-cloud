@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+  SolverBot / Base@Home v3: base diferencial + elevador prismático + AgileX Piper 6-DOF + cabezal pan-tilt
+  con RealSense D435 + Hokuyo UST-05LX. ROS 2 Humble.
+
+  Marco REP-103 (X adelante, Y izquierda, Z arriba). base_footprint = base_link en el piso.
+  Geometría: config/geometry_v3.yaml (medida/derivada, con procedencia).
+  Valores provisionales SOLO de simulación: config/sim_provisional.yaml.
+  Límites del brazo: config/piper_limits.yaml (perfil elegido con arm_limits).
+
+  Argumentos:
+    ros2_control  none | mock | gazebo | gz   none: solo descripción (RViz con joint_states externos)
+                                         mock: mock_components/GenericSystem (sin hardware ni simulador)
+                                         gazebo: ign_ros2_control + sensores para Ignition Gazebo Fortress
+                                         gz: gz_ros2_control + sensores para Gazebo Harmonic (ROS 2 Jazzy)
+    head_mount    column | lift          dónde se apoya el cabezal (escaneo v2: sobre la columna fija)
+    arm_limits    official | base_athome límites del Piper (cinemática siempre oficial)
+    camera_frames true | false           frames nominales de la D435 (false si el driver real publica TF)
+    wrist_camera  true | false           cámara Orbbec de muñeca (frames de base_athome)
+    Solo con ros2_control:=gz (ver urdf/gazebo_harmonic.xacro):
+    camera_profile demo | train          resolución/frecuencia de las cámaras simuladas (config/sim_cameras.yaml)
+    controllers   ruta a un YAML de ros2_control (por defecto config/ros2_controllers.yaml)
+-->
+<robot name="robot_v3" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="ros2_control" default="none"/>
+  <xacro:arg name="head_mount" default="column"/>
+  <xacro:arg name="arm_limits" default="official"/>
+  <xacro:arg name="camera_frames" default="true"/>
+  <xacro:arg name="wrist_camera" default="true"/>
+  <xacro:arg name="camera_profile" default="demo"/>
+  <xacro:arg name="controllers" default="$(find robot_v3_description)/config/ros2_controllers.yaml"/>
+
+  <xacro:property name="ros2_control_mode" value="$(arg ros2_control)"/>
+  <xacro:property name="head_mount" value="$(arg head_mount)"/>
+  <xacro:property name="arm_limits" value="$(arg arm_limits)"/>
+
+  <xacro:if value="${ros2_control_mode not in ['none', 'mock', 'gazebo', 'gz']}">
+    ${xacro.fatal('ros2_control debe ser none, mock, gazebo o gz (recibido: ' + ros2_control_mode + ')')}
+  </xacro:if>
+
+  <xacro:include filename="$(find robot_v3_description)/urdf/common.xacro"/>
+  <xacro:include filename="$(find robot_v3_description)/urdf/base.xacro"/>
+  <xacro:include filename="$(find robot_v3_description)/urdf/torso.xacro"/>
+  <xacro:include filename="$(find robot_v3_description)/urdf/piper.xacro"/>
+  <xacro:include filename="$(find robot_v3_description)/urdf/head.xacro"/>
+  <xacro:include filename="$(find robot_v3_description)/urdf/realsense_d435.xacro"/>
+
+  <xacro:base/>
+  <xacro:torso/>
+
+  <xacro:piper_arm parent="mounting_cube_link" limits="${arm_limits}" wrist_camera="$(arg wrist_camera)">
+    <origin xyz="${xyz_str(G['arm_mount']['origin_in_box'])}" rpy="${xyz_str(G['arm_mount']['rpy'])}"/>
+  </xacro:piper_arm>
+
+  <xacro:head mount="${head_mount}"/>
+
+  <!-- RealSense D435 en el tilt: carcasa a CAMERA_LEVER_ARM del eje de tilt (base_athome) -->
+  <xacro:sensor_d435 parent="tilt_link" name="camera" nominal_frames="$(arg camera_frames)"/>
+
+  <xacro:if value="${ros2_control_mode != 'none'}">
+    <xacro:include filename="$(find robot_v3_description)/urdf/ros2_control.xacro"/>
+    <xacro:robot_v3_ros2_control mode="${ros2_control_mode}"/>
+  </xacro:if>
+  <xacro:if value="${ros2_control_mode == 'gazebo'}">
+    <xacro:include filename="$(find robot_v3_description)/urdf/gazebo.xacro"/>
+    <xacro:robot_v3_gazebo/>
+  </xacro:if>
+  <xacro:if value="${ros2_control_mode == 'gz'}">
+    <xacro:include filename="$(find robot_v3_description)/urdf/gazebo_harmonic.xacro"/>
+    <xacro:robot_v3_gazebo_harmonic profile="$(arg camera_profile)" controllers="$(arg controllers)"
+                                    wrist_camera="$(arg wrist_camera)"/>
+  </xacro:if>
+
+</robot>

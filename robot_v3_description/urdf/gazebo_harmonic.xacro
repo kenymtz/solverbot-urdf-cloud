@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+  Extensiones para Gazebo Harmonic (gz-sim 8) con ROS 2 Jazzy: gz_ros2_control + sensores SIMULADOS.
+  No modifica la cinemática del robot ni la descripción usada por el hardware real (gazebo.xacro = Fortress).
+    * RGB-D de cabeza en camera_color_frame (sigue a pan/tilt), mensajes en camera_color_optical_frame.
+    * Cámara próxima a la pinza: módulo VIRTUAL sobre arm_camera_link (ver config/sim_cameras.yaml).
+    * LiDAR 2D en "laser".
+  Tópicos Gazebo: camera/rgbd/{image,depth_image,points,camera_info}, wrist_camera/{image,camera_info}, scan.
+  El mundo debe cargar el sistema Sensors (render ogre2).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="robot_v3_gazebo_harmonic" params="profile controllers wrist_camera">
+    <xacro:property name="SG" value="${S['gazebo']}"/>
+    <xacro:property name="SC" value="${xacro.load_yaml('$(find robot_v3_description)/config/sim_cameras.yaml')}"/>
+    <xacro:if value="${profile not in SC['profiles']}">
+      ${xacro.fatal('camera_profile debe ser uno de ' + str(list(SC['profiles'])) + ' (recibido: ' + profile + ')')}
+    </xacro:if>
+    <xacro:property name="P" value="${SC['profiles'][profile]}"/>
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers}</parameters>
+      </plugin>
+      <!-- Pose real de la base en /model/robot_v3/pose: SOLO para recompensas/métricas de simulación -->
+      <plugin filename="gz-sim-pose-publisher-system" name="gz::sim::systems::PosePublisher">
+        <publish_link_pose>false</publish_link_pose>
+        <publish_model_pose>true</publish_model_pose>
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <update_frequency>100</update_frequency>
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="left_wheel"><mu1>${SG['wheel_mu']}</mu1><mu2>${SG['wheel_mu']}</mu2></gazebo>
+    <gazebo reference="right_wheel"><mu1>${SG['wheel_mu']}</mu1><mu2>${SG['wheel_mu']}</mu2></gazebo>
+    <gazebo reference="rear_left_caster"><mu1>${SG['caster_mu']}</mu1><mu2>${SG['caster_mu']}</mu2></gazebo>
+    <gazebo reference="rear_right_caster"><mu1>${SG['caster_mu']}</mu1><mu2>${SG['caster_mu']}</mu2></gazebo>
+    <gazebo reference="link7"><mu1>${SC['fingers']['mu']}</mu1><mu2>${SC['fingers']['mu']}</mu2></gazebo>
+    <gazebo reference="link8"><mu1>${SC['fingers']['mu']}</mu1><mu2>${SC['fingers']['mu']}</mu2></gazebo>
+
+    <!-- RGB-D de cabeza (D435): el sensor mira por +X de camera_color_frame -->
+    <gazebo reference="camera_color_frame">
+      <sensor name="d435_rgbd" type="rgbd_camera">
+        <always_on>true</always_on>
+        <update_rate>${P['head']['update_rate']}</update_rate>
+        <visualize>false</visualize>
+        <topic>camera/rgbd</topic>
+        <gz_frame_id>camera_color_optical_frame</gz_frame_id>
+        <camera name="d435">
+          <horizontal_fov>${SC['head']['horizontal_fov']}</horizontal_fov>
+          <image><width>${P['head']['width']}</width><height>${P['head']['height']}</height><format>R8G8B8</format></image>
+          <clip><near>${SC['head']['near']}</near><far>${SC['head']['far']}</far></clip>
+          <depth_camera><clip><near>${SC['head']['near']}</near><far>${SC['head']['far']}</far></clip></depth_camera>
+        </camera>
+      </sensor>
+    </gazebo>
+
+    <!-- Cámara próxima a la pinza (VIRTUAL). Frame del sensor rotado dentro de arm_camera_link para que el eje
+         óptico apunte a aim_point_in_gripper; solo existe en simulación (no altera arm_camera_link real). -->
+    <xacro:if value="${wrist_camera}">
+      <xacro:property name="WC" value="${G['arm_mount']['wrist_camera']['origin_in_gripper']}"/>
+      <xacro:property name="AIM" value="${SC['wrist']['aim_point_in_gripper']}"/>
+      <xacro:property name="wrist_pitch" value="${math.atan2(-(AIM[2] - WC[2]), AIM[0] - WC[0])}"/>
+      <link name="wrist_sim_camera_link"/>
+      <joint name="wrist_sim_camera_joint" type="fixed">
+        <parent link="arm_camera_link"/>
+        <child link="wrist_sim_camera_link"/>
+        <!-- en la cara de la carcasa (caja de 25 mm en z de la pinza), no en su interior -->
+        <origin xyz="0 0 0.0145" rpy="0 ${wrist_pitch} 0"/>
+      </joint>
+      <link name="wrist_sim_camera_optical_frame"/>
+      <joint name="wrist_sim_camera_optical_joint" type="fixed">
+        <parent link="wrist_sim_camera_link"/>
+        <child link="wrist_sim_camera_optical_frame"/>
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      </joint>
+      <gazebo reference="wrist_sim_camera_link">
+        <sensor name="wrist_camera" type="camera">
+          <always_on>true</always_on>
+          <update_rate>${P['wrist']['update_rate']}</update_rate>
+          <visualize>false</visualize>
+          <topic>wrist_camera/image</topic>
+          <gz_frame_id>wrist_sim_camera_optical_frame</gz_frame_id>
+          <camera name="wrist">
+            <camera_info_topic>wrist_camera/camera_info</camera_info_topic>
+            <horizontal_fov>${SC['wrist']['horizontal_fov']}</horizontal_fov>
+            <image><width>${P['wrist']['width']}</width><height>${P['wrist']['height']}</height><format>R8G8B8</format></image>
+            <clip><near>${SC['wrist']['near']}</near><far>${SC['wrist']['far']}</far></clip>
+          </camera>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+
+    <gazebo reference="laser">
+      <sensor name="hokuyo" type="gpu_lidar">
+        <always_on>true</always_on>
+        <update_rate>${P['lidar']['update_rate']}</update_rate>
+        <visualize>false</visualize>
+        <topic>scan</topic>
+        <gz_frame_id>laser</gz_frame_id>
+        <lidar>
+          <scan><horizontal>
+            <samples>${P['lidar']['samples']}</samples><resolution>1</resolution>
+            <min_angle>${SG['lidar']['min_angle']}</min_angle><max_angle>${SG['lidar']['max_angle']}</max_angle>
+          </horizontal></scan>
+          <range><min>${SG['lidar']['range_min']}</min><max>${SG['lidar']['range_max']}</max><resolution>0.01</resolution></range>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+</robot>

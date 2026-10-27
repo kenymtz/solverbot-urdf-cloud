@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  Cabezal pan-tilt (2 x ROBOTIS Dynamixel XL430, nombres de base_athome: pan_joint, tilt_joint).
+  mount = column: sobre la placa superior del perfil (lo que muestra el escaneo v2; no se mueve con el elevador).
+  mount = lift:   colgado de torso_lift_link (árbol de base_athome); misma pose con el elevador en cero.
+  Ejes: pan sobre +Z, tilt sobre +Y (positivo = cámara hacia abajo), como en base_athome.
+  Piezas visuales: config/visual_v3.yaml (servos XL430, soporte, micrófono); ejes: config/geometry_v3.yaml (head).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="head" params="mount">
+    <xacro:property name="H" value="${G['head']}"/>
+    <xacro:if value="${mount not in ['column', 'lift']}">
+      ${xacro.fatal('head_mount debe ser column o lift (recibido: ' + mount + ')')}
+    </xacro:if>
+
+    <link name="pan_tilt_base_link">
+      <xacro:visual_parts group="pan_tilt_base"/>
+      <xacro:box_inertial m="${S['masses_kg']['pan_tilt_base_link']}" size="${[0.06, 0.06, 0.006]}" xyz="0 0 0.003"/>
+    </link>
+    <joint name="pan_tilt_base_joint" type="fixed">
+      <parent link="${'torso_column' if mount == 'column' else 'torso_lift_link'}"/>
+      <child link="pan_tilt_base_link"/>
+      <origin xyz="${xyz_str(H['pan_tilt_base_in_column'] if mount == 'column' else H['pan_tilt_base_in_lift'])}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Servo de pan: ocupa el espacio entre la placa y el eje de tilt -->
+    <xacro:property name="hz" value="${H['tilt_axis_above_pan']}"/>
+    <link name="pan_link">
+      <xacro:visual_parts group="pan"/>
+      <collision>
+        <origin xyz="0 0 ${hz/2}" rpy="0 0 0"/>
+        <geometry><box size="0.034 0.0285 ${hz}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['pan_link']}" size="${[0.034, 0.0285, hz]}" xyz="0 0 ${hz/2}"/>
+    </link>
+    <joint name="pan_joint" type="revolute">
+      <parent link="pan_tilt_base_link"/>
+      <child link="pan_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${S['head']['pan']['lower']}" upper="${S['head']['pan']['upper']}"
+             effort="${S['head']['pan']['effort']}" velocity="${S['head']['pan']['velocity']}"/>
+    </joint>
+
+    <!-- Soporte de tilt: une el eje de tilt con la cámara -->
+    <link name="tilt_link">
+      <xacro:visual_parts group="tilt"/>
+      <xacro:box_inertial m="${S['masses_kg']['tilt_link']}" size="${[0.024, 0.05, 0.01]}" xyz="0.012 0 0"/>
+    </link>
+    <joint name="tilt_joint" type="revolute">
+      <parent link="pan_link"/>
+      <child link="tilt_link"/>
+      <origin xyz="0 0 ${hz}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="${S['head']['tilt']['lower']}" upper="${S['head']['tilt']['upper']}"
+             effort="${S['head']['tilt']['effort']}" velocity="${S['head']['tilt']['velocity']}"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,9 @@
+OK     colcon build
+OK     xacro + check_urdf
+OK     validación estática (validate_v3.py)
+OK     colcon test
+OK     ros2_control mock: chequeos en ejecución
+OK     ros2_control mock: demo_motion.py
+OK     TF: view_frames
+OK     mock con head_mount:=lift arm_limits:=base_athome
+OK     real_state.launch.py con /joint_states tipo Jetson

@@ -1,0 +1,40 @@
+robot name is: robot_v3
+---------- Successfully Parsed XML ---------------
+root Link: base_footprint has 1 child(ren)
+    child(1):  base_link
+        child(1):  laser_mount
+            child(1):  laser
+        child(2):  left_wheel
+        child(3):  rear_left_caster
+        child(4):  rear_right_caster
+        child(5):  right_wheel
+        child(6):  torso_column
+            child(1):  pan_tilt_base_link
+                child(1):  pan_link
+                    child(1):  tilt_link
+                        child(1):  camera_bottom_screw_frame
+                            child(1):  camera_link
+                                child(1):  camera_color_frame
+                                    child(1):  camera_color_optical_frame
+                                child(2):  camera_depth_frame
+                                    child(1):  camera_depth_optical_frame
+                                child(3):  camera_infra1_frame
+                                    child(1):  camera_infra1_optical_frame
+                                child(4):  camera_infra2_frame
+                                    child(1):  camera_infra2_optical_frame
+            child(2):  torso_lift_link
+                child(1):  mounting_cube_link
+                    child(1):  arm_base_link
+                        child(1):  link1
+                            child(1):  link2
+                                child(1):  link3
+                                    child(1):  link4
+                                        child(1):  link5
+                                            child(1):  link6
+                                                child(1):  gripper_base
+                                                    child(1):  arm_camera_link
+                                                        child(1):  arm_camera_optical_frame
+                                                    child(2):  link7
+                                                    child(3):  link8
+                                                child(2):  tcp_link
+                    child(2):  screen_link

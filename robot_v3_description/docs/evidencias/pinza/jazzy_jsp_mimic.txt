@@ -1,0 +1,1 @@
+joint7 0.02 joint8 -0.02 joints publicados 13

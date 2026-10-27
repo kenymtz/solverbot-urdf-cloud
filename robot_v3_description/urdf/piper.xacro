@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<!--
+  AgileX Piper 6-DOF (variante estándar) con la pinza estándar de dos dedos.
+
+  Cinemática, inercias y mallas de colisión: copia de la descripción OFICIAL
+    agilexrobotics/agx_arm_urdf @ 680fa92 (submódulo de agx_arm_ros, rama ros2 @ 286633e),
+    piper/urdf/piper_description.urdf (licencia MIT, ver THIRD_PARTY.md).
+  Pinza (gripper_base, joint7, joint8): agilexrobotics/piper_ros, rama humble @ 017ffef
+    (MIT). Se usan los nombres joint7/joint8 porque son los que publica la Jetson (piper_arm_controller.py).
+  Cambios respecto del oficial:
+    * base_link -> arm_base_link (base_link es la base del robot; mismo nombre que base_athome).
+    * se elimina el link "world"; el brazo cuelga de "parent" con el origen recibido.
+    * límites según el perfil "limits" de config/piper_limits.yaml.
+    * visual: mallas visuales oficiales (DAE con colores) simplificadas, desvío p95 < 1 mm
+      (meshes/piper/visual, tools/make_piper_visuals.py); colisión: STL oficiales sin cambios.
+    * tcp_link y cámara de muñeca (arm_camera_link) como en base_athome.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="piper_link" params="name ixyz mass ixx ixy ixz iyy iyz izz">
+    <link name="${name}">
+      <inertial>
+        <origin xyz="${ixyz}" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <!-- DAE con los colores oficiales (blanco, negro, rojo); sin material para no sobrescribirlos -->
+        <geometry><mesh filename="${pkg}/meshes/piper/visual/${'base_link' if name == 'arm_base_link' else name}.dae"/></geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${pkg}/meshes/piper/collision/${'base_link' if name == 'arm_base_link' else name}.stl"/></geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="piper_joint" params="name type parent child xyz rpy lim axis:='0 0 1'">
+    <joint name="${name}" type="${type}">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <axis xyz="${axis}"/>
+      <limit lower="${lim['lower']}" upper="${lim['upper']}" effort="${lim['effort']}" velocity="${lim['velocity']}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="piper_arm" params="parent limits wrist_camera *origin">
+    <xacro:if value="${limits not in PL or limits == 'gripper'}">
+      ${xacro.fatal('arm_limits debe ser official o base_athome (recibido: ' + limits + ')')}
+    </xacro:if>
+    <xacro:property name="L" value="${PL[limits]}"/>
+    <xacro:property name="LG" value="${PL['gripper']}"/>
+
+    <joint name="arm_mount_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="arm_base_link"/>
+    </joint>
+
+    <xacro:piper_link name="arm_base_link" ixyz="-0.00473641164191482 2.56829134630247E-05 0.041451518036016" mass="1.02"
+                      ixx="0.00267433" ixy="-0.00000073" ixz="-0.00017389" iyy="0.00282612" iyz="0.0000004" izz="0.00089624"/>
+    <xacro:piper_link name="link1" ixyz="0.00032 -0.00041 -0.00348" mass="0.71"
+                      ixx="0.00050027" ixy="0.00000078" ixz="0.00000626" iyy="0.00040879" iyz="0.00000462" izz="0.00045802"/>
+    <xacro:piper_link name="link2" ixyz="0.21852 -0.00861 0.00126" mass="1.16"
+                      ixx="0.00111915" ixy="0.00182916" ixz="0.00019233" iyy="0.06763251" iyz="0.00000767" izz="0.067559"/>
+    <xacro:piper_link name="link3" ixyz="-0.01999 -0.14808 -0.00053" mass="0.5"
+                      ixx="0.01347608" ixy="0.00161034" ixz="0.00000066" iyy="0.00046377" iyz="0.00000162" izz="0.01363321"/>
+    <xacro:piper_link name="link4" ixyz="0.00013 -0.00076 -0.00394" mass="0.38"
+                      ixx="0.00017844" ixy="0.00000062" ixz="0.00000067" iyy="0.00018914" iyz="0.00000408" izz="0.00014613"/>
+    <xacro:piper_link name="link5" ixyz="0.00018 -0.06104 -0.00227" mass="0.383"
+                      ixx="0.00172318" ixy="0.00000259" ixz="0.00000010" iyy="0.00017936" iyz="0.00000990" izz="0.00171172"/>
+    <xacro:piper_link name="link6" ixyz="0.00134940815 0 -0.00344975303" mass="0.01655408133"
+                      ixx="1.52476803967e-6" ixy="0" ixz="1.0017156778e-7" iyy="1.51721319881e-6" iyz="0" izz="2.84541364481e-6"/>
+
+    <!-- Orígenes y ejes: idénticos a agx_arm_urdf/piper/urdf/piper_description.urdf -->
+    <xacro:piper_joint name="joint1" type="revolute" parent="arm_base_link" child="link1"
+                       xyz="0 0 0.123" rpy="0 0 0" lim="${L['joint1']}"/>
+    <xacro:piper_joint name="joint2" type="revolute" parent="link1" child="link2"
+                       xyz="0 0 0" rpy="1.5707963 -0.1357866 -3.1415926" lim="${L['joint2']}"/>
+    <xacro:piper_joint name="joint3" type="revolute" parent="link2" child="link3"
+                       xyz="0.28503 0 0" rpy="0 0 -1.7938494" lim="${L['joint3']}"/>
+    <xacro:piper_joint name="joint4" type="revolute" parent="link3" child="link4"
+                       xyz="-0.02198 -0.25075 0" rpy="1.5707963 0 0" lim="${L['joint4']}"/>
+    <xacro:piper_joint name="joint5" type="revolute" parent="link4" child="link5"
+                       xyz="0 0 0" rpy="-1.5707963 0 0" lim="${L['joint5']}"/>
+    <xacro:piper_joint name="joint6" type="revolute" parent="link5" child="link6"
+                       xyz="8.8259E-05 -0.091 0" rpy="1.5707963 0 0" lim="${L['joint6']}"/>
+
+    <!-- Pinza estándar (piper_ros humble) -->
+    <xacro:piper_link name="gripper_base" ixyz="-0.000183807162235591 8.05033155577911E-05 0.0321436689908876" mass="0.45"
+                      ixx="0.00092934" ixy="0.00000034" ixz="-0.00000738" iyy="0.00071447" iyz="0.00000005" izz="0.00039442"/>
+    <joint name="joint6_to_gripper_base" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="link6"/>
+      <child link="gripper_base"/>
+    </joint>
+    <xacro:piper_link name="link7" ixyz="0.00065123185041968 -0.0491929869131989 0.00972258769184025" mass="0.025"
+                      ixx="0.00007371" ixy="-0.00000113" ixz="0.00000021" iyy="0.00000781" iyz="-0.00001372" izz="0.0000747"/>
+    <xacro:piper_link name="link8" ixyz="0.000651231850419722 -0.0491929869131991 0.00972258769184024" mass="0.025"
+                      ixx="0.00007371" ixy="-0.00000113" ixz="0.00000021" iyy="0.00000781" iyz="-0.00001372" izz="0.0000747"/>
+    <xacro:piper_joint name="joint7" type="prismatic" parent="gripper_base" child="link7"
+                       xyz="0 0 0.1358" rpy="1.5707963 0 0" lim="${LG['joint7']}"/>
+    <!-- La pinza tiene UN grado de libertad: joint7 es la apertura de cada dedo y joint8 la copia con signo opuesto.
+         Relación oficial de AgileX (agx_arm_urdf, piper_with_gripper_description.xacro): dedo1 = +0.5·gripper,
+         dedo2 = -0.5·gripper, con los mismos orígenes, ejes y mallas que joint7/joint8 -> joint8 = -1 · joint7.
+         Coincide con lo que publica la Jetson: joint7 = +apertura/2, joint8 = -apertura/2. -->
+    <joint name="joint8" type="prismatic">
+      <origin xyz="0 0 0.1358" rpy="1.5707963 0 -3.1415926"/>
+      <parent link="gripper_base"/>
+      <child link="link8"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="${LG['joint8']['lower']}" upper="${LG['joint8']['upper']}" effort="${LG['joint8']['effort']}"
+             velocity="${LG['joint8']['velocity']}"/>
+      <mimic joint="joint7" multiplier="${LG['joint8']['mimic_multiplier']}" offset="0"/>
+    </joint>
+
+    <!-- Punto central de herramienta entre los dedos (base_athome / piper_ros) -->
+    <link name="tcp_link"/>
+    <joint name="link6_to_tcp_joint" type="fixed">
+      <origin xyz="0 0 ${G['arm_mount']['tcp_offset']}" rpy="0 0 0"/>
+      <parent link="link6"/>
+      <child link="tcp_link"/>
+    </joint>
+
+    <!-- Cámara de muñeca Orbbec DaBai DC1 (posición de base_athome; frame del stream de la Jetson) -->
+    <xacro:if value="${wrist_camera}">
+      <xacro:property name="WC" value="${G['arm_mount']['wrist_camera']}"/>
+      <link name="arm_camera_link">
+        <visual>
+          <geometry><box size="${xyz_str(WC['size'])}"/></geometry>
+          <material name="orbbec_black"/>
+        </visual>
+        <collision>
+          <geometry><box size="${xyz_str(WC['size'])}"/></geometry>
+        </collision>
+        <xacro:box_inertial m="${S['masses_kg']['arm_camera_link']}" size="${WC['size']}"/>
+      </link>
+      <joint name="arm_camera_mount_joint" type="fixed">
+        <parent link="gripper_base"/>
+        <child link="arm_camera_link"/>
+        <origin xyz="${xyz_str(WC['origin_in_gripper'])}" rpy="0 0 0"/>
+      </joint>
+      <link name="arm_camera_optical_frame"/>
+      <joint name="arm_camera_optical_joint" type="fixed">
+        <parent link="arm_camera_link"/>
+        <child link="arm_camera_optical_frame"/>
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      </joint>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>solverbot_sim</name>
+  <version>0.1.0</version>
+  <description>Arena doméstica 3D y tarea de Pick and Place de SolverBot v3 en Gazebo Harmonic (ROS 2 Jazzy). Solo simulación.</description>
+  <maintainer email="augusto.calfani@estudiantes.utec.edu.uy">SolverBot</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>robot_v3_description</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_interfaces</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>ros2_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>rqt_image_view</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

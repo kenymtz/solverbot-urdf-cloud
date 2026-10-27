@@ -1,0 +1,66 @@
+[
+ {
+  "episodes": [
+   0,
+   276
+  ],
+  "success_rate": 0.0,
+  "mean_return": -4.659
+ },
+ {
+  "episodes": [
+   276,
+   552
+  ],
+  "success_rate": 0.0,
+  "mean_return": -3.258
+ },
+ {
+  "episodes": [
+   552,
+   828
+  ],
+  "success_rate": 0.018,
+  "mean_return": -2.651
+ },
+ {
+  "episodes": [
+   828,
+   1104
+  ],
+  "success_rate": 0.029,
+  "mean_return": -2.536
+ },
+ {
+  "episodes": [
+   1104,
+   1380
+  ],
+  "success_rate": 0.123,
+  "mean_return": -1.437
+ },
+ {
+  "episodes": [
+   1380,
+   1656
+  ],
+  "success_rate": 0.109,
+  "mean_return": -1.617
+ },
+ {
+  "episodes": [
+   1656,
+   1932
+  ],
+  "success_rate": 0.246,
+  "mean_return": 0.147
+ },
+ {
+  "episodes": [
+   1932,
+   2208
+  ],
+  "success_rate": 0.373,
+  "mean_return": 1.678
+ }
+]

@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!-- Base diferencial (hoverboard): chasis, ruedas motrices, ruedas locas y LiDAR Hokuyo UST-05LX -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="base">
+    <xacro:property name="B" value="${G['base']}"/>
+    <xacro:property name="W" value="${B['wheels']}"/>
+
+    <link name="base_footprint"/>
+
+    <!-- Chasis: visual = estructura de perfiles en dos niveles (config/visual_v3.yaml); colisión = caja medida -->
+    <link name="base_link">
+      <xacro:visual_parts group="chassis"/>
+      <collision>
+        <origin xyz="${xyz_str(B['chassis_box']['center'])}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(B['chassis_box']['size'])}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['base_link']}" size="${B['chassis_box']['size']}" xyz="${xyz_str(B['chassis_box']['center'])}"/>
+    </link>
+    <joint name="base_joint" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Ruedas motrices: origen en el eje medido, giro sobre +Y (como en base_athome) -->
+    <xacro:macro name="drive_wheel" params="side">
+      <link name="${side}_wheel">
+        <xacro:visual_parts group="wheel"/>
+        <collision>
+          <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+          <geometry><cylinder radius="${W['collision_radius']}" length="${W['width']}"/></geometry>
+        </collision>
+        <xacro:cylinder_y_inertial m="${S['masses_kg']['wheel']}" r="${W['collision_radius']}" h="${W['width']}"/>
+      </link>
+      <joint name="${side}_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="${side}_wheel"/>
+        <origin xyz="${xyz_str(W[side])}" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+      </joint>
+    </xacro:macro>
+    <xacro:drive_wheel side="left"/>
+    <xacro:drive_wheel side="right"/>
+
+    <!-- Ruedas locas traseras: pivote pasivo no modelado (fijas, esfera sin fricción en simulación) -->
+    <xacro:macro name="rear_caster" params="side">
+      <link name="rear_${side}_caster">
+        <xacro:visual_parts group="caster"/>
+        <collision>
+          <geometry><sphere radius="${B['casters']['radius']}"/></geometry>
+        </collision>
+        <xacro:sphere_inertial m="${S['masses_kg']['caster']}" r="${B['casters']['radius']}"/>
+      </link>
+      <joint name="rear_${side}_caster_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="rear_${side}_caster"/>
+        <origin xyz="${xyz_str(B['casters']['rear_' + side])}" rpy="0 0 0"/>
+      </joint>
+    </xacro:macro>
+    <xacro:rear_caster side="left"/>
+    <xacro:rear_caster side="right"/>
+
+    <!-- Hokuyo UST-05LX: laser_mount = base del cuerpo (centrada en XY); laser = punto focal (nombre usado por urg_node/Nav2) -->
+    <xacro:property name="Ls" value="${G['laser']}"/>
+    <link name="laser_mount">
+      <xacro:visual_parts group="hokuyo"/>
+      <collision>
+        <origin xyz="0 0 ${Ls['body_size'][2]/2}" rpy="0 0 0"/>
+        <geometry><box size="${xyz_str(Ls['body_size'])}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${S['masses_kg']['laser_mount']}" size="${Ls['body_size']}" xyz="0 0 ${Ls['body_size'][2]/2}"/>
+    </link>
+    <joint name="laser_mount_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="laser_mount"/>
+      <origin xyz="${xyz_str(Ls['mount'])}" rpy="0 0 0"/>
+    </joint>
+    <link name="laser"/>
+    <joint name="laser_joint" type="fixed">
+      <parent link="laser_mount"/>
+      <child link="laser"/>
+      <origin xyz="0 0 ${Ls['focal_height']}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

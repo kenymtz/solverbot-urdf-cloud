@@ -1,0 +1,57 @@
+# Controladores ros2_control para SIMULACIÓN en Gazebo Harmonic (gz_ros2_control). Ningún controlador de este
+# archivo se conecta al hardware real. Para RL se usan controladores de posición directos (forward_command):
+# la política fija objetivos articulares en cada paso del entorno.
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    arm_position_controller:
+      type: forward_command_controller/ForwardCommandController
+    gripper_position_controller:
+      type: forward_command_controller/ForwardCommandController
+    lift_position_controller:
+      type: forward_command_controller/ForwardCommandController
+    head_position_controller:
+      type: forward_command_controller/ForwardCommandController
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+arm_position_controller:
+  ros__parameters:
+    joints: [joint1, joint2, joint3, joint4, joint5, joint6]
+    interface_name: position
+
+gripper_position_controller:
+  ros__parameters:
+    # Una sola orden: joint7. joint8 es mimic (= -joint7) y no se comanda.
+    joints: [joint7]
+    interface_name: position
+
+lift_position_controller:
+  ros__parameters:
+    joints: [torso_lift_joint]
+    interface_name: position
+
+head_position_controller:
+  ros__parameters:
+    joints: [pan_joint, tilt_joint]
+    interface_name: position
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+    wheel_separation: 0.5621      # geometría del MODELO (geometry_v3.yaml)
+    wheel_radius: 0.0829
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    enable_odom_tf: true
+    cmd_vel_timeout: 0.5
+    linear.x.has_velocity_limits: true
+    linear.x.max_velocity: 0.4
+    linear.x.min_velocity: -0.4
+    angular.z.has_velocity_limits: true
+    angular.z.max_velocity: 1.0
+    angular.z.min_velocity: -1.0
