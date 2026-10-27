@@ -82,7 +82,7 @@ class ScriptedExpert:
             d = p - s.tcp_pos
             n = np.linalg.norm(d)
             q, _ = solve_ik(e.chain, 'tcp_link', e.arm_joints, e._q_cmd, s.tcp_pos + (d if n < 0.01 else d / n * 0.01),
-                            None, {'torso_lift_joint': e.cfg['robot']['lift']}, approach_axis=s.tcp_z,
+                            None, {'torso_lift_joint': e.cfg['robot']['lift']}, approach_axis=(APPROACH if goal == 'reach' else s.tcp_z),
                             rot_weight=0.5, reg=0.02)
         else:
             q = self._ik(p)
