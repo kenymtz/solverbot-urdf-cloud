@@ -46,7 +46,9 @@ class ScriptedExpert:
         grip = -1.0
         if self.phase == 'pregrasp':
             p = obj + np.array([0, 0, e.params.pregrasp_height])
-            if np.linalg.norm(s.tcp_pos - p) < 0.015 and goal != 'reach':
+            if (goal != 'reach'
+                    and np.linalg.norm((s.tcp_pos - p)[:2]) < 0.004
+                    and abs(s.tcp_pos[2] - p[2]) < 0.006):
                 self.phase = 'descend'
         if self.phase == 'descend':
             p = obj.copy()
@@ -55,7 +57,7 @@ class ScriptedExpert:
         if self.phase == 'close':
             p, grip = s.tcp_pos.copy(), 1.0
             self.count += 1
-            if self.count > 4:
+            if self.count > 15:
                 self.phase, self.count = 'lift', 0
         if self.phase == 'lift':
             p, grip = obj + np.array([0, 0, 0.10]), 1.0
@@ -86,5 +88,14 @@ class ScriptedExpert:
                             rot_weight=0.5, reg=0.02)
         else:
             q = self._ik(p)
-        a = np.clip((q - e._q_cmd) / e.delta, -1, 1)
+        raw = (q - e._q_cmd) / e.delta
+
+        # Durante el descenso, conservar las proporciones
+        # del movimiento articular calculado por la IK.
+        if self.phase == 'descend':
+            factor = max(1.0, float(np.max(np.abs(raw))))
+            a = raw / factor
+        else:
+            a = np.clip(raw, -1.0, 1.0)
+
         return np.append(a, grip).astype(np.float32)
