@@ -1,0 +1,45 @@
+{
+ "backend": "gazebo",
+ "physical": true,
+ "level": 4,
+ "criterion": "rise >= 30 mm during >= 20 steps, cube < 4 cm from TCP",
+ "overrides": {
+  "control.max_episode_steps": 10000,
+  "task.no_progress_steps": 10000,
+  "observation.object_source": "privileged"
+ },
+ "successes": 1,
+ "episodes": 1,
+ "success_rate": 1.0,
+ "seeds": [
+  {
+   "seed": 40001,
+   "cube_xy0": [
+    0.1798,
+    0.5161
+   ],
+   "cube_yaw0_deg": 6.0,
+   "max_mimic_err_mm": 1.977,
+   "drift_before_close_mm": 0.35,
+   "q7_at_block_mm": 20.01,
+   "max_rise_mm": 86.49,
+   "best_hold_steps": 25,
+   "final_rise_mm": 86.49,
+   "final_q7_mm": 21.0,
+   "final_q8_mm": -19.03,
+   "grasp_tilt_deg": 10.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 114,
+   "wall_s": 42.2,
+   "success": true
+  }
+ ]
+}

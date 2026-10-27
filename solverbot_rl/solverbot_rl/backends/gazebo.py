@@ -14,6 +14,7 @@ import time
 
 import numpy as np
 
+from ..gripper import coupled_finger_targets, is_squeezing
 from ..kinematics import UrdfChain
 from ..perception import locate_on_plane
 from .base import Backend
@@ -24,6 +25,7 @@ try:
     from rclpy.node import Node
     from rclpy.parameter import Parameter
     from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+    from rclpy.signals import SignalHandlerOptions
     from ros_gz_interfaces.srv import ControlWorld, SetEntityPose
     from rosgraph_msgs.msg import Clock
     from sensor_msgs.msg import CameraInfo, Image, JointState
@@ -63,7 +65,11 @@ class GazeboBackend(Backend):
         self.use_perception = perception
         self.timeout = timeout
         self.max_image_age = 0.2                # s de tiempo simulado
+        self._g_logic = cfg['robot']['gripper_open']
+        self.grip_squeeze = cfg['robot'].get('gripper_squeeze', 0.002)
+        self.grip_coupling_dt = cfg['robot'].get('gripper_coupling_dt', 0.02)
         self.stale_images = 0
+        self.stale_joint_states = 0             # pasos cuya muestra articular quedó > 40 ms detrás (diagnóstico)
         self._lock = threading.Lock()
         self._clock = 0.0
         self._js: dict[str, float] = {}
@@ -75,7 +81,9 @@ class GazeboBackend(Backend):
         self._urdf: str | None = None
 
         if not rclpy.ok():
-            rclpy.init()
+            # Sin los manejadores de señales de rclpy: con ellos, SIGINT/SIGTERM apagan el contexto ROS a mitad de una
+            # llamada de servicio. La parada limpia la gestiona train.py (termina el paso, guarda checkpoint, cierra).
+            rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
         self.node = Node('solverbot_rl_env', parameter_overrides=[Parameter('use_sim_time', value=True)])
         n = self.node
         be = QoSProfile(depth=2, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -114,6 +122,13 @@ class GazeboBackend(Backend):
         self._wait(lambda: self._urdf is not None and self._js, 'robot_description y /joint_states')
         self.chain = UrdfChain(self._urdf)
         self._last_est = np.zeros(3)
+        # Si la observación usa cámaras (imágenes o percepción), sus datos deben existir de verdad: no se entrena en
+        # silencio con observaciones vacías.
+        for key in sorted(need):
+            self._wait(lambda k=key: k in self._img, f'imágenes de la cámara "{key}" (¿sensores/render activos?)',
+                       timeout=60.0)
+        if perception:
+            self._wait(lambda: self._k is not None, 'CameraInfo de la cámara de muñeca', timeout=60.0)
         # El launch arranca el mundo corriendo (los spawners necesitan ciclos de control para activar los
         # controladores); a partir de aquí el tiempo solo avanza con advance().
         self._wait_controllers()
@@ -150,6 +165,7 @@ class GazeboBackend(Backend):
             p, q = t.transform.translation, t.transform.rotation
             if t.child_frame_id == self.obj_name:
                 self._obj_pose = np.array([p.x, p.y, p.z])
+                self._obj_yaw_w = float(np.arctan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z)))
             elif t.child_frame_id == 'robot_v3':
                 x, y, z, w = q.x, q.y, q.z, q.w
                 m4 = np.eye(4)
@@ -169,7 +185,8 @@ class GazeboBackend(Backend):
         t0 = time.monotonic()
         while not cond():
             if time.monotonic() - t0 > (timeout or self.timeout):
-                raise TimeoutError(f'Tiempo de espera agotado: {what}')
+                raise TimeoutError(f'Tiempo de espera agotado: {what}; reloj={self._clock:.3f} '
+                                   f'joint_states={self._js_t:.3f}')
             time.sleep(0.002)
 
     def _call(self, cli, req):
@@ -182,20 +199,58 @@ class GazeboBackend(Backend):
         pub.publish(Float64MultiArray(data=[float(v) for v in values]))
 
     def command(self, arm_q, gripper):
+        """Una sola orden lógica de pinza (objetivo de joint7). Se aplica a ambos dedos (gripper_servo:=dual) con la
+        ley de acoplamiento de solverbot_rl.gripper, recalculada en cada subpaso de advance()."""
         self._pub(self.pub_arm, arm_q)
-        self._pub(self.pub_grip, [gripper])
+        self._g_logic = float(gripper)
+        self._send_fingers()
+
+    def _send_fingers(self):
+        js = self._js
+        t7, t8 = coupled_finger_targets(self._g_logic, js.get('joint7', self._g_logic), js.get('joint8', -self._g_logic),
+                                        self.grip_squeeze)
+        self._pub(self.pub_grip, [t7, t8])
 
     def advance(self, dt):
+        """Avanza dt. Mientras la pinza aprieta, en subpasos de grip_coupling_dt para que el acoplamiento de los
+        dedos actúe a 50 Hz (el entorno sigue viendo un único paso de dt)."""
+        js = self._js
+        if is_squeezing(self._g_logic, js.get('joint7', 0.0), js.get('joint8', 0.0), self.grip_squeeze):
+            n = max(1, int(round(dt / self.grip_coupling_dt)))
+            for _ in range(n):
+                self._send_fingers()
+                self._advance_once(dt / n, images=False)
+            t_end = self._clock
+            t0 = time.monotonic()
+            while self._js_t < t_end - 0.04 and time.monotonic() - t0 < 2.0:
+                time.sleep(0.002)
+            self.stale_joint_states += int(self._js_t < t_end - 0.04)
+            self._advance_once(0.0, images=True)
+        else:
+            self._advance_once(dt, images=True)
+
+    def _advance_once(self, dt, images=True):
+        if dt <= 0.0:
+            self._wait_images(self._clock)
+            return
         req = ControlWorld.Request()
         req.world_control.pause = True
         req.world_control.multi_step = max(1, int(round(dt / self.physics_step)))
         t_goal = self._clock + dt - 0.5 * self.physics_step
-        js_goal = self._js_t + 0.5 * dt
+        # Pasos normales (0.1 s): la muestra articular debe ser al menos dt/2 más nueva. Subpasos del acoplamiento de
+        # la pinza (0.02 s): solo se espera el reloj; en 20 ms puede no llegar ninguna muestra nueva (observado) y la
+        # ley de centrado usa la última disponible. advance() comprueba la frescura al final del paso completo.
+        js_goal = self._js_t + 0.5 * dt if images else -np.inf
         time.sleep(0.003)                       # deja salir los comandos publicados antes de avanzar
         self._call(self.cli_ctrl, req)
-        # joint_state_broadcaster publica en ciclos de control y puede ir algunos ciclos detrás de /clock: se exige un
+        # joint_state_broadcaster publica en ciclos de control y puede ir hasta ~36 ms detrás de /clock: se exige un
         # estado articular NUEVO (posterior al paso), no una tolerancia absoluta respecto del reloj
-        self._wait(lambda: self._clock >= t_goal and self._js_t >= js_goal, 'avance del tiempo simulado')
+        self._wait(lambda: self._clock >= t_goal and self._js_t >= js_goal,
+                   f'avance del tiempo simulado (dt={dt}, objetivo reloj {t_goal:.3f} / joint_states {js_goal:.3f})')
+        if images:
+            self._wait_images(t_goal)
+
+    def _wait_images(self, t_goal):
         # Imágenes: con render por CPU, Gazebo puede saltear cuadros. Se espera un cuadro reciente un tiempo acotado
         # y, si no llega, se usa el último y se cuenta como imagen vieja (info['stale_images'] en el entorno).
         self.stale_images = 0
@@ -248,6 +303,10 @@ class GazeboBackend(Backend):
         self.advance(0.3)                       # el objeto se asienta sobre la mesa
         self._last_est = np.zeros(3)
 
+    def object_yaw_truth(self):
+        b = self._base()
+        return float(getattr(self, '_obj_yaw_w', 0.0) - np.arctan2(b[1, 0], b[0, 0]))
+
     def world_xy_to_base(self, xy):
         b = self._base()
         return (np.linalg.inv(b) @ np.array([xy[0], xy[1], 0.0, 1.0]))[:2]
@@ -279,6 +338,9 @@ class GazeboBackend(Backend):
         return {k: v[1] for k, v in self._img.items() if k in self.want_images}
 
     def close(self):
+        # Quitar el nodo del executor antes de detenerlo evita futuros pendientes sobre entidades destruidas
+        # ("cannot use Destroyable because destruction was requested").
+        self.exec.remove_node(self.node)
         self.exec.shutdown(timeout_sec=2.0)
         self._spin.join(timeout=2.0)
         self.node.destroy_node()

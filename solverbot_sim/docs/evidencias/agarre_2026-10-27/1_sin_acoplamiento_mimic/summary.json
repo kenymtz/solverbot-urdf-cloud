@@ -1,0 +1,161 @@
+{
+ "backend": "gazebo",
+ "physical": true,
+ "level": 4,
+ "criterion": "rise >= 30 mm during >= 10 steps, cube < 4 cm from TCP",
+ "overrides": {
+  "control.max_episode_steps": 10000,
+  "task.no_progress_steps": 10000,
+  "observation.object_source": "privileged"
+ },
+ "successes": 5,
+ "episodes": 5,
+ "success_rate": 1.0,
+ "seeds": [
+  {
+   "seed": 40000,
+   "cube_xy0": [
+    0.2334,
+    0.5889
+   ],
+   "cube_yaw0_deg": -5.6,
+   "max_mimic_err_mm": 30.038,
+   "drift_before_close_mm": 1.94,
+   "q7_at_block_mm": 20.01,
+   "max_rise_mm": 100.14,
+   "best_hold_steps": 15,
+   "final_rise_mm": 100.14,
+   "final_q7_mm": 5.01,
+   "final_q8_mm": -35.0,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 102,
+   "wall_s": 35.0,
+   "success": true
+  },
+  {
+   "seed": 40001,
+   "cube_xy0": [
+    0.1798,
+    0.5161
+   ],
+   "cube_yaw0_deg": 6.0,
+   "max_mimic_err_mm": 29.984,
+   "drift_before_close_mm": 0.33,
+   "q7_at_block_mm": 19.94,
+   "max_rise_mm": 74.57,
+   "best_hold_steps": 15,
+   "final_rise_mm": 74.57,
+   "final_q7_mm": 5.04,
+   "final_q8_mm": -35.0,
+   "grasp_tilt_deg": 10.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 102,
+   "wall_s": 27.6,
+   "success": true
+  },
+  {
+   "seed": 40002,
+   "cube_xy0": [
+    0.2522,
+    0.5227
+   ],
+   "cube_yaw0_deg": -13.3,
+   "max_mimic_err_mm": 29.998,
+   "drift_before_close_mm": 0.89,
+   "q7_at_block_mm": 19.94,
+   "max_rise_mm": 99.83,
+   "best_hold_steps": 15,
+   "final_rise_mm": 99.83,
+   "final_q7_mm": 5.04,
+   "final_q8_mm": -35.0,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 97,
+   "wall_s": 33.0,
+   "success": true
+  },
+  {
+   "seed": 40003,
+   "cube_xy0": [
+    0.2514,
+    0.5473
+   ],
+   "cube_yaw0_deg": -7.1,
+   "max_mimic_err_mm": 30.015,
+   "drift_before_close_mm": 0.63,
+   "q7_at_block_mm": 19.95,
+   "max_rise_mm": 99.84,
+   "best_hold_steps": 15,
+   "final_rise_mm": 99.84,
+   "final_q7_mm": 5.04,
+   "final_q8_mm": -35.0,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 96,
+   "wall_s": 31.5,
+   "success": true
+  },
+  {
+   "seed": 40004,
+   "cube_xy0": [
+    0.1968,
+    0.6049
+   ],
+   "cube_yaw0_deg": 5.5,
+   "max_mimic_err_mm": 30.026,
+   "drift_before_close_mm": 1.23,
+   "q7_at_block_mm": 20.0,
+   "max_rise_mm": 74.02,
+   "best_hold_steps": 15,
+   "final_rise_mm": 74.02,
+   "final_q7_mm": 5.0,
+   "final_q8_mm": -35.0,
+   "grasp_tilt_deg": 10.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ],
+   "collision": false,
+   "dropped": false,
+   "steps": 104,
+   "wall_s": 24.3,
+   "success": true
+  }
+ ]
+}

@@ -39,3 +39,40 @@ están marcados **[robot real]**: conviene verificarlos físicamente.
 
 No verificado todavía: conducción de la base con `diff_drive_controller` en Harmonic (el controlador se activa;
 no se probó navegación), LiDAR (publica, sin análisis), GUI de Gazebo y rqt_image_view en WSLg.
+
+## Agarre físico (2026-10-27, rama fix/solverbot-grasp-headless)
+
+Parte del informe de WSL (bloqueo de joint8 en -35 mm al cerrar desde el límite; contacto ~20 mm; levantamiento
+fallido con TCP +3.4 mm / cubo +0.5 mm). Cambios y evidencias en `docs/evidencias/agarre_2026-10-27/`:
+
+13. **Precierre permanente**: la orden "abierta" es 32 mm por dedo (`gripper_open`), nunca el límite de 35 mm, y la
+    orden de la pinza tiene rampa (`gripper_rate` 1.5 mm/paso).
+14. **Descenso planificado y verificado**: con orientación fija, la IK local paso a paso derivaba 3 cm en Y y empujaba
+    el cubo (reproducido también sin física). El experto ahora elige la orientación (eje de cierre perpendicular a
+    dos caras del cubo, inclinación 0–30°) solo si TODOS los waypoints del descenso se alcanzan (< 2 mm, < 3°).
+15. **Deriva en bloque de los dedos al levantar** (dato nuevo): cierre y apriete simétricos (contacto a 20 mm, error
+    de mimic 0.15 mm), pero al levantar j7 pasó de 20 a 5 mm y j8 de -20 a -35 mm con la apertura constante en 40 mm.
+    Con el mimic emulado (`1_sin_acoplamiento_mimic`) y con dos servos independientes (`2_dos_servos_sin_centrado`)
+    pasa lo mismo: dos servos de velocidad bloqueados quedan saturados a su esfuerzo y el equilibrio lateral es
+    neutro. DART informa además que no soporta la restricción mimic. Corrección SOLO de simulación:
+    `gripper_servo:=dual` (joint8 con servo propio, `mimic="false"` en `<ros2_control>`) + ley de centrado a 50 Hz
+    (`solverbot_rl/gripper.py`), que emula el acoplamiento rígido del motor único del Piper. Resultado
+    (`3_acoplamiento_centrado`): 5/5 semillas 40000–40004, cubo elevado 74–100 mm y sostenido, dedos simétricos
+    (|j7 + j8| < 2 mm).
+16. La cinemática y el modo del robot real no cambian: `gripper_servo` vale `mimic` por defecto y `dual` solo se usa con
+    `ros2_control:=gz` y los controladores RL.
+17. **Profundidad de agarre**: un error propio en el tiempo máximo del descenso (se acortaba al consumir waypoints)
+    cerraba la pinza ~2 cm por encima de lo planificado; la semilla 40017 llegó a soltar el cubo tras 1.7 s. Corregido
+    (prueba de regresión `test_descent_reaches_planned_depth_kinematic`): las puntas quedan 1–4 mm bajo el centro del
+    cubo y el deslizamiento al levantar es ≤ 0.1 mm.
+18. **Sincronización en subpasos de 20 ms**: con el mundo en pausa puede no llegar ninguna muestra de `/joint_states`
+    nueva en 20 ms simulados. Los subpasos del acoplamiento esperan solo al reloj; al final del paso completo se
+    espera (acotado) una muestra < 40 ms y los retrasos se cuentan en `info['stale_joint_states_total']`.
+19. **Señales**: `rclpy.init()` instala por defecto manejadores de SIGINT/SIGTERM que apagan el contexto ROS a mitad de
+    una llamada de servicio; el backend lo inicializa sin ellos y la parada limpia la gestiona `train.py`.
+
+**Resultado final** (código del commit de esta rama, `4_final_20_semillas/`): 20/20 semillas 40000–40019, nivel pick
+(desde la pose inicial), cubo ±5 cm en XY y yaw entre −16° y +13°: elevación máxima 84–100 mm (mediana 100), ≥ 4.5 s
+sostenido sobre 30 mm, |j7 + j8| ≤ 2.0 mm, deriva del cubo antes del cierre ≤ 1.24 mm, apertura al sostener 19–21 mm
+por dedo, sin colisiones ni caídas. Alcance: un solo objeto (cubo de 4 cm), una mesa y la física de DART; no cubre
+otros objetos, fricciones ni la pinza real.

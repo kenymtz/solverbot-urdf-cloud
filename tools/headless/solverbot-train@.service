@@ -1,0 +1,20 @@
+# Unidad systemd de USUARIO (reanuda el entrenamiento tras un reinicio; train.py continúa desde latest.zip).
+#   mkdir -p ~/.config/systemd/user && cp tools/headless/solverbot-train@.service ~/.config/systemd/user/
+#   editar ExecStart (ruta del repo, run, pasos) ; systemctl --user daemon-reload
+#   systemctl --user enable --now solverbot-train@0     # instancia 0
+#   loginctl enable-linger $USER                        # que arranque sin sesión abierta
+#   journalctl --user -u solverbot-train@0 -f           # logs ; systemctl --user stop solverbot-train@0
+[Unit]
+Description=SolverBot RL headless (instancia %i) - solo simulacion
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/solverbot-urdf-cloud/tools/headless/run_experiment.sh %i train sac_gz_%i --algo sac --steps 300000 --checkpoint-every 5000
+KillSignal=SIGTERM
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target

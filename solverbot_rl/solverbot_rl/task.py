@@ -30,6 +30,8 @@ class TaskState:
     arm_points: np.ndarray            # (N,3) puntos del brazo/pinza para el chequeo de colisión con la mesa
     joints_at_limit: int = 0
     obj_vel: float = 0.0              # |v| del objeto (m/s)
+    gripper_target: float = 0.0       # objetivo de joint7 enviado en este paso (m)
+    gripper_q8: float | None = None   # joint8 medido (debería ser -joint7)
 
 
 @dataclass
@@ -56,6 +58,7 @@ class TaskParams:
     release_clearance: float = 0.05
     drop_height_margin: float = 0.05
     no_progress_steps: int = 40
+    block_margin: float = 0.003
     w: dict = field(default_factory=dict)
 
     @classmethod
@@ -70,7 +73,8 @@ class TaskParams:
                    pregrasp_height=tk['pregrasp_height'], grasp_radius=tk['grasp_radius'],
                    lift_height=tk['lift_height'], place_tolerance=tk['place_tolerance'],
                    release_clearance=tk['release_clearance'], drop_height_margin=tk['drop_height_margin'],
-                   no_progress_steps=tk['no_progress_steps'], w=dict(cfg['reward']))
+                   no_progress_steps=tk['no_progress_steps'],
+                   block_margin=cfg['robot'].get('gripper_block_margin', 0.003), w=dict(cfg['reward']))
 
 
 # ------------------------------------------------------------------------------------------- predicados
@@ -83,12 +87,18 @@ def lift_amount(s: TaskState, p: TaskParams) -> float:
 
 
 def fingers_blocked_by_object(s: TaskState, p: TaskParams) -> bool:
-    """Evidencia física de agarre: se ordenó cerrar pero los dedos NO llegaron a cerrarse del todo (algo los
-    detiene) y el objeto está junto al TCP. No se exige apertura = media anchura: en Gazebo el objeto puede rotar
-    dentro de la pinza (agarre por la arista) y la apertura bajar a ~7 mm manteniéndolo sujeto."""
+    """Evidencia física de agarre: con orden de cierre, los dedos quedaron DETENIDOS por encima del objetivo
+    ordenado (algo los frena), no cerrados del todo, y el objeto está junto al TCP. En Gazebo el cubo puede rotar
+    dentro de la pinza (agarre por la arista) y la apertura bajar a ~7 mm manteniéndolo sujeto, por eso no se exige
+    apertura = media anchura. Sin objeto los dedos siguen al objetivo (A/B del informe WSL) y esto no se cumple."""
     near = np.linalg.norm(s.tcp_pos - s.obj_pos) < p.grasp_radius
-    blocked = 0.003 < s.gripper_q < p.obj_half_width + 0.008
-    return bool(s.gripper_cmd_closed and near and blocked)
+    stopped = s.gripper_q > 0.003 and s.gripper_q - s.gripper_target > p.block_margin
+    return bool(s.gripper_cmd_closed and near and stopped and s.gripper_q < p.obj_half_width + 0.008)
+
+
+def mimic_error(s: TaskState) -> float:
+    """|joint7 + joint8| medido (0 = dedos sincronizados)."""
+    return 0.0 if s.gripper_q8 is None else abs(s.gripper_q + s.gripper_q8)
 
 
 def is_held(s: TaskState, p: TaskParams) -> bool:

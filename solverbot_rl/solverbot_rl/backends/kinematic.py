@@ -43,6 +43,7 @@ class KinematicBackend(Backend):
         self.g_cmd = float(gripper)
         self.fixed = {'torso_lift_joint': lift, **head}
         self.obj = np.array([obj_xy[0], obj_xy[1], self.table_h + self.obj_size[2] / 2])
+        self.obj_yaw = float(obj_yaw)
         self.attached: np.ndarray | None = None
         self._last_est = self.obj.copy()
 
@@ -93,6 +94,9 @@ class KinematicBackend(Backend):
 
     def object_pose_truth(self):
         return self.obj.copy()
+
+    def object_yaw_truth(self):
+        return self.obj_yaw
 
     def object_estimate(self):
         """Detector SIMULADO: verdad + ruido gaussiano + pérdidas de detección. Sustituto del pipeline de

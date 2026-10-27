@@ -62,7 +62,9 @@ def launch_setup(context):
         os.path.join(robot_share, 'config', 'ros2_controllers.yaml')
     description = ParameterValue(Command([
         'xacro ', os.path.join(robot_share, 'urdf', 'robot_v3.urdf.xacro'), ' ros2_control:=gz',
-        ' camera_profile:=', a['camera_profile'], ' controllers:=', controllers_yaml]), value_type=str)
+        ' camera_profile:=', a['camera_profile'], ' controllers:=', controllers_yaml,
+        # controladores RL: dedos con servo propio y orden espejada (ver ros2_control.xacro); trajectory: mimic
+        ' gripper_servo:=', 'dual' if a['controllers'] == 'rl' else 'mimic']), value_type=str)
 
     gz_args = '-r ' + ('-s ' if a['headless'] == 'true' else '') + \
         ('--headless-rendering ' if a['egl'] == 'true' else '') + world_file

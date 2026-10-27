@@ -77,7 +77,7 @@ class SolverBotPickPlaceEnv(gym.Env):
         self._prev_obj = obj
         return T.TaskState(tcp_pos=tcp[:3, 3], tcp_z=tcp[:3, 2], obj_pos=obj, gripper_q=float(js.get('joint7', 0.0)),
                            gripper_cmd_closed=self._grip_closed, arm_points=pts, joints_at_limit=self._at_limit,
-                           obj_vel=vel)
+                           obj_vel=vel, gripper_target=self._g_cmd, gripper_q8=js.get('joint8'))
 
     def _object_obs(self):
         if self.object_source == 'privileged':
@@ -96,7 +96,7 @@ class SolverBotPickPlaceEnv(gym.Env):
         goal = np.zeros(len(T.GOALS))
         goal[T.GOALS.index(self.params.goal)] = 1.0
         target = np.array([*self.params.target_xy, self.params.table_height + self.params.obj_half_height])
-        state = np.concatenate([qn, [s.gripper_q / 0.035 * 2 - 1], s.tcp_pos, s.tcp_z,
+        state = np.concatenate([qn, [s.gripper_q / self.cfg['robot']['gripper_open'] * 2 - 1], s.tcp_pos, s.tcp_z,
                                 (self._obj_est - s.tcp_pos) if self._obj_est is not None else np.zeros(3), [float(valid)],
                                 target - s.tcp_pos, self._prev_action, goal]).astype(np.float32)
         if not self.image_keys:
@@ -141,6 +141,7 @@ class SolverBotPickPlaceEnv(gym.Env):
         js = self._joints()
         self._q_cmd = np.array([js[j] for j in self.arm_joints])
         self._grip_closed = False
+        self._g_cmd = float(r['gripper_open'])
         self._at_limit = 0
         self._prev_action = np.zeros(7, np.float32)
         self._prev_obj = None
@@ -159,9 +160,15 @@ class SolverBotPickPlaceEnv(gym.Env):
         target = self._q_cmd + a[:6] * self.delta
         self._at_limit = int(np.sum((target <= self.lo + 1e-4) | (target >= self.hi - 1e-4)))
         self._q_cmd = np.clip(target, self.lo, self.hi)
-        self._grip_closed = bool(a[6] > 0)
+        # Pinza: a[6] = -1 -> abierta (precierre gripper_open), +1 -> cerrada. El objetivo se mueve con rampa
+        # limitada (gripper_rate) para un cierre gradual y simétrico; nunca se ordena el límite físico de 35 mm.
         r = self.cfg['robot']
-        self.backend.command(self._q_cmd, r['gripper_closed'] if self._grip_closed else r['gripper_open'])
+        g_open, g_closed = r['gripper_open'], r['gripper_closed']
+        g_req = g_closed + (g_open - g_closed) * (1.0 - float(a[6])) / 2.0
+        rate = r.get('gripper_rate', g_open)
+        self._g_cmd = float(np.clip(self._g_cmd + np.clip(g_req - self._g_cmd, -rate, rate), g_closed, g_open))
+        self._grip_closed = bool(a[6] > 0)
+        self.backend.command(self._q_cmd, self._g_cmd)
         self.backend.advance(self.dt)
         prev = self._state
         self._state = self._task_state(self._joints())
@@ -176,7 +183,9 @@ class SolverBotPickPlaceEnv(gym.Env):
         info = {'is_success': bool(terms['success']), 'terms': terms, 'level': self.level,
                 'goal': self.params.goal, 'object_source': self.object_source,
                 'grasped': self.flags.grasped_once, 'lifted': self.flags.lifted_once,
-                'stale_images': getattr(self.backend, 'stale_images', 0)}
+                'gripper_target': self._g_cmd, 'mimic_error': T.mimic_error(self._state),
+                'stale_images': getattr(self.backend, 'stale_images', 0),
+                'stale_joint_states_total': getattr(self.backend, 'stale_joint_states', 0)}
         if terminated or truncated:
             info['episode_summary'] = {'return': self.ep_return, 'length': self.steps, 'success': info['is_success'],
                                        'level': self.level, 'goal': self.params.goal, 'stalled': stalled,
