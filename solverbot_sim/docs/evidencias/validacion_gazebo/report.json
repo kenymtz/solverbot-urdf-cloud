@@ -1,0 +1,71 @@
+{
+ "joints_present": {
+  "pass": true,
+  "missing": []
+ },
+ "arm_reaches_home": {
+  "pass": true,
+  "err": 0.0006868060855502733
+ },
+ "lift_tracks": {
+  "pass": true,
+  "lift": -4.6891054253424775e-09
+ },
+ "gripper_mimic_open": {
+  "pass": true,
+  "joint7": 0.0349966783116448,
+  "joint8": -0.034996285893310615
+ },
+ "camera_head_image": {
+  "pass": true,
+  "shape": [
+   480,
+   640,
+   3
+  ]
+ },
+ "camera_wrist_image": {
+  "pass": true,
+  "shape": [
+   480,
+   640,
+   3
+  ]
+ },
+ "perception_wrist_camera": {
+  "pass": true,
+  "truth": [
+   0.22,
+   0.56,
+   0.7621
+  ],
+  "estimate": [
+   0.2219,
+   0.5624,
+   0.76
+  ]
+ },
+ "head_camera_follows_pan_tilt": {
+  "pass": true,
+  "pan": 0.00018103836615511608
+ },
+ "grasp_fingers_blocked_by_object": {
+  "pass": true,
+  "joint7": 0.02327519452678393,
+  "joint8": -0.024981141078335864,
+  "ik_err": 0.0019453352606995016
+ },
+ "gripper_mimic_closed": {
+  "pass": true
+ },
+ "physical_grasp_lift_hold": {
+  "pass": true,
+  "object_rise": 0.10285337147333729,
+  "obj_tcp_dist": 0.014542688091575497,
+  "joint7_holding": 0.0235702907633191
+ },
+ "wrist_camera_follows_arm": {
+  "pass": true
+ },
+ "all_pass": true
+}

@@ -1,0 +1,12 @@
+# Puente Gazebo Harmonic <-> ROS 2 Jazzy (sensores). Los servicios/tópicos que dependen del nombre del mundo
+# (control, set_pose, pose/info) los agrega launch/sim.launch.py.
+- {ros_topic_name: /clock, gz_topic_name: /clock, ros_type_name: rosgraph_msgs/msg/Clock, gz_type_name: gz.msgs.Clock, direction: GZ_TO_ROS}
+# Cámara de cabeza (D435 simulada): mismos nombres que el driver real de la Jetson
+- {ros_topic_name: /camera/camera/color/image_raw, gz_topic_name: /camera/rgbd/image, ros_type_name: sensor_msgs/msg/Image, gz_type_name: gz.msgs.Image, direction: GZ_TO_ROS}
+- {ros_topic_name: /camera/camera/color/camera_info, gz_topic_name: /camera/rgbd/camera_info, ros_type_name: sensor_msgs/msg/CameraInfo, gz_type_name: gz.msgs.CameraInfo, direction: GZ_TO_ROS}
+- {ros_topic_name: /camera/camera/aligned_depth_to_color/image_raw, gz_topic_name: /camera/rgbd/depth_image, ros_type_name: sensor_msgs/msg/Image, gz_type_name: gz.msgs.Image, direction: GZ_TO_ROS}
+- {ros_topic_name: /camera/camera/depth/color/points, gz_topic_name: /camera/rgbd/points, ros_type_name: sensor_msgs/msg/PointCloud2, gz_type_name: gz.msgs.PointCloudPacked, direction: GZ_TO_ROS}
+# Cámara próxima a la pinza (módulo VIRTUAL)
+- {ros_topic_name: /wrist_camera/image_raw, gz_topic_name: /wrist_camera/image, ros_type_name: sensor_msgs/msg/Image, gz_type_name: gz.msgs.Image, direction: GZ_TO_ROS}
+- {ros_topic_name: /wrist_camera/camera_info, gz_topic_name: /wrist_camera/camera_info, ros_type_name: sensor_msgs/msg/CameraInfo, gz_type_name: gz.msgs.CameraInfo, direction: GZ_TO_ROS}
+- {ros_topic_name: /scan, gz_topic_name: /scan, ros_type_name: sensor_msgs/msg/LaserScan, gz_type_name: gz.msgs.LaserScan, direction: GZ_TO_ROS}

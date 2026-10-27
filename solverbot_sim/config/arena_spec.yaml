@@ -1,0 +1,87 @@
+# =====================================================================================
+#  Especificación de la arena doméstica (Gazebo Harmonic). Fuente: docs/referencias_desafios/10, 11 y 12.
+#  NINGUNA medida de este archivo es oficial salvo la puerta de referencia (2.00 x 0.70 m, imagen 05).
+#
+#  Método (ver solverbot_sim/docs/ARENA_SPEC.md):
+#    * Posiciones y tamaños en planta medidos en píxeles sobre el plano 10 (casa: x 500-870 px, y 125-492 px).
+#    * Escala DERIVADA: los vanos de puerta del plano miden ~35 px y se asumen de 0.70 m -> 0.02 m/px.
+#      Casa resultante: 7.40 x 7.34 m (exterior).
+#    * Alturas: NO figuran en los planos. Mesas 0.74 m = altura medida en el escaneo v2 del laboratorio
+#      (robot_v3 worlds/robot_v3_test.sdf); el resto son valores típicos de mobiliario, marcados "supuesto".
+#  Frame del mundo: origen en la esquina exterior inferior-izquierda del plano, X hacia la derecha del plano,
+#  Y hacia arriba del plano, Z arriba. px -> X = (px - 500) * 0.02 ; py -> Y = (492 - py) * 0.02
+# =====================================================================================
+
+scale_m_per_px: 0.02
+house:
+  size: [7.40, 7.34]
+  wall_thickness: 0.16          # ~8 px
+  wall_height: 2.10             # supuesto: >= puerta de referencia (2.00 m)
+  door_width: 0.70              # oficial (imagen 05)
+  door_height: 2.00             # oficial (imagen 05)
+  interior_wall_x: 3.66         # pared vertical interior (683 px)
+  interior_wall_y: 4.24         # pared horizontal interior (280 px)
+
+# Vanos (sin hoja de puerta): pared + centro sobre la pared (m) + ancho
+openings:
+  - {name: entrance_living, wall: west,       center: 2.59, width: 0.70}   # puerta de entrada (HRI/GPSR/P&P)
+  - {name: door_laundry,    wall: west,       center: 6.14, width: 0.70}
+  - {name: laundry_bedroom, wall: interior_x, center: 6.59, width: 0.70}
+  - {name: laundry_living,  wall: interior_y, center: 2.45, width: 0.70}
+  - {name: bedroom_kitchen, wall: interior_y, center: 6.35, width: 0.70}
+  - {name: living_kitchen,  wall: interior_x, center: 2.25, width: 0.70}
+
+rooms:
+  laundry:     {min: [0.08, 4.32], max: [3.58, 7.26], floor_rgb: [0.93, 0.85, 0.72]}
+  bedroom:     {min: [3.74, 4.32], max: [7.32, 7.26], floor_rgb: [0.90, 0.84, 0.74]}
+  living_room: {min: [0.08, 0.08], max: [3.58, 4.16], floor_rgb: [0.92, 0.86, 0.73]}
+  kitchen:     {min: [3.74, 0.08], max: [7.32, 4.16], floor_rgb: [0.88, 0.86, 0.80]}
+
+# Mobiliario: id = numeración del plano 10; placeable = marcado con (*) en el plano 10.
+# xy = centro (m), size = [x, y, z] (m), yaw (rad). kind = forma compuesta usada por el generador.
+furniture:
+  - {id: 1,  name: laundry_table,    room: laundry,     kind: table,        xy: [1.15, 6.96], size: [0.90, 0.56, 0.74], placeable: true}
+  - {id: 2,  name: washing_machine,  room: laundry,     kind: washer,       xy: [2.37, 6.96], size: [0.60, 0.60, 0.85], placeable: true}   # altura supuesto
+  - {id: 3,  name: shelf,            room: laundry,     kind: shelf,        xy: [0.80, 4.47], size: [1.00, 0.30, 1.20], placeable: true}   # altura supuesto
+  - {id: 4,  name: laundry_trash_bin, room: laundry,    kind: bin,          xy: [1.66, 4.50], size: [0.30, 0.30, 0.45]}
+  - {id: 5,  name: bed,              room: bedroom,     kind: bed,          xy: [4.60, 4.74], size: [1.56, 0.84, 0.50], placeable: true}   # planta medida; altura supuesto
+  - {id: 17, name: bedside_table,    room: bedroom,     kind: cabinet_low,  xy: [3.95, 5.46], size: [0.40, 0.40, 0.55], placeable: true}
+  - {id: 18, name: coat_rack,        room: bedroom,     kind: coat_rack,    xy: [6.90, 6.94], size: [0.40, 0.40, 1.75]}
+  - {id: 6,  name: tv_stand,         room: living_room, kind: tv_stand,     xy: [1.13, 4.00], size: [0.94, 0.30, 0.50], placeable: true}
+  - {id: 7,  name: sofa,             room: living_room, kind: sofa,         xy: [1.80, 0.48], size: [1.68, 0.80, 0.85], placeable: true}   # respaldo hacia -Y
+  - {id: 8,  name: coffee_table,     room: living_room, kind: table,        xy: [3.15, 0.40], size: [0.45, 0.45, 0.45], placeable: true}
+  - {id: 9,  name: cabinet,          room: kitchen,     kind: cabinet_open, xy: [3.89, 3.48], size: [0.30, 0.80, 1.20], placeable: true}   # altura supuesto
+  - {id: 10, name: refrigerator,     room: kitchen,     kind: fridge,       xy: [7.02, 3.48], size: [0.60, 0.70, 1.80]}
+  - {id: 15, name: kitchen_trash_bin, room: kitchen,    kind: bin,          xy: [6.96, 2.88], size: [0.30, 0.30, 0.45]}
+  - {id: 16, name: dinner_table,     room: kitchen,     kind: round_table,  xy: [5.56, 2.18], size: [1.10, 1.10, 0.74], placeable: true}
+  - {id: 11, name: counter,          room: kitchen,     kind: counter,      xy: [4.20, 0.38], size: [0.72, 0.60, 0.90], placeable: true}
+  - {id: 12, name: sink,             room: kitchen,     kind: sink,         xy: [4.76, 0.38], size: [0.40, 0.60, 0.90]}
+  - {id: 13, name: cooking_table,    room: kitchen,     kind: stove,        xy: [5.23, 0.38], size: [0.54, 0.60, 0.90], placeable: true}
+  - {id: 14, name: dishwasher,       room: kitchen,     kind: dishwasher,   xy: [6.20, 0.38], size: [0.60, 0.60, 0.85], placeable: true}
+
+# Objetos de prueba (primitivas con dimensiones TÍPICAS del objeto de las imágenes 06-09, supuestas).
+# Ubicación inicial por categoría según el plano 11. mass en kg (supuesto).
+objects:
+  - {name: red_plate,    category: dishes,   shape: cylinder, size: [0.22, 0.22, 0.02], mass: 0.30, rgb: [0.65, 0.10, 0.10], place_on: dishwasher, xy_off: [-0.10, 0.0]}
+  - {name: red_bowl,     category: dishes,   shape: cylinder, size: [0.15, 0.15, 0.06], mass: 0.20, rgb: [0.60, 0.08, 0.08], place_on: dishwasher, xy_off: [0.15, 0.10]}
+  - {name: red_mug,      category: dishes,   shape: cylinder, size: [0.08, 0.08, 0.09], mass: 0.20, rgb: [0.55, 0.08, 0.08], place_on: dinner_table, xy_off: [-0.25, 0.15]}
+  - {name: fork,         category: dishes,   shape: box,      size: [0.19, 0.025, 0.015], mass: 0.04, rgb: [0.70, 0.12, 0.12], place_on: dinner_table, xy_off: [0.10, -0.25]}
+  - {name: sponge,       category: cleaning, shape: box,      size: [0.11, 0.07, 0.04], mass: 0.02, rgb: [0.95, 0.85, 0.20], place_on: sink, xy_off: [0.0, 0.0]}
+  - {name: soft_scrub,   category: cleaning, shape: cylinder, size: [0.07, 0.07, 0.20], mass: 0.30, rgb: [0.95, 0.95, 0.95], place_on: cooking_table, xy_off: [0.10, 0.05]}
+  - {name: orange,       category: fruits,   shape: sphere,   size: [0.075, 0.075, 0.075], mass: 0.15, rgb: [1.0, 0.55, 0.05], place_on: dinner_table, xy_off: [0.0, 0.0]}
+  - {name: apple,        category: fruits,   shape: sphere,   size: [0.07, 0.07, 0.07], mass: 0.15, rgb: [0.80, 0.05, 0.05], place_on: dinner_table, xy_off: [0.20, 0.10]}
+  - {name: cola_can,     category: drinks,   shape: cylinder, size: [0.066, 0.066, 0.12], mass: 0.35, rgb: [0.85, 0.05, 0.05], place_on: cabinet, xy_off: [0.0, -0.2]}
+  - {name: milk_bottle,  category: drinks,   shape: cylinder, size: [0.08, 0.08, 0.16], mass: 0.40, rgb: [0.95, 0.95, 0.98], place_on: cabinet, xy_off: [0.0, 0.2]}
+  - {name: jello_box,    category: snacks,   shape: box,      size: [0.09, 0.03, 0.07], mass: 0.10, rgb: [0.85, 0.10, 0.15], place_on: shelf, xy_off: [-0.3, 0.0]}
+  - {name: pringles,     category: snacks,   shape: cylinder, size: [0.075, 0.075, 0.23], mass: 0.20, rgb: [0.75, 0.10, 0.10], place_on: shelf, xy_off: [0.2, 0.0]}
+  - {name: spam_can,     category: foods,    shape: box,      size: [0.10, 0.06, 0.08], mass: 0.34, rgb: [0.20, 0.30, 0.70], place_on: coffee_table, xy_off: [0.0, 0.0]}
+  - {name: tshirt,       category: fabrics,  shape: box,      size: [0.30, 0.25, 0.03], mass: 0.15, rgb: [0.20, 0.45, 0.80], place_on: laundry_table, xy_off: [0.0, 0.0]}
+  - {name: rubiks_cube,  category: toys,     shape: box,      size: [0.057, 0.057, 0.057], mass: 0.09, rgb: [0.20, 0.70, 0.25], place_on: bed, xy_off: [0.3, 0.0]}
+  - {name: tennis_ball,  category: toys,     shape: sphere,   size: [0.067, 0.067, 0.067], mass: 0.06, rgb: [0.85, 0.95, 0.20], place_on: bed, xy_off: [-0.2, 0.1]}
+
+# Ubicaciones de inicio de los desafíos (imagen 12): fuera de la arena, frente a la puerta de entrada.
+start_locations:
+  outside_entrance: {xy: [-0.60, 2.59], yaw: 0.0}
+  # Demo de Pick and Place: robot en la cocina con la mesa del comedor a su IZQUIERDA (el Piper va montado
+  # en el costado izquierdo de la base, eje del brazo hacia +Y del robot).
+  pick_place_demo: {xy: [5.10, 1.30], yaw: 0.0}

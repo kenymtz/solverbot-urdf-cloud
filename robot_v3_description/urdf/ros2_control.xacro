@@ -4,6 +4,7 @@
   los Dynamixel ni el hoverboard.
     mode = mock   -> mock_components/GenericSystem: el estado sigue al comando (sin física).
     mode = gazebo -> ign_ros2_control/IgnitionSystem (Ignition Gazebo Fortress, ROS 2 Humble).
+    mode = gz     -> gz_ros2_control/GazeboSimSystem (Gazebo Harmonic, ROS 2 Jazzy).
   El hardware real se integra por /joint_states (launch/real_state.launch.py), no por este archivo.
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -25,12 +26,15 @@
         <xacro:if value="${mode == 'gazebo'}">
           <plugin>ign_ros2_control/IgnitionSystem</plugin>
         </xacro:if>
+        <xacro:if value="${mode == 'gz'}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
       </hardware>
 
       <!-- Ruedas: en Gazebo las mueve diff_drive_controller; en mock solo publican estado (0) -->
       <xacro:macro name="wheel" params="side">
         <joint name="${side}_wheel_joint">
-          <xacro:if value="${mode == 'gazebo'}"><command_interface name="velocity"/></xacro:if>
+          <xacro:if value="${mode in ['gazebo', 'gz']}"><command_interface name="velocity"/></xacro:if>
           <state_interface name="position"/>
           <state_interface name="velocity"/>
         </joint>
