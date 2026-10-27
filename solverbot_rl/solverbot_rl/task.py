@@ -83,10 +83,11 @@ def lift_amount(s: TaskState, p: TaskParams) -> float:
 
 
 def fingers_blocked_by_object(s: TaskState, p: TaskParams) -> bool:
-    """Evidencia física de agarre: se ordenó cerrar pero los dedos quedaron detenidos por el objeto
-    (apertura ~ media anchura del objeto), con el objeto entre los dedos."""
+    """Evidencia física de agarre: se ordenó cerrar pero los dedos NO llegaron a cerrarse del todo (algo los
+    detiene) y el objeto está junto al TCP. No se exige apertura = media anchura: en Gazebo el objeto puede rotar
+    dentro de la pinza (agarre por la arista) y la apertura bajar a ~7 mm manteniéndolo sujeto."""
     near = np.linalg.norm(s.tcp_pos - s.obj_pos) < p.grasp_radius
-    blocked = abs(s.gripper_q - p.obj_half_width) < 0.008 and s.gripper_q > 0.004
+    blocked = 0.003 < s.gripper_q < p.obj_half_width + 0.008
     return bool(s.gripper_cmd_closed and near and blocked)
 
 

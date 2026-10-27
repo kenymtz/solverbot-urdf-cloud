@@ -190,10 +190,12 @@ class GazeboBackend(Backend):
         req.world_control.pause = True
         req.world_control.multi_step = max(1, int(round(dt / self.physics_step)))
         t_goal = self._clock + dt - 0.5 * self.physics_step
+        js_goal = self._js_t + 0.5 * dt
         time.sleep(0.003)                       # deja salir los comandos publicados antes de avanzar
         self._call(self.cli_ctrl, req)
-        # joint_state_broadcaster publica en ciclos de control (100 Hz): puede ir hasta ~3 ciclos detrás de /clock
-        self._wait(lambda: self._clock >= t_goal and self._js_t >= t_goal - 0.035, 'avance del tiempo simulado')
+        # joint_state_broadcaster publica en ciclos de control y puede ir algunos ciclos detrás de /clock: se exige un
+        # estado articular NUEVO (posterior al paso), no una tolerancia absoluta respecto del reloj
+        self._wait(lambda: self._clock >= t_goal and self._js_t >= js_goal, 'avance del tiempo simulado')
         # Imágenes: con render por CPU, Gazebo puede saltear cuadros. Se espera un cuadro reciente un tiempo acotado
         # y, si no llega, se usa el último y se cuenta como imagen vieja (info['stale_images'] en el entorno).
         self.stale_images = 0
@@ -223,7 +225,12 @@ class GazeboBackend(Backend):
 
     def reset(self, rng, obj_xy, obj_yaw, arm_q, gripper, lift, head):
         # Se lleva el robot a la pose inicial con sus controladores (sin teletransportar articulaciones) y
-        # luego se reubica el objeto: el estado del episodio anterior no se arrastra.
+        # luego se reubica el objeto: el estado del episodio anterior no se arrastra. Si la base derivó (>1 cm o >1°)
+        # se la devuelve a su pose de aparición (el mundo de entrenamiento la crea en el origen).
+        b = self._base()
+        if np.linalg.norm(b[:2, 3]) > 0.01 or abs(np.arctan2(b[1, 0], b[0, 0])) > np.radians(1):
+            self.set_pose('robot_v3', [0.0, 0.0, 0.01], 0.0)
+            self.advance(0.2)
         self.set_pose_in_base(self.obj_name, [obj_xy[0], -0.8, self.obj_half_h + 0.002], obj_yaw)   # al piso, lejos
         self._pub(self.pub_lift, [lift])
         self._pub(self.pub_head, [head['pan_joint'], head['tilt_joint']])
@@ -240,6 +247,10 @@ class GazeboBackend(Backend):
         self.set_pose_in_base(self.obj_name, [obj_xy[0], obj_xy[1], self.table_h + self.obj_half_h + 0.003], obj_yaw)
         self.advance(0.3)                       # el objeto se asienta sobre la mesa
         self._last_est = np.zeros(3)
+
+    def world_xy_to_base(self, xy):
+        b = self._base()
+        return (np.linalg.inv(b) @ np.array([xy[0], xy[1], 0.0, 1.0]))[:2]
 
     def joint_positions(self):
         with self._lock:
@@ -268,5 +279,7 @@ class GazeboBackend(Backend):
         return {k: v[1] for k, v in self._img.items() if k in self.want_images}
 
     def close(self):
-        self.exec.shutdown()
+        self.exec.shutdown(timeout_sec=2.0)
+        self._spin.join(timeout=2.0)
         self.node.destroy_node()
+        rclpy.try_shutdown()

@@ -1,0 +1,19 @@
+{
+ "episodes": 3,
+ "success_rate": 1.0,
+ "success_ci95": 3.5784540423670856e-05,
+ "mean_return": 16.640175379605513,
+ "std_return": 0.014639542041673205,
+ "mean_length": 36.666666666666664,
+ "grasp_rate": 1.0,
+ "lift_rate": 1.0,
+ "stalled_rate": 0.0,
+ "collision_rate": 0.0,
+ "drop_rate": 0.0,
+ "policy": "scripted",
+ "backend": "gazebo",
+ "level": 3,
+ "level_name": "lift",
+ "object_source": "perception",
+ "physical": true
+}

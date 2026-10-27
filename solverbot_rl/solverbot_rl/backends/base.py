@@ -37,6 +37,10 @@ class Backend(abc.ABC):
     def object_estimate(self) -> tuple[np.ndarray, bool]:
         """Posición estimada por percepción y si la detección es válida."""
 
+    def world_xy_to_base(self, xy) -> np.ndarray:
+        """Punto fijo del mundo (p. ej. la zona objetivo) en el frame de la base. Identidad si la base no se mueve."""
+        return np.asarray(xy, float)
+
     def images(self) -> dict[str, np.ndarray]:
         return {}
 

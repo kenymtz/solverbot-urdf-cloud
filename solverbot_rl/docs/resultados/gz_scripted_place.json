@@ -1,0 +1,19 @@
+{
+ "episodes": 2,
+ "success_rate": 0.5,
+ "success_ci95": 0.6929646455628166,
+ "mean_return": 6.239879886417046,
+ "std_return": 6.697325755140952,
+ "mean_length": 89.0,
+ "grasp_rate": 1.0,
+ "lift_rate": 0.5,
+ "stalled_rate": 0.5,
+ "collision_rate": 0.0,
+ "drop_rate": 0.0,
+ "policy": "scripted",
+ "backend": "gazebo",
+ "level": 5,
+ "level_name": "place",
+ "object_source": "perception",
+ "physical": true
+}

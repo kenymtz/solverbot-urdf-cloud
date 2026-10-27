@@ -4,7 +4,9 @@
     ros2 launch solverbot_sim sim.launch.py                                   # arena + GUI + ambas cámaras
     ros2 launch solverbot_sim sim.launch.py world:=pick_place_training        # mundo de entrenamiento
     ros2 launch solverbot_sim sim.launch.py world:=pick_place_training headless:=true cameras:=false \
-        camera_profile:=train paused:=true                                    # modo RL (lo usa solverbot_rl)
+        camera_profile:=train                                                 # modo RL (lo usa solverbot_rl)
+El mundo arranca corriendo (los spawners necesitan ciclos de control); el entorno RL lo pausa al conectarse y luego
+avanza el tiempo con /world/<mundo>/control (multi_step).
 
 Tópicos ROS: /camera/camera/color/image_raw, /camera/camera/aligned_depth_to_color/image_raw,
 /camera/camera/color/camera_info, /wrist_camera/image_raw, /wrist_camera/camera_info, /scan, /clock, /joint_states.
@@ -37,7 +39,7 @@ CONTROLLERS = {
 
 def launch_setup(context):
     a = {k: LaunchConfiguration(k).perform(context) for k in (
-        'world', 'headless', 'egl', 'paused', 'cameras', 'rviz', 'camera_profile', 'controllers', 'x', 'y', 'yaw',
+        'world', 'headless', 'egl', 'cameras', 'rviz', 'camera_profile', 'controllers', 'x', 'y', 'yaw',
         'allow_robot_domain', 'gz_partition')}
     domain = os.environ.get('ROS_DOMAIN_ID', '0')
     if domain == ROBOT_DOMAIN_ID and a['allow_robot_domain'] != 'true':
@@ -62,7 +64,7 @@ def launch_setup(context):
         'xacro ', os.path.join(robot_share, 'urdf', 'robot_v3.urdf.xacro'), ' ros2_control:=gz',
         ' camera_profile:=', a['camera_profile'], ' controllers:=', controllers_yaml]), value_type=str)
 
-    gz_args = ('' if a['paused'] == 'true' else '-r ') + ('-s ' if a['headless'] == 'true' else '') + \
+    gz_args = '-r ' + ('-s ' if a['headless'] == 'true' else '') + \
         ('--headless-rendering ' if a['egl'] == 'true' else '') + world_file
     resource = os.pathsep.join(p for p in (os.path.dirname(robot_share), os.environ.get('GZ_SIM_RESOURCE_PATH', '')) if p)
 
@@ -108,7 +110,7 @@ def launch_setup(context):
                                 arguments=[topic], parameters=[{'use_sim_time': True}]))
     if a['rviz'] == 'true':
         actions.append(Node(package='rviz2', executable='rviz2', output='log',
-                            arguments=['-d', os.path.join(sim_share, 'config', 'solverbot_sim.rviz')],
+                            arguments=['-d', os.path.join(robot_share, 'rviz', 'robot_v3.rviz')],
                             parameters=[{'use_sim_time': True}]))
     return actions
 
@@ -120,8 +122,6 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('egl', default_value='false', choices=['true', 'false'],
                               description='Render de sensores por EGL sin servidor X (--headless-rendering)'),
-        DeclareLaunchArgument('paused', default_value='false', choices=['true', 'false'],
-                              description='Arrancar en pausa (el entorno RL avanza el tiempo con /world/<w>/control)'),
         DeclareLaunchArgument('cameras', default_value='true', choices=['true', 'false'],
                               description='Abrir rqt_image_view para la cámara de cabeza y la de la pinza'),
         DeclareLaunchArgument('rviz', default_value='false', choices=['true', 'false']),

@@ -50,35 +50,38 @@ class KinematicBackend(Backend):
         self.q_cmd = np.clip(np.asarray(arm_q, float), self.lo, self.hi)
         self.g_cmd = float(np.clip(gripper, 0.0, 0.035))
 
-    def _tcp(self):
-        return self.chain.link_pose('tcp_link', self.joint_positions())[:3, 3]
+    def _local(self):
+        """Objeto en el frame de tcp_link (x: ancho del dedo, y: cierre, z: aproximación; dedos en z in [-0.076, 0])."""
+        t = self.chain.link_pose('tcp_link', self.joint_positions())
+        return t, t[:3, :3].T @ (self.obj - t[:3, 3])
 
     def advance(self, dt):
         half_w = min(self.obj_size[0], self.obj_size[1]) / 2
+        half_h = self.obj_size[2] / 2
         for _ in range(max(1, int(round(dt / self.dt_internal)))):
             step = np.clip(self.q_cmd - self.q, -self.vmax * self.dt_internal, self.vmax * self.dt_internal)
             self.q = self.q + step
-            tcp = self._tcp()
-            between = np.linalg.norm(tcp - self.obj) < self.grasp_radius
-            # pinza: se detiene contra el objeto si está entre los dedos
-            g_next = self.g + np.clip(self.g_cmd - self.g, -0.05 * self.dt_internal * 5, 0.05 * self.dt_internal * 5)
+            t, loc = self._local()
+            # entre los dedos: centrado en el ancho del dedo, dentro de la apertura y del largo de los dedos
+            between = abs(loc[0]) < 0.02 and abs(loc[1]) < self.g and -0.07 < loc[2] < half_h
+            g_next = self.g + np.clip(self.g_cmd - self.g, -0.025, 0.025)
             if (between or self.attached is not None) and g_next < half_w <= self.g + 1e-9:
-                g_next = half_w
+                g_next = half_w                     # los dedos se detienen contra el objeto
             self.g = g_next
             if self.attached is None and between and self.g_cmd < half_w and abs(self.g - half_w) < 1e-6:
-                self.attached = self.obj - tcp
+                self.attached = loc.copy()
             if self.attached is not None:
                 if self.g_cmd > half_w + 0.002:
                     self.attached = None
                     self._fall()
                 else:
-                    self.obj = tcp + self.attached
-            else:
-                # empuje burdo: el TCP bajo y pegado al objeto lo desplaza horizontalmente
-                d = self.obj[:2] - tcp[:2]
-                if np.linalg.norm(d) < 0.035 and abs(tcp[2] - self.obj[2]) < self.obj_size[2] / 2 + 0.01:
-                    self.obj[:2] = tcp[:2] + d / (np.linalg.norm(d) + 1e-9) * 0.035
-                    self._fall()
+                    self.obj = t[:3, :3] @ self.attached + t[:3, 3]
+            elif not between and abs(loc[0]) < 0.028 + half_w and -0.076 - half_h < loc[2] < half_h \
+                    and abs(loc[1]) < self.g + 0.012 + half_w:
+                # un dedo toca el objeto (fuera de la zona de captura): lo empuja lateralmente (modelo burdo)
+                push = np.sign(loc[1]) * (self.g + 0.012 + half_w) - loc[1]
+                self.obj = self.obj + t[:3, 1] * push * np.array([1, 1, 0])
+                self._fall()
 
     def _fall(self):
         x0, x1, y0, y1 = self.table_rect
