@@ -20,6 +20,7 @@
     Solo con ros2_control:=gz (ver urdf/gazebo_harmonic.xacro):
     camera_profile demo | train          resolución/frecuencia de las cámaras simuladas (config/sim_cameras.yaml)
     controllers   ruta a un YAML de ros2_control (por defecto config/ros2_controllers.yaml)
+    gripper_servo mimic | dual            dual: joint8 con servo propio y orden espejada (solo simulación, ver ros2_control.xacro)
 -->
 <robot name="robot_v3" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
@@ -29,6 +30,7 @@
   <xacro:arg name="camera_frames" default="true"/>
   <xacro:arg name="wrist_camera" default="true"/>
   <xacro:arg name="camera_profile" default="demo"/>
+  <xacro:arg name="gripper_servo" default="mimic"/>
   <xacro:arg name="controllers" default="$(find robot_v3_description)/config/ros2_controllers.yaml"/>
 
   <xacro:property name="ros2_control_mode" value="$(arg ros2_control)"/>
@@ -60,7 +62,7 @@
 
   <xacro:if value="${ros2_control_mode != 'none'}">
     <xacro:include filename="$(find robot_v3_description)/urdf/ros2_control.xacro"/>
-    <xacro:robot_v3_ros2_control mode="${ros2_control_mode}"/>
+    <xacro:robot_v3_ros2_control mode="${ros2_control_mode}" gripper_servo="$(arg gripper_servo)"/>
   </xacro:if>
   <xacro:if value="${ros2_control_mode == 'gazebo'}">
     <xacro:include filename="$(find robot_v3_description)/urdf/gazebo.xacro"/>

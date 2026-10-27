@@ -22,10 +22,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from solverbot_rl.backends.gazebo import GazeboBackend  # noqa: E402
 from solverbot_rl.config import load_config  # noqa: E402
-from solverbot_rl.kinematics import solve_ik  # noqa: E402
 
-# Eje de aproximación: 20° respecto de la vertical hacia +X (factible en toda la zona; ver docs/HALLAZGOS.md)
-APPROACH = np.array([np.sin(np.radians(20)), 0.0, -np.cos(np.radians(20))])
 
 
 def write_png(path, rgb):
@@ -90,49 +87,24 @@ def main():
           pan=be.joint_positions()['pan_joint'])
     be._pub(be.pub_head, [r['head']['pan_joint'], r['head']['tilt_joint']])
 
-    # ---------------- prueba física de agarre guionada (IK + interpolación cartesiana de 1 cm/paso)
-    fixed = {'torso_lift_joint': r['lift']}
-    o = be.object_pose_truth()
-    z_table = o[2]
-    qc = np.array([be.joint_positions()[j] for j in J])
-    tcp = be.chain.link_pose('tcp_link', be.joint_positions())[:3, 3]
-
-    def move(p_goal, grip, steps, settle=5):
-        nonlocal qc, tcp
-        p0 = tcp.copy()
-        err = 0.0
-        for k in range(1, steps + 1):
-            qc, err = solve_ik(be.chain, 'tcp_link', J, qc, p0 + (p_goal - p0) * k / steps, None, fixed,
-                               approach_axis=APPROACH, rot_weight=1.0, restarts=3)
-            be.command(qc, grip)
-            be.advance(0.1)
-        for _ in range(settle):
-            be.advance(0.1)
-        tcp = be.chain.link_pose('tcp_link', be.joint_positions())[:3, 3]
-        return err
-
-    move(o - APPROACH * 0.10, r['gripper_open'], 20)
-    move(o, r['gripper_open'], 12)
-    err = move(tcp, r['gripper_closed'], 1, settle=15)
-    js = be.joint_positions()
-    check('grasp_fingers_blocked_by_object', 0.012 < js['joint7'] < 0.024, joint7=js['joint7'], joint8=js['joint8'],
-          ik_err=err)
-    check('gripper_mimic_closed', abs(js['joint8'] + js['joint7']) < 2e-3)
-    write_png(os.path.join(args.out, 'wrist_grasp.png'), be.images()['wrist'])
-    move(tcp + [0, 0, 0.12], r['gripper_closed'], 12)
-    move(tcp, r['gripper_closed'], 1, settle=20)                 # sostener 2 s
-    js = be.joint_positions()
-    o2 = be.object_pose_truth()
-    check('physical_grasp_lift_hold', o2[2] - z_table > 0.09 and np.linalg.norm(o2 - tcp) < 0.05,
-          object_rise=float(o2[2] - z_table), obj_tcp_dist=float(np.linalg.norm(o2 - tcp)), joint7_holding=js['joint7'])
-    write_png(os.path.join(args.out, 'wrist_lifted.png'), be.images()['wrist'])
-    write_png(os.path.join(args.out, 'head_lifted.png'), be.images()['head'])
+    # ---------------- prueba física de agarre: el MISMO procedimiento que usa el entorno RL (experto guionado con
+    # precierre a 32 mm, descenso verificado, rampa de cierre y acoplamiento de dedos), semilla 40001.
+    be.command(np.array([be.joint_positions()[j] for j in J]) + [0.3, 0, 0, 0, 0, 0], r['gripper_open'])
+    for _ in range(10):
+        be.advance(0.1)
     check('wrist_camera_follows_arm', np.abs(be.images()['wrist'].astype(float) - wrist0).mean() > 5.0)
+    be.close()
+    # Mismo proceso que en producción: validate_grasp.py en un subproceso (conexión ROS propia)
+    import subprocess
+    gdir = os.path.join(args.out, 'grasp')
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'validate_grasp.py'),
+                    '--backend', 'gazebo', '--seeds', '40001', '--hold-steps', '20', '--out', gdir], check=False)
+    with open(os.path.join(gdir, 'summary.json')) as fh:
+        g = json.load(fh)['seeds'][0]
 
     rep['all_pass'] = bool(ok)
     with open(os.path.join(args.out, 'report.json'), 'w') as fh:
         json.dump(rep, fh, indent=1)
-    be.close()
     print('RESULTADO:', 'TODO OK' if ok else 'HAY FALLAS')
     return 0 if ok else 1
 

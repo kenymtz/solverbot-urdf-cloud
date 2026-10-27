@@ -68,6 +68,19 @@ source tools/wsl/sim_env.sh 1
 python3 solverbot_rl/scripts/validate_sim.py --out validacion/     # report.json + PNG; sale != 0 si algo falla
 ```
 
+### Validación física del agarre por semilla
+
+```bash
+python3 solverbot_rl/scripts/validate_grasp.py --backend gazebo --seeds 40000-40019 --hold-steps 40 --out runs/grasp_val
+```
+Criterio independiente de la recompensa: cubo ≥ 30 mm sobre su altura apoyada durante ≥ N pasos, a < 4 cm del TCP.
+`steps.csv` registra por paso q7/q8, error de mimic, objetivo de la pinza, TCP y cubo; `summary.json` da la tasa con
+denominador. Ejecución headless y entrenamiento autónomo en otra PC: [`tools/headless/README.md`](../tools/headless/README.md).
+
+**Pinza en simulación** (`config/pick_place.yaml`, sección `robot`): precierre a 32 mm (nunca el límite de 35 mm),
+rampa de cierre de 1.5 mm/paso, y con los controladores RL `gripper_servo:=dual` + acoplamiento emulado de los dedos
+(`solverbot_rl/gripper.py`). El modo del robot real y la cinemática no cambian. Ver `docs/HALLAZGOS.md` (13–19).
+
 ## 4. Entrenamiento y evaluación
 
 ```bash

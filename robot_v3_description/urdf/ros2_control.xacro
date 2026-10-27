@@ -17,7 +17,10 @@
     </joint>
   </xacro:macro>
 
-  <xacro:macro name="robot_v3_ros2_control" params="mode">
+  <xacro:macro name="robot_v3_ros2_control" params="mode gripper_servo:=mimic">
+    <xacro:if value="${gripper_servo not in ['mimic', 'dual'] or (gripper_servo == 'dual' and mode != 'gz')}">
+      ${xacro.fatal('gripper_servo: mimic | dual (dual solo con ros2_control:=gz); recibido ' + gripper_servo)}
+    </xacro:if>
     <ros2_control name="robot_v3_sim" type="system">
       <hardware>
         <xacro:if value="${mode == 'mock'}">
@@ -53,12 +56,25 @@
       <!-- joint8 = -1 · joint7 (mimic en el URDF). Sin interfaz de comando: la pinza tiene una sola orden lógica.
            Humble (ros2_control 2.x, mock e ign_ros2_control) toma la relación de estos parámetros;
            Jazzy (4.x) la toma del <mimic> del URDF. -->
-      <joint name="joint8">
-        <param name="mimic">joint7</param>
-        <param name="multiplier">-1</param>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
+      <xacro:unless value="${gripper_servo == 'dual'}">
+        <joint name="joint8">
+          <param name="mimic">joint7</param>
+          <param name="multiplier">-1</param>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+        </joint>
+      </xacro:unless>
+      <!-- SOLO SIMULACIÓN (gz): el mimic emulado por gz_ros2_control no ejerce fuerza propia en joint8 y, al apretar un
+           objeto, el par de dedos se desplaza en bloque hasta el tope de joint8 (Gazebo, 2026-10-27). En el Piper real
+           ambos dedos están acoplados rígidamente a un solo motor; se emula con un servo de posición por dedo que
+           recibe la MISMA orden espejada (la pinza sigue teniendo una sola orden lógica en el entorno). -->
+      <xacro:if value="${gripper_servo == 'dual'}">
+        <joint name="joint8" mimic="false">
+          <command_interface name="position"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+        </joint>
+      </xacro:if>
       <xacro:position_joint name="pan_joint"/>
       <xacro:position_joint name="tilt_joint"/>
     </ros2_control>

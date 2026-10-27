@@ -24,8 +24,9 @@ arm_position_controller:
 
 gripper_position_controller:
   ros__parameters:
-    # Una sola orden: joint7. joint8 es mimic (= -joint7) y no se comanda.
-    joints: [joint7]
+    # Una sola orden lógica (joint7). Con gripper_servo:=dual (el que usa este archivo) joint8 tiene servo propio y el
+    # backend envía la orden espejada [g, -g]; el entorno RL sigue exponiendo UNA acción de pinza.
+    joints: [joint7, joint8]
     interface_name: position
 
 lift_position_controller:
