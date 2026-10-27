@@ -3,7 +3,8 @@
 
 Publica en /joint_states lo mismo que piper_arm_controller.py (joint1..6 en rad, joint7 = +a/2, joint8 = -a/2)
 y, por separado, pan_joint/tilt_joint (como pan_tilt_node). Verifica que:
-  * /robot_v3/joint_states contenga las 13 articulaciones (elevador y ruedas completadas en 0);
+  * /robot_v3/joint_states contenga las 13 articulaciones (elevador y ruedas completadas en 0) y joint8 = -joint7
+    (joint8 es mimic en el URDF: la Jetson lo sigue publicando y coincide con lo que calcula el combinador);
   * la TF de tcp_link, link7/link8 y camera_link coincida con la cinemática del URDF para esos valores.
 Se niega a correr en ROS_DOMAIN_ID=10 (allí publicaría estados falsos junto a los reales).
 

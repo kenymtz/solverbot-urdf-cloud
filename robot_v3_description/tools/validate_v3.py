@@ -89,6 +89,9 @@ class Urdf:
                 'limit': None if lim is None else {k: float(lim.get(k)) for k in ('lower', 'upper', 'effort', 'velocity')
                                                    if lim.get(k) is not None},
                 'mimic': j.find('mimic') is not None,
+                'mimic_of': None if j.find('mimic') is None else (
+                    j.find('mimic').get('joint'), float(j.find('mimic').get('multiplier', 1.0)),
+                    float(j.find('mimic').get('offset', 0.0))),
             }
         self.child_joint = {j['child']: n for n, j in self.joints.items()}
         roots = [n for n in self.links if n not in self.child_joint]
@@ -107,13 +110,20 @@ class Urdf:
             t = t @ homog(np.asarray(j['axis'], float) / np.linalg.norm(j['axis']) * q)
         return t
 
+    def value(self, jn, q):
+        """Posición de jn: la de q, o la calculada con <mimic> a partir de su articulación principal."""
+        m = self.joints[jn]['mimic_of']
+        if m is not None and m[0] in q and jn not in q:
+            return m[1] * q[m[0]] + m[2]
+        return q.get(jn, 0.0)
+
     def pose(self, link, q=None):
-        """Pose de link en el marco raíz."""
+        """Pose de link en el marco raíz (las articulaciones mimic siguen a su principal)."""
         q = q or {}
         t = np.eye(4)
         while link in self.child_joint:
             jn = self.child_joint[link]
-            t = self.joint_transform(jn, q.get(jn, 0.0)) @ t
+            t = self.joint_transform(jn, self.value(jn, q)) @ t
             link = self.joints[jn]['parent']
         return t
 
@@ -252,7 +262,14 @@ def validate(pkg, rep, repo_root=None, v2_base='9401da9'):
     rep.check('joints que publica la Jetson existen y son móviles',
               all(u.joints[j]['type'] in ('revolute', 'prismatic') for j in JETSON_JOINT_STATES))
     movable = sorted(u.movable())
-    rep.check('articulaciones móviles', len(movable) == 13, ', '.join(movable))
+    rep.check('articulaciones independientes: 12 (la pinza cuenta como una)', len(movable) == 12, ', '.join(movable))
+    j8 = u.joints['joint8']
+    rep.check('pinza: joint8 es mimic de joint7 con multiplicador -1 y offset 0 (relación oficial de AgileX)',
+              j8['mimic_of'] == ('joint7', -1.0, 0.0) and not u.joints['joint7']['mimic'],
+              str(j8['mimic_of']))
+    rep.check('pinza: límites de joint8 = espejo de los de joint7 (0..0.035 m -> -0.035..0)',
+              abs(j8['limit']['lower'] + u.joints['joint7']['limit']['upper']) < 1e-12
+              and abs(j8['limit']['upper'] + u.joints['joint7']['limit']['lower']) < 1e-12)
 
     # ---- 4. límites
     lj = u.joints['torso_lift_joint']
@@ -343,11 +360,19 @@ def validate(pkg, rep, repo_root=None, v2_base='9401da9'):
         ok &= abs(ang - 0.3) < 1e-9 and np.allclose(rel @ ax, ax, atol=1e-9)
         ok &= np.allclose(u.pose(u.joints[n]['parent'], q1), u.pose(u.joints[n]['parent']), atol=1e-12)
     rep.check('brazo: cada joint1..6 gira 0.3 rad sobre su eje sin mover a su padre', ok)
-    t7 = u.relative('gripper_base', 'link7', {'joint7': 0.035}) @ np.linalg.inv(u.relative('gripper_base', 'link7'))
-    t8 = u.relative('gripper_base', 'link8', {'joint8': -0.035}) @ np.linalg.inv(u.relative('gripper_base', 'link8'))
-    sep = np.linalg.norm(t7[:3, 3] - t8[:3, 3])
-    rep.check('pinza: joint7=+0.035 y joint8=-0.035 separan los dedos 70 mm en direcciones opuestas',
-              abs(sep - 0.07) < 1e-6, f'{sep * 1000:.2f} mm')
+    # Pinza cerrada, a mitad y abierta comandando SOLO joint7 (joint8 sale del <mimic>)
+    lim7 = u.joints['joint7']['limit']
+    for a in (lim7['lower'], (lim7['lower'] + lim7['upper']) / 2, lim7['upper']):
+        p7 = u.relative('gripper_base', 'link7', {'joint7': a})[:3, 3]
+        p8 = u.relative('gripper_base', 'link8', {'joint7': a})[:3, 3]
+        d7 = p7 - u.relative('gripper_base', 'link7')[:3, 3]
+        d8 = p8 - u.relative('gripper_base', 'link8')[:3, 3]
+        sep = np.linalg.norm(d7 - d8)
+        # tolerancia 1 µm: los rpy oficiales están redondeados (1.5707963, 3.1415926)
+        ok = (abs(sep - 2 * a) < 1e-6 and np.allclose(d7, -d8, atol=1e-6) and abs(np.linalg.norm(d7) - a) < 1e-6
+              and abs(d7[2]) < 1e-6)
+        rep.check(f'pinza con joint7={a * 1000:.1f} mm: ambos dedos se mueven {a * 1000:.1f} mm en sentidos opuestos, '
+                  f'simétricos respecto del eje', ok, f'separación {sep * 1000:.2f} mm')
     tcp = u.relative('link6', 'tcp_link')[:3, 3]
     rep.check('tcp_link a 0.1358 m sobre el eje de link6', np.allclose(tcp, [0, 0, 0.1358]))
 
@@ -467,13 +492,21 @@ def validate(pkg, rep, repo_root=None, v2_base='9401da9'):
         rc = r.find('ros2_control')
         plugin = rc.find('hardware/plugin').text.strip()
         jn = sorted(j.get('name') for j in rc.findall('joint'))
-        rep.check(f'ros2_control {mode}: todas las articulaciones móviles declaradas ({plugin})', jn == movable)
+        rep.check(f'ros2_control {mode}: todas las articulaciones móviles declaradas ({plugin})',
+                  jn == sorted(movable + ['joint8']))
+        j8rc = [j for j in rc.findall('joint') if j.get('name') == 'joint8'][0]
+        params = {p.get('name'): p.text for p in j8rc.findall('param')}
+        rep.check(f'ros2_control {mode}: joint8 sin interfaz de comando y declarado mimic de joint7 (-1)',
+                  not j8rc.findall('command_interface') and params.get('mimic') == 'joint7'
+                  and float(params.get('multiplier', 0)) == -1.0)
     ctrl = yaml.safe_load(open(os.path.join(pkg, 'config', 'ros2_controllers.yaml')))
     declared = set()
     for c in ('arm_controller', 'gripper_controller', 'lift_controller', 'head_controller'):
         declared |= set(ctrl[c]['ros__parameters']['joints'])
     rep.check('controladores de trayectoria cubren brazo, pinza, elevador y cabezal',
               declared == set(movable) - {'left_wheel_joint', 'right_wheel_joint'})
+    rep.check('gripper_controller comanda solo joint7 (una orden lógica; joint8 es mimic)',
+              ctrl['gripper_controller']['ros__parameters']['joints'] == ['joint7'])
     gz = models[('gazebo', 'column', 'official', 'true')]
     rep.check('Gazebo: plugin ign_ros2_control, cámara RGB-D y LiDAR presentes',
               'ign_ros2_control-system' in gz and 'rgbd_camera' in gz and 'gpu_lidar' in gz)

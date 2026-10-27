@@ -32,8 +32,8 @@ arm_controller:
 
 gripper_controller:
   ros__parameters:
-    # Dedos independientes, igual que el /joint_states de la Jetson (joint7 = +a/2, joint8 = -a/2)
-    joints: [joint7, joint8]
+    # Una sola orden lógica: joint7 (apertura de cada dedo, 0 a 0.035 m). joint8 es mimic (= -joint7) y no se comanda.
+    joints: [joint7]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
     allow_nonzero_velocity_at_trajectory_end: false

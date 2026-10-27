@@ -46,7 +46,15 @@
       <xacro:position_joint name="joint5"/>
       <xacro:position_joint name="joint6"/>
       <xacro:position_joint name="joint7"/>
-      <xacro:position_joint name="joint8"/>
+      <!-- joint8 = -1 · joint7 (mimic en el URDF). Sin interfaz de comando: la pinza tiene una sola orden lógica.
+           Humble (ros2_control 2.x, mock e ign_ros2_control) toma la relación de estos parámetros;
+           Jazzy (4.x) la toma del <mimic> del URDF. -->
+      <joint name="joint8">
+        <param name="mimic">joint7</param>
+        <param name="multiplier">-1</param>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
       <xacro:position_joint name="pan_joint"/>
       <xacro:position_joint name="tilt_joint"/>
     </ros2_control>

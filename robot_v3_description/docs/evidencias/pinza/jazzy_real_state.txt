@@ -1,0 +1,11 @@
+[OK] /robot_description recibido
+[OK] /robot_v3/joint_states combina brazo + pinza + pan/tilt de la "Jetson"
+[OK] elevador y ruedas completados por defecto (0) para que exista toda la TF
+[OK] TF de tcp_link = cinemática del URDF con los estados de la "Jetson" — 0.0000 mm
+[OK] TF de link7 = cinemática del URDF con los estados de la "Jetson" — 0.0000 mm
+[OK] TF de link8 = cinemática del URDF con los estados de la "Jetson" — 0.0000 mm
+[OK] TF de camera_link = cinemática del URDF con los estados de la "Jetson" — 0.0000 mm
+[OK] TF de mounting_cube_link = cinemática del URDF con los estados de la "Jetson" — 0.0000 mm
+[OK] camera_frames:=false: el URDF no publica los frames que publica el driver de la D435 — []
+
+9/9 chequeos de estados reales OK

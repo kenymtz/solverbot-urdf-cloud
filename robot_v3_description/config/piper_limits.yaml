@@ -31,6 +31,7 @@ base_athome:
 # Pinza estándar del Piper (piper_ros, rama humble @ 017ffef): dos dedos prismáticos de 0 a 35 mm cada uno
 # (70 mm de apertura total = gripper_range de piper_sdk). La Jetson publica joint7 = +apertura/2 y
 # joint8 = -apertura/2, recortado a 0.035 m.
+# Un solo grado de libertad: joint7 se comanda; joint8 es mimic (joint8 = -1 · joint7, relación oficial de AgileX).
 gripper:
   joint7: {lower: 0.0,    upper: 0.035, effort: 10.0, velocity: 1.0}
-  joint8: {lower: -0.035, upper: 0.0,   effort: 10.0, velocity: 1.0}
+  joint8: {lower: -0.035, upper: 0.0,   effort: 10.0, velocity: 1.0, mimic_multiplier: -1.0}

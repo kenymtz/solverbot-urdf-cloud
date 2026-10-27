@@ -1,0 +1,71 @@
+[OK] xacro: 24/24 combinaciones de argumentos generan URDF
+[OK] xacro rechaza argumento inválido {'ros2_control': 'foo'}
+[OK] xacro rechaza argumento inválido {'arm_limits': 'foo'}
+[OK] xacro rechaza argumento inválido {'head_mount': 'foo'}
+[OK] check_urdf ('none', 'column', 'official', 'true') — robot name is: robot_v3
+[OK] check_urdf ('gazebo', 'lift', 'base_athome', 'true') — robot name is: robot_v3
+[OK] check_urdf ('none', 'column', 'official', 'false') — robot name is: robot_v3
+[OK] una sola raíz = base_footprint — raíces: ['base_footprint']
+[OK] todos los joints conectan links existentes
+[OK] árbol sin ciclos y conexo (links = joints + 1) — 38 links, 37 joints
+[OK] cada link tiene a lo sumo un padre
+[OK] frames de compatibilidad (base_athome, urg_node, Jetson, realsense) presentes — 36 frames
+[OK] joints de compatibilidad presentes
+[OK] joints que publica la Jetson existen y son móviles
+[OK] articulaciones independientes: 12 (la pinza cuenta como una) — joint1, joint2, joint3, joint4, joint5, joint6, joint7, left_wheel_joint, pan_joint, right_wheel_joint, tilt_joint, torso_lift_joint
+[OK] pinza: joint8 es mimic de joint7 con multiplicador -1 y offset 0 (relación oficial de AgileX) — ('joint7', -1.0, 0.0)
+[OK] pinza: límites de joint8 = espejo de los de joint7 (0..0.035 m -> -0.035..0)
+[OK] torso_lift_joint prismático en +Z de la columna
+[OK] límites del elevador = valores provisionales separados (sim_provisional.yaml) — {'lower': -0.19, 'upper': 0.068, 'effort': 1000.0, 'velocity': 0.05}
+[OK] todas las revolutas/prismáticas: lower < upper, effort > 0, velocity > 0, eje unitario
+[OK] límites del Piper = perfil "official" de piper_limits.yaml
+[OK] límites del Piper = perfil "base_athome" de piper_limits.yaml
+[OK] pose DEFAULT_HOME de la Jetson dentro de los límites oficiales
+[OK] posición de left_wheel = medida/derivada — error 0.000 mm
+[OK] posición de right_wheel = medida/derivada — error 0.000 mm
+[OK] posición de laser = medida/derivada — error 0.000 mm
+[OK] posición de torso_lift_link = medida/derivada — error 0.000 mm
+[OK] posición de mounting_cube_link = medida/derivada — error 0.000 mm
+[OK] posición de arm_base_link = medida/derivada — error 0.000 mm
+[OK] posición de pan_tilt_base_link = medida/derivada — error 0.000 mm
+[OK] centro de la carcasa D435 (tilt del escaneo) = posición medida en v2 — error 0.05 mm
+[OK] base del brazo: z del Piper hacia +Y (montaje lateral izquierdo)
+[OK] elevador (column) -0.190 m: suben/bajan 6 frames exactamente, 8 quietos
+[OK] elevador (column) +0.050 m: suben/bajan 6 frames exactamente, 8 quietos
+[OK] elevador (column) +0.068 m: suben/bajan 6 frames exactamente, 8 quietos
+[OK] elevador (lift) -0.190 m: suben/bajan 9 frames exactamente, 5 quietos
+[OK] elevador (lift) +0.050 m: suben/bajan 9 frames exactamente, 5 quietos
+[OK] elevador (lift) +0.068 m: suben/bajan 9 frames exactamente, 5 quietos
+[OK] brazo: posición de link6 (URDF) = MDH oficial de piper_sdk en 202 poses — máx 0.088 mm
+[OK] brazo: orientación de link6 (URDF) = MDH oficial de piper_sdk — máx ‖ΔR‖ 1.34e-07
+[OK] brazo: cada joint1..6 gira 0.3 rad sobre su eje sin mover a su padre
+[OK] pinza con joint7=0.0 mm: ambos dedos se mueven 0.0 mm en sentidos opuestos, simétricos respecto del eje — separación 0.00 mm
+[OK] pinza con joint7=17.5 mm: ambos dedos se mueven 17.5 mm en sentidos opuestos, simétricos respecto del eje — separación 35.00 mm
+[OK] pinza con joint7=35.0 mm: ambos dedos se mueven 35.0 mm en sentidos opuestos, simétricos respecto del eje — separación 70.00 mm
+[OK] tcp_link a 0.1358 m sobre el eje de link6
+[OK] pan sobre +Z y tilt sobre +Y (positivo = cámara hacia abajo)
+[OK] D435: 4 frames ópticos con convención REP-103 (z adelante, x derecha, y abajo)
+[OK] D435: extrínsecos nominales de Intel (color +15 mm, infra2 -50 mm en Y)
+[OK] D435: camera_link mira hacia adelante del robot con el cabezal en cero
+[OK] camera_frames:=false: quedan camera_link y la rosca; se quitan los 8 frames del driver
+[OK] todas las mallas referenciadas existen dentro del paquete — 34 referencias
+[OK] sin mallas sin usar en el paquete
+[OK] paquete liviano: mallas < 15 MB, sin texturas de imagen — 12.9 MB
+[OK] rutas de mallas con package:// (portables)
+[OK] inercias: masa > 0, tensor definido positivo y desigualdad triangular
+[OK] todo link con geometría tiene inercia (requisito de Gazebo) — []
+[OK] visual: los 12 DAE de estructura coinciden con sus primitivas (±1 mm) y colores del YAML
+[OK] visual: todos los grupos de visual_v3.yaml se usan en el URDF — []
+[OK] visual: un solo <visual> por link (RViz2 aplica el material de la primera a todas) — []
+[OK] visual: neumático con radio y ancho calibrados (0.084 / 0.055)
+[OK] ros2_control mock: todas las articulaciones móviles declaradas (mock_components/GenericSystem)
+[OK] ros2_control mock: joint8 sin interfaz de comando y declarado mimic de joint7 (-1)
+[OK] ros2_control gazebo: todas las articulaciones móviles declaradas (ign_ros2_control/IgnitionSystem)
+[OK] ros2_control gazebo: joint8 sin interfaz de comando y declarado mimic de joint7 (-1)
+[OK] controladores de trayectoria cubren brazo, pinza, elevador y cabezal
+[OK] gripper_controller comanda solo joint7 (una orden lógica; joint8 es mimic)
+[OK] Gazebo: plugin ign_ros2_control, cámara RGB-D y LiDAR presentes
+[OK] modo none: sin etiquetas ros2_control ni gazebo (descripción pura)
+[OK] robot_v2_description idéntico al commit 9401da9 (git diff + status vacíos)
+
+69/69 comprobaciones OK

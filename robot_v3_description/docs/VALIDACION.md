@@ -17,7 +17,7 @@ ROS 2 Humble real se usó un contenedor Docker efímero con paquetes de **RoboSt
 Las diferencias con la NUC (binarios apt) son de empaquetado; el código de ROS es el mismo. En la NUC hay que repetir
 las pruebas con `tools/nuc_validate.sh` (§4).
 
-## 1. Validación estática — 62/62
+## 1. Validación estática — 69/69
 
 `tools/validate_v3.py` (detalle: [`evidencias/estatica_humble.md`](evidencias/estatica_humble.md)):
 
@@ -38,7 +38,7 @@ las pruebas con `tools/nuc_validate.sh` (§4).
 
 `colcon build` + `colcon test`: 2 tests, 0 errores, 0 fallas.
 
-## 2. Ejecución con ros2_control mock — 22/22 (y 22/22 con `head_mount:=lift`)
+## 2. Ejecución con ros2_control mock — 26/26 (y 26/26 con `head_mount:=lift`)
 
 `sim_mock.launch.py` + `tools/runtime_checks.py`, con `robot_state_publisher`, `controller_manager` y
 `joint_trajectory_controller` reales:
@@ -65,7 +65,7 @@ Capturas de RViz desde 5 vistas y comparación con v2: [`evidencias/visual/`](ev
 elevador y ruedas en 0, y la TF de `tcp_link`, `link7`, `link8`, `camera_link` y `mounting_cube_link` coincide con la
 cinemática calculada **a partir de los valores publicados** ([`evidencias/real_state.txt`](evidencias/real_state.txt)).
 
-## 4. Ignition Gazebo Fortress — 28/28 (dos corridas seguidas)
+## 4. Ignition Gazebo Fortress — 32/32
 
 `gazebo.launch.py headless:=true` + `runtime_checks.py --use-sim-time --tolerance 0.01 --sensors`
 ([`evidencias/runtime_gazebo.txt`](evidencias/runtime_gazebo.txt)):
@@ -99,3 +99,19 @@ inclinación la caja con el monitor tapa la vista de la cámara. Hay que verific
 * Nada sobre el hardware real (por diseño): ni CAN, ni el ESP32 del elevador, ni los Dynamixel, ni el driver de la D435.
 * Binarios apt de Humble y GPU Intel de la NUC: repetir con `tools/nuc_validate.sh ~/robot_v3_ws --gazebo`.
 * GUI de Gazebo y de `joint_state_publisher_gui` (solo RViz con Xvfb).
+
+## 7. Pinza con un solo grado de libertad (27/10/2026)
+
+`joint8` pasó a ser mimic de `joint7` (×−1, relación oficial de AgileX). Pruebas, comandando **solo** `joint7`:
+
+| Entorno | Prueba | Resultado |
+|---|---|---|
+| Humble y Jazzy | `validate_v3.py`: mimic ×−1, límites espejo; cerrada, a mitad y abierta (0, 17.5 y 35 mm por dedo): dedos simétricos, separados 0, 35 y 70 mm | 69/69 |
+| Jazzy | `joint_state_publisher_gui`: 12 sliders, `joint7` sí y `joint8` no | [captura](evidencias/pinza/jazzy_joint_state_publisher_gui.png) |
+| Jazzy | `joint_state_publisher` con solo `joint7 = 0.02`: publica `joint8 = -0.02` | [jsp_mimic](evidencias/pinza/jazzy_jsp_mimic.txt) |
+| Humble y Jazzy | mock: `gripper_controller` con `joints: [joint7]`; `joint8` = −17.5, −35 y 0 mm; separación 35, 70 y 0 mm | 26/26 ([Jazzy](evidencias/pinza/jazzy_runtime_mock.txt), [Humble](evidencias/runtime_mock.txt)) |
+| Humble | Gazebo Fortress: dedo físico sincronizado (`joint8_mimic` = −`joint7`), separación 35, 70 y 0 mm | 32/32 ([runtime_gazebo](evidencias/runtime_gazebo.txt)) |
+| Humble y Jazzy | `real_state.launch.py` con `/joint_states` tipo Jetson (`joint7` y `joint8`): el `joint8` combinado coincide con el de la Jetson | 9/9 |
+
+La simulación de Gazebo en Jazzy (Harmonic, `gz_ros2_control`) no está implementada en este paquete; `gazebo.launch.py` es para Fortress/Humble.
+

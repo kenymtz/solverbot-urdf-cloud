@@ -102,8 +102,19 @@
                       ixx="0.00007371" ixy="-0.00000113" ixz="0.00000021" iyy="0.00000781" iyz="-0.00001372" izz="0.0000747"/>
     <xacro:piper_joint name="joint7" type="prismatic" parent="gripper_base" child="link7"
                        xyz="0 0 0.1358" rpy="1.5707963 0 0" lim="${LG['joint7']}"/>
-    <xacro:piper_joint name="joint8" type="prismatic" parent="gripper_base" child="link8"
-                       xyz="0 0 0.1358" rpy="1.5707963 0 -3.1415926" lim="${LG['joint8']}" axis="0 0 -1"/>
+    <!-- La pinza tiene UN grado de libertad: joint7 es la apertura de cada dedo y joint8 la copia con signo opuesto.
+         Relación oficial de AgileX (agx_arm_urdf, piper_with_gripper_description.xacro): dedo1 = +0.5·gripper,
+         dedo2 = -0.5·gripper, con los mismos orígenes, ejes y mallas que joint7/joint8 -> joint8 = -1 · joint7.
+         Coincide con lo que publica la Jetson: joint7 = +apertura/2, joint8 = -apertura/2. -->
+    <joint name="joint8" type="prismatic">
+      <origin xyz="0 0 0.1358" rpy="1.5707963 0 -3.1415926"/>
+      <parent link="gripper_base"/>
+      <child link="link8"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="${LG['joint8']['lower']}" upper="${LG['joint8']['upper']}" effort="${LG['joint8']['effort']}"
+             velocity="${LG['joint8']['velocity']}"/>
+      <mimic joint="joint7" multiplier="${LG['joint8']['mimic_multiplier']}" offset="0"/>
+    </joint>
 
     <!-- Punto central de herramienta entre los dedos (base_athome / piper_ros) -->
     <link name="tcp_link"/>

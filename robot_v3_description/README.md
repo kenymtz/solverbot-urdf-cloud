@@ -9,7 +9,7 @@ Es un paquete nuevo, independiente de `robot_v2_description`, que no se modific�
 
 | | v2 | v3 |
 |---|---|---|
-| Brazo | un link rígido escaneado | Piper articulado: joint1–6 + pinza joint7/8, cinemática oficial |
+| Brazo | un link rígido escaneado | Piper articulado: joint1–6 + pinza de un grado de libertad (joint7; joint8 mimic), cinemática oficial |
 | Elevador | prismático, sin controlador | prismático + controlador de trayectoria (mock y Gazebo) |
 | Cabezal | soporte rígido | pan_joint + tilt_joint (nombres de base_athome) |
 | Cámara | `camera_link` + 1 frame óptico | D435 completa: rosca, `camera_link`, depth/infra1/infra2/color con sus frames ópticos |
@@ -80,7 +80,7 @@ Controladores (`config/ros2_controllers.yaml`), todos `joint_trajectory_controll
 |---|---|---|
 | `lift_controller` | `torso_lift_joint` | `/lift_controller/follow_joint_trajectory` |
 | `arm_controller` | `joint1`…`joint6` | `/arm_controller/follow_joint_trajectory` |
-| `gripper_controller` | `joint7`, `joint8` (dedos, ±0.035 m) | `/gripper_controller/follow_joint_trajectory` |
+| `gripper_controller` | `joint7` (apertura de cada dedo, 0–0.035 m); `joint8` lo sigue como mimic | `/gripper_controller/follow_joint_trajectory` |
 | `head_controller` | `pan_joint`, `tilt_joint` | `/head_controller/follow_joint_trajectory` |
 | `diff_drive_controller` (solo Gazebo) | ruedas | `/diff_drive_controller/cmd_vel_unstamped` |
 
@@ -104,7 +104,7 @@ base_footprint
       │  └─ mounting_cube_link                 caja (bandeja + monitor)
       │     ├─ screen_link
       │     └─ arm_mount_joint ─ arm_base_link  Piper, z hacia +Y (montaje lateral izquierdo)
-      │        └─ joint1 … joint6 ─ link6 ─ gripper_base ─ joint7/link7, joint8/link8
+      │        └─ joint1 … joint6 ─ link6 ─ gripper_base ─ joint7/link7, joint8/link8 (mimic: joint8 = −joint7)
       │                             ├─ tcp_link (+0.1358 m)
       │                             └─ arm_camera_link ─ arm_camera_optical_frame
       └─ pan_tilt_base_link                    (head_mount:=lift → cuelga de torso_lift_link)
@@ -113,7 +113,8 @@ base_footprint
                └─ camera_{depth,infra1,infra2,color}_frame ─ camera_*_optical_frame
 ```
 
-38 links, 37 joints; 13 articulaciones móviles (2 ruedas, elevador, 6 del brazo, 2 dedos, pan, tilt).
+38 links, 37 joints; 13 articulaciones móviles (2 ruedas, elevador, 6 del brazo, 2 dedos, pan, tilt), 12 independientes:
+el dedo `joint8` es mimic de `joint7`.
 Con el elevador se mueven: `torso_lift_link`, `mounting_cube_link`, `screen_link` y todo el brazo
 (y el cabezal solo con `head_mount:=lift`).
 
@@ -161,6 +162,24 @@ Comparación con v2 desde 5 vistas: `docs/evidencias/visual/` (v3, v2 y ambos su
 ### "No Image" en RViz
 
 El panel de imagen que aparecía en la configuración anterior de RViz mostraba "No Image" porque **nadie publicaba** `/camera/camera/color/image_raw`. Con `display.launch.py` no hay simulador ni driver, y el tópico no existe (`docs/evidencias/no_image_diagnostico.txt`). La cámara está bien representada en el URDF (frames y geometría), pero eso no significa que haya una cámara funcionando. Con `gazebo.launch.py` el tópico tiene 1 publicador y entrega imágenes `rgb8` en `camera_color_optical_frame`. En el robot real lo publica el driver de la Jetson. El panel se quitó de la configuración por defecto.
+
+## 4c. Pinza: un solo grado de libertad
+
+La pinza estándar del Piper abre y cierra con un único movimiento. Por eso:
+
+* `joint7` es la articulación principal: apertura de **cada** dedo, de 0 a 0.035 m (70 mm entre dedos).
+* `joint8` es `<mimic joint="joint7" multiplier="-1" offset="0"/>`. La relación sale de la descripción oficial de AgileX:
+  en `agx_arm_urdf`, `piper_with_gripper_description.xacro` define los dos dedos como mimic de `gripper` con +0.5 y −0.5,
+  con los mismos orígenes, ejes y mallas que `joint7`/`joint8`. Los límites de `joint8` (−0.035..0) son el espejo de los de `joint7`.
+* `joint_state_publisher_gui` muestra **un solo slider** (`joint7`) y calcula `joint8` (captura: `docs/evidencias/pinza/`).
+* `gripper_controller` comanda solo `joint7`. En `ros2_control`, `joint8` no tiene interfaz de comando y se declara mimic:
+  * Humble (mock e `ign_ros2_control`) toma la relación de `<param name="mimic">` y `<param name="multiplier">`.
+  * Jazzy (ros2_control 4.x) la toma del `<mimic>` del URDF.
+* **Gazebo Fortress (Humble):** `ign_ros2_control` 0.7 sincroniza físicamente el dedo, pero publica su estado como `joint8_mimic`.
+  La TF de `link8` es correcta porque `robot_state_publisher` calcula `joint8` desde el `<mimic>` del URDF.
+* **Jetson:** no cambia nada. `piper_arm_controller.py` sigue publicando `joint7 = +a/2` y `joint8 = −a/2`, que es exactamente la relación del mimic.
+  Con `real_state.launch.py`, el combinador calcula `joint8` a partir de `joint7`; da el mismo valor que publica la Jetson (verificado).
+  Para comandar la pinza real se sigue usando la interfaz de la Jetson (`/arm/gripper_cmd`, en mm de apertura total); este paquete no la toca.
 
 ## 5. Brazo Piper: límites y estados reales
 
@@ -226,11 +245,11 @@ Ignition Gazebo 6.16). No se tocó la NUC, la Jetson ni el robot. Evidencias: [`
 | Prueba | Resultado |
 |---|---|
 | `colcon build` + `colcon test` | OK (2 tests, 0 fallas) |
-| `tools/validate_v3.py`: xacro en 24 combinaciones (sin salida por stderr), `check_urdf`, árbol, límites, cinemática (brazo contra MDH de `piper_sdk`: 0.088 mm), D435, recursos, inercias, DAE visuales = primitivas, ros2_control, v2 sin cambios | 62/62 OK |
-| `sim_mock.launch.py` + `runtime_checks.py` (TF real, controladores reales), también con `head_mount:=lift` | 22/22 y 22/22 OK |
+| `tools/validate_v3.py`: xacro en 24 combinaciones (sin salida por stderr), `check_urdf`, árbol, límites, cinemática (brazo contra MDH de `piper_sdk`: 0.088 mm), pinza mimic (cerrada, a mitad y abierta), D435, recursos, inercias, DAE visuales = primitivas, ros2_control, v2 sin cambios | 69/69 OK (Humble y Jazzy) |
+| `sim_mock.launch.py` + `runtime_checks.py` (TF real, controladores reales, pinza con una sola orden), también con `head_mount:=lift` | 26/26 y 26/26 OK (Humble); 26/26 OK (Jazzy) |
 | `demo_motion.py` y guardia de dominio (aborta con `ROS_DOMAIN_ID=10`) | OK |
-| `real_state.launch.py` con `/joint_states` en el formato de la Jetson (`check_real_state.py`) | 9/9 OK |
-| `gazebo.launch.py` (Fortress, headless) + `runtime_checks.py --sensors` (física, RGB-D, nube, LiDAR) | 28/28 OK (dos corridas seguidas) |
+| `real_state.launch.py` con `/joint_states` en el formato de la Jetson (`check_real_state.py`) | 9/9 OK (Humble y Jazzy) |
+| `gazebo.launch.py` (Fortress, headless, solo Humble) + `runtime_checks.py --sensors` (física, pinza mimic, RGB-D, nube, LiDAR) | 32/32 OK |
 | `tools/nuc_validate.sh` completo (sin `--gazebo`) | 9/9 etapas OK |
 
 Durante la validación aparecieron y se corrigieron errores reales (remapeo en `real_state`, `set -u` en el script de

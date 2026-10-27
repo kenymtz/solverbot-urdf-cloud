@@ -37,8 +37,9 @@ SEQUENCES = {
         ([0.0, 1.2, -1.0, 0.0, 0.5, 0.0], 3.0),                                 # brazo extendido hacia afuera
         ([v * DEG for v in (86.28, 173.91, -164.0, 66.98, 0.69, -146.41)], 4.0),  # DEFAULT_HOME de la Jetson
         ([0.0] * 6, 3.0)]),
-    'gripper': ('gripper_controller', ['joint7', 'joint8'],
-                [([0.035, -0.035], 1.5), ([0.0, 0.0], 1.5)]),
+    # Una sola orden de apertura (joint7, por dedo); joint8 la sigue como mimic
+    'gripper': ('gripper_controller', ['joint7'],
+                [([0.0175], 1.0), ([0.035], 1.0), ([0.0], 1.5)]),
 }
 
 

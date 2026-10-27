@@ -2,7 +2,7 @@
 """Chequeos en EJECUCIÓN contra una simulación de robot_v3 (sim_mock.launch.py o gazebo.launch.py).
 
 Verifica con el grafo ROS real (robot_state_publisher, ros2_control, tf2):
-  * /robot_description publicado y /joint_states con las 13 articulaciones móviles;
+  * /robot_description publicado y /joint_states con las 13 articulaciones móviles (joint8 es mimic de joint7);
   * TF: todos los links alcanzables desde base_footprint y coincidentes con la cinemática del URDF;
   * elevador: al comandar torso_lift_joint, caja/brazo se trasladan exactamente en Z y la columna no;
   * brazo: tcp_link en TF = cinemática directa de los joint_states tras una trayectoria;
@@ -60,6 +60,11 @@ class Checks(Node):
 
     def _on_js(self, msg):
         self.js.update(dict(zip(msg.name, msg.position)))
+        # ign_ros2_control 0.7 (Gazebo Fortress, Humble) publica el estado de una articulación mimic como
+        # "<nombre>_mimic". Se usa ese valor (posición física simulada) para verificar la sincronización.
+        for name, pos in zip(msg.name, msg.position):
+            if name.endswith('_mimic'):
+                self.js[name[:-len('_mimic')]] = pos
 
     def spin_for(self, seconds, until=None):
         end = time.monotonic() + seconds
@@ -137,8 +142,8 @@ class Checks(Node):
         self.check('/robot_description recibido', self.spin_for(30.0, lambda: self.urdf is not None))
         if self.urdf is None:
             return
-        movable = sorted(self.urdf.movable())
-        self.check('/joint_states con las 13 articulaciones móviles',
+        movable = sorted(n for n, j in self.urdf.joints.items() if j['type'] != 'fixed')   # incluye joint8 (mimic)
+        self.check('/joint_states con las 13 articulaciones móviles (joint8 puede llegar como joint8_mimic en Gazebo)',
                    self.spin_for(30.0, lambda: set(movable) <= set(self.js)), f'{sorted(self.js)}')
         self.spin_for(30.0, lambda: all(self.tf('base_footprint', link) is not None for link in self.urdf.links))
         self.fk_matches_tf('estado inicial')
@@ -166,10 +171,16 @@ class Checks(Node):
         tcp = self.tf('base_footprint', 'tcp_link')
         err = np.linalg.norm(tcp[:3, 3] - self.urdf.pose('tcp_link', self.js)[:3, 3])
         self.check('brazo en DEFAULT_HOME: tcp_link en TF = cinemática directa', err < self.tol, f'{err * 1000:.3f} mm')
-        self.move('gripper_controller', ['joint7', 'joint8'], [0.035, -0.035], 1.5)
-        d = np.linalg.norm(self.tf('link7', 'link8')[:3, 3])
-        self.fk_matches_tf('brazo en DEFAULT_HOME, pinza abierta')
-        self.check('pinza abierta: dedos separados', d > 0.05, f'distancia entre orígenes de link7 y link8 {d * 1000:.1f} mm')
+        # Pinza: una sola orden (joint7); joint8 debe seguirla como mimic (= -joint7). Mitad, abierta y cerrada.
+        for a, label in ((0.0175, 'a mitad'), (0.035, 'abierta'), (0.0, 'cerrada')):
+            self.move('gripper_controller', ['joint7'], [a], 1.5)
+            j8 = self.js.get('joint8', float('nan'))
+            d = np.linalg.norm(self.tf('link7', 'link8')[:3, 3])
+            self.check(f'pinza {label} (solo joint7 = {a * 1000:.1f} mm): joint8 = -joint7 y dedos separados {2 * a * 1000:.0f} mm',
+                       abs(j8 + a) < max(self.tol, 1e-3) and abs(d - 2 * a) < 2 * max(self.tol, 1e-3),
+                       f'joint8 = {j8 * 1000:.2f} mm, separación {d * 1000:.2f} mm')
+            if a == 0.035:
+                self.fk_matches_tf('brazo en DEFAULT_HOME, pinza abierta')
         self.move('arm_controller', [f'joint{i}' for i in range(1, 7)], [0.0] * 6, 3.0)
 
         # Cabezal y frames ópticos

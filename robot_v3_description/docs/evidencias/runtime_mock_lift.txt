@@ -12,13 +12,17 @@
 [OK] elevador +0.00 m: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.000 mm (link7)
 [OK] arm_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[1.5059, 3.0353, -2.8623, 1.169, 0.012, -2.5553]
 [OK] brazo en DEFAULT_HOME: tcp_link en TF = cinemática directa — 0.000 mm
-[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.035, -0.035]
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0175]
+[OK] pinza a mitad (solo joint7 = 17.5 mm): joint8 = -joint7 y dedos separados 35 mm — joint8 = -17.50 mm, separación 35.00 mm
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.035]
+[OK] pinza abierta (solo joint7 = 35.0 mm): joint8 = -joint7 y dedos separados 70 mm — joint8 = -35.00 mm, separación 70.00 mm
 [OK] brazo en DEFAULT_HOME, pinza abierta: TF de los 38 links = cinemática del URDF con los /joint_states — máx 0.000 mm (link7)
-[OK] pinza abierta: dedos separados — distancia entre orígenes de link7 y link8 70.0 mm
+[OK] gripper_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0]
+[OK] pinza cerrada (solo joint7 = 0.0 mm): joint8 = -joint7 y dedos separados 0 mm — joint8 = -0.00 mm, separación 0.00 mm
 [OK] arm_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 [OK] head_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.3]
 [OK] tilt +0.3 rad: el eje óptico (z) apunta hacia adelante y abajo — z óptico = [ 0.955  0.    -0.296]
 [OK] camera_color_frame -> camera_color_optical_frame con convención REP-103
 [OK] head_controller: trayectoria ejecutada y estado alcanzado — error_code=0, estado=[0.0, 0.0]
 
-22/22 chequeos en ejecución OK
+26/26 chequeos en ejecución OK
