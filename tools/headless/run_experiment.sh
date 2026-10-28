@@ -2,15 +2,19 @@
 # Orquestador en PRIMER PLANO (lo usan start.sh, tmux o systemd): simulación headless -> trabajo -> apagado limpio.
 #   run_experiment.sh <instancia> validate [args de validate_grasp.py]
 #   run_experiment.sh <instancia> train <run> [args de train.py]      (reanuda solo si existe runs/<run>/checkpoints)
+#   run_experiment.sh <instancia> py <dir> <script.py> [args]          (cualquier script de solverbot_rl/scripts;
+#                                                                       logs en <dir>/logs, p. ej. runs/reach_bc_v1)
 # Variables: SIM_ARGS (extra para sim.launch.py), SIM_READY_TIMEOUT (s, def. 240).
 # sin "set -u": los setup.bash de ROS/colcon usan variables no definidas
 INSTANCE="$1"; MODE="$2"; shift 2
 source "$(dirname "$0")/common.sh" "$INSTANCE"
 cd "$REPO"
 STAMP=$(date +%Y%m%d_%H%M%S)
-if [ "$MODE" = train ]; then RUN="$1"; shift; LOGDIR="runs/$RUN/logs"; else LOGDIR="runs/validate_$STAMP/logs"; fi
+if [ "$MODE" = train ]; then RUN="$1"; shift; LOGDIR="runs/$RUN/logs"
+elif [ "$MODE" = py ]; then PYDIR="$1"; PYSCRIPT="$2"; shift 2; LOGDIR="$PYDIR/logs"
+else LOGDIR="runs/validate_$STAMP/logs"; fi
 mkdir -p "$LOGDIR"
-SIM_LOG="$LOGDIR/sim_$STAMP.log"; JOB_LOG="$LOGDIR/${MODE}_$STAMP.log"
+SIM_LOG="$LOGDIR/sim_$STAMP.log"; JOB_LOG="$LOGDIR/${MODE}_${PYSCRIPT:+$(basename "$PYSCRIPT" .py)_}$STAMP.log"
 echo "[run] instancia=$INSTANCE ROS_DOMAIN_ID=$ROS_DOMAIN_ID GZ_PARTITION=$GZ_PARTITION modo=$MODE logs=$LOGDIR"
 
 if timeout 8 gz topic -l 2>/dev/null | grep -q "^/clock" || \
@@ -46,6 +50,8 @@ echo "[run] simulación lista en $(( $(date +%s) - T0 )) s"
 
 if [ "$MODE" = validate ]; then
   python3 solverbot_rl/scripts/validate_grasp.py --backend gazebo --out "${LOGDIR%/logs}" "$@" > "$JOB_LOG" 2>&1 &
+elif [ "$MODE" = py ]; then
+  python3 "solverbot_rl/scripts/$(basename "$PYSCRIPT")" "$@" > "$JOB_LOG" 2>&1 &
 else
   python3 solverbot_rl/scripts/train.py --backend gazebo --run "$RUN" "$@" > "$JOB_LOG" 2>&1 &
 fi
