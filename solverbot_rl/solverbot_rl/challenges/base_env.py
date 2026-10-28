@@ -20,7 +20,7 @@ import gymnasium as gym
 
 from ..kinematics import UrdfChain, solve_ik
 from ..config import load_urdf
-from .arena import AXLE, CIRCUMRADIUS, DOOR_STANDOFF, FOOTPRINT, LASER_XY, ArenaMap
+from .arena import AXLE, CIRCUMRADIUS, DOOR_STANDOFF, FOOTPRINT, HALF_WIDTH, LASER_XY, ArenaMap
 from .backend import PAN_LIM, TILT_LIM, KinematicMobileBackend, wrap
 from .humans import HumanSim
 from .nav import NavController, ScanLocalizer, foot_center
@@ -157,6 +157,12 @@ class ChallengeEnv(gym.Env):
 
     def ref_truth(self) -> np.ndarray:
         return foot_center(self.truth())
+
+    def person_plan_radius(self) -> float:
+        """Radio con el que el planificador infla a una persona (sumado a la media huella): persona + margen social +
+        lo que sobresalen las esquinas al girar (radio de giro - media huella). Así la ruta no entra en la zona en la
+        que el gobernador de seguridad frena."""
+        return self.person_radius + PERSON_SOCIAL + (CIRCUMRADIUS - HALF_WIDTH)
 
     def _robot_block(self):
         """Círculo que las personas simuladas esquivan al planificar: radio de giro del robot + persona + margen."""
@@ -367,7 +373,7 @@ class ChallengeEnv(gym.Env):
             self._exit_corridor()
             pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
             # margen social de 0.15 m: la ruta pasa fuera de la zona en la que el gobernador de seguridad frena
-            dyn = [(*self.track(n)[:2], self.person_radius + PERSON_SOCIAL) for n in self.humans.people
+            dyn = [(*self.track(n)[:2], self.person_plan_radius()) for n in self.humans.people
                    if n not in (follower, ignore) and self.track(n, 4.0) is not None
                    and np.linalg.norm(self.track(n)[:2] - foot_center(pose)) > 0.6]
             wps = self.arena.plan(foot_center(pose), goal_xy, dynamic=dyn) or self.arena.plan(foot_center(pose), goal_xy)
@@ -509,19 +515,31 @@ class ChallengeEnv(gym.Env):
         """Sigue a la persona p a ~1 m usando solo sus detecciones. Termina por PERCEPCIÓN cuando la persona queda
         quieta > 3 s (y, si se indica, dentro de done_room)."""
         t0 = self.sim_time
-        last, hist = self.track(p, 30.0), []
+        last, hist, seen = self.track(p, 30.0), [], []
         self.skill_wait(1.0, head=look_at_angles(self.est, (*last[:2], 1.2)) if last is not None else (0.0, 0.2))
         while self.sim_time - t0 < max_time and not self.failed():
             t = self.track(p, 1.0)               # solo detecciones recientes: la persona se mueve
             if t is None:
                 last = self.track(p, 60.0)
-                if last is not None and np.linalg.norm(last[:2] - foot_center(self.est)) > 1.2:
-                    # perdida de vista: ir hacia la última posición conocida mirando hacia ella
-                    self.skill_navigate(last[:2], None, max_time=5.0, max_replans=0, stop_near=(last[:2], 0.9),
-                                        ignore=p, head_fn=lambda pose: look_at_angles(pose, (*last[:2], 1.2)))
+                goal = None
+                if last is not None and len(seen) >= 2 and np.linalg.norm(seen[-1][1] - seen[0][1]) > 0.3:
+                    # perdida de vista mientras caminaba: extrapolar 1.5 m en su dirección de marcha (p. ej. cruzó
+                    # una puerta y quedó detrás de una pared); el planificador resuelve las puertas
+                    d = seen[-1][1] - seen[0][1]
+                    goal = last[:2] + d / np.linalg.norm(d) * 1.5
+                    if self.arena.plan(foot_center(self.est), goal) is None:
+                        goal = None
+                if goal is None and last is not None and np.linalg.norm(last[:2] - foot_center(self.est)) > 1.2:
+                    goal = last[:2]
+                if goal is not None and np.linalg.norm(goal - foot_center(self.est)) > 0.5:
+                    self.skill_navigate(goal, None, max_time=8.0, max_replans=0, stop_near=(goal, 0.4), ignore=p,
+                                        head_fn=lambda pose: look_at_angles(pose, (*goal, 1.2)))
+                    seen = seen[-1:]
                 else:
                     self.skill_search(p)
                 continue
+            seen.append((self.sim_time, t[:2].copy()))
+            seen = [x for x in seen if self.sim_time - x[0] <= 3.0]
             if np.linalg.norm(t[:2] - foot_center(self.est)) > 1.4:
                 # ir hacia la persona por el planificador (respeta puertas) y detenerse a ~1 m
                 self.skill_navigate(t[:2], None, max_time=6.0, max_replans=0, stop_near=(t[:2], 1.0), ignore=p,
@@ -548,8 +566,8 @@ class ChallengeEnv(gym.Env):
             ax = foot_center(est)
             base = ax - np.array([math.cos(nxt), math.sin(nxt)]) * AXLE[0]
             if self.arena.footprint_collides(base[0], base[1], nxt, margin=0.02,
-                                             dynamic=[(*t[:2], self.person_radius) for t in
-                                                      (self.track(n, 2.0) for n in self.humans.people) if t is not None]):
+                                             dynamic=[(*t[:2], self.person_radius + 0.08) for t in
+                                                      (self.track(n, 8.0) for n in self.humans.people) if t is not None]):
                 break
             self.sim_step(0.0, w, (0.0, 0.2))
             turned += w * DT

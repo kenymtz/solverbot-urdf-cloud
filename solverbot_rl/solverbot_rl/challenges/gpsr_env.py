@@ -156,11 +156,14 @@ class GPSREnv(ChallengeEnv):
                     continue
                 if not self._keeps_reachable([*avoid, (x, y)]):
                     continue                          # ni cortar el paso a alguna habitación
+                spots = self._approach_spots((x, y), [(px, py, self.person_radius + PERSON_SOCIAL) for px, py in avoid])
+                if not any(self.arena.plan(self.instr[:2], q) is not None for q in spots[:3]):
+                    continue                          # el robot tiene que poder acercarse a la persona
                 return x, y
         raise RuntimeError(f'sin lugar libre en {room}')
 
     def _keeps_reachable(self, people_xy) -> bool:
-        dyn = [(x, y, self.person_radius + PERSON_SOCIAL) for x, y in people_xy]
+        dyn = [(x, y, self.person_plan_radius()) for x, y in people_xy]
         for r in ROOM_IDS:
             loc = self.arena.locations[r]
             if self.arena.plan(self.instr[:2], (loc.x, loc.y), dynamic=dyn) is None:
@@ -411,8 +414,8 @@ class GPSREnv(ChallengeEnv):
     def _search_room(self, room, terms):
         loc = self.arena.locations[room]
         nav = self.skill_navigate((loc.x, loc.y), None)
-        if not nav.ok and nav.get('reason') in ('colision', 'vuelco'):
-            return nav
+        if not nav.ok and (nav.get('reason') in ('colision', 'vuelco') or self.arena.room_of(*foot_center(self.est)) != room):
+            return nav                                 # no buscar en otra habitación
         t0 = self.sim_time
         seen_before = {n: self.tracks.get(n, (None, -1))[1] for n in self.world.person_names}
         self.skill_search(None, max_turn=2 * math.pi, w=0.5)
@@ -437,28 +440,22 @@ class GPSREnv(ChallengeEnv):
             return SkillResult(ok=False, reason='persona_no_percibida')
         a = self.arena
         here = foot_center(self.est)
-        room = a.room_of(*t[:2])
         others = [(*self.track(n, 20.0)[:2], self.person_radius + PERSON_SOCIAL) for n in self.humans.people
                   if n != c.person and self.track(n, 20.0) is not None]
-        cands = []
-        for rad in (1.0, 1.2, 0.9, 1.4, 1.6, 1.8):
-            for ang in np.linspace(-math.pi, math.pi, 16, endpoint=False):
-                q = t[:2] + rad * np.array([math.cos(ang), math.sin(ang)])
-                i, j = a.to_ij(*q, a.plan_res)
-                # punto donde se pueda girar en el lugar (la siguiente navegación empieza girando)
-                if not (0 <= i < a.rot_free.shape[0] and 0 <= j < a.rot_free.shape[1]) or not a.rot_free[i, j]:
-                    continue
-                if a.room_of(*q) != room or any(np.hypot(q[0] - x, q[1] - y) < r + 0.4 for x, y, r in others):
-                    continue
-                cands.append((float(np.linalg.norm(q - here)), q))
-            if cands:
-                break
-        for _, q in sorted(cands, key=lambda x: x[0])[:4]:
-            if a.plan(here, q) is None:
-                continue
+        if float(np.linalg.norm(t[:2] - here)) < 1.9:          # ya a distancia de interacción: orientarse
+            self.skill_turn(math.atan2(t[1] - self.est[1], t[0] - self.est[0]))
+            self.look_at(self.head_from_track(t), turn=True)
+            return SkillResult(ok=not self.failed())
+        cands = [(float(np.linalg.norm(q - here)), q) for q in self._approach_spots(t[:2], others)]
+        for d, q in sorted(cands, key=lambda x: x[0])[:4]:
             yaw = math.atan2(t[1] - q[1], t[0] - q[0])
-            res = self.skill_navigate(q, None, max_time=90.0, ignore=c.person,
-                                      head_fn=lambda pose: look_at_angles(pose, (t[0], t[1], 1.3)))
+            if d < 0.15:                                   # ya está en el punto: solo orientarse
+                res = SkillResult(ok=True)
+            elif a.plan(here, q) is None:
+                continue
+            else:
+                res = self.skill_navigate(q, None, max_time=90.0, ignore=c.person,
+                                          head_fn=lambda pose: look_at_angles(pose, (t[0], t[1], 1.3)))
             if res.ok:
                 self.skill_turn(yaw)
                 self.look_at(self.head_from_track(t), turn=True)
@@ -473,6 +470,25 @@ class GPSREnv(ChallengeEnv):
         if self.track(person, 2.0) is None:
             self.look_at(self.head_from_track(t), settle=6, turn=True)
         return self.track(person, 1.0)
+
+    def _approach_spots(self, person_xy, others=()):
+        """Puntos a 0.9-1.8 m de la persona, en su habitación, donde el robot puede girar en el lugar (la siguiente
+        navegación empieza girando) y lejos de otras personas. Los más cercanos primero (por anillo)."""
+        a = self.arena
+        room = a.room_of(*person_xy)
+        for rad in (1.0, 1.2, 0.9, 1.4, 1.6, 1.7, 1.8, 1.9):
+            out = []
+            for ang in np.linspace(-math.pi, math.pi, 32, endpoint=False):
+                q = np.asarray(person_xy) + rad * np.array([math.cos(ang), math.sin(ang)])
+                i, j = a.to_ij(*q, a.plan_res)
+                if not (0 <= i < a.rot_free.shape[0] and 0 <= j < a.rot_free.shape[1]) or not a.rot_free[i, j]:
+                    continue
+                if a.room_of(*q) != room or any(np.hypot(q[0] - x, q[1] - y) < r + 0.4 for x, y, r in others):
+                    continue
+                out.append(q)
+            if out:
+                return out
+        return []
 
     def _greet(self, c, terms):
         if self._reacquire(c.person) is None:
@@ -660,7 +676,7 @@ class GPSRPlanner:
         if c.verb == 'where_person':
             # la respuesta la deja search_room al verla; si se la vio antes, buscar en esa habitación
             return np.array([S('search_room'), ROOM_IDS.index(e.arena.room_of(*t[:2]))])
-        if np.linalg.norm(t[:2] - foot_center(e.est)) > 1.4:
+        if np.linalg.norm(t[:2] - foot_center(e.est)) > 1.9:
             return np.array([S('approach_person'), 0])
         return np.array([S({'greet': 'greet', 'follow': 'follow', 'guide': 'guide'}[c.verb]), 0])
 
