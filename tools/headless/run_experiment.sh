@@ -14,7 +14,7 @@ if [ "$MODE" = train ]; then RUN="$1"; shift; LOGDIR="runs/$RUN/logs"
 elif [ "$MODE" = py ]; then PYDIR="$1"; PYSCRIPT="$2"; shift 2; LOGDIR="$PYDIR/logs"
 else LOGDIR="runs/validate_$STAMP/logs"; fi
 mkdir -p "$LOGDIR"
-SIM_LOG="$LOGDIR/sim_$STAMP.log"; JOB_LOG="$LOGDIR/${MODE}_${PYSCRIPT:+$(basename "$PYSCRIPT" .py)_}$STAMP.log"
+SIM_LOG="$LOGDIR/sim_${STAMP}_i$INSTANCE.log"; JOB_LOG="$LOGDIR/${MODE}_${PYSCRIPT:+$(basename "$PYSCRIPT" .py)_}${STAMP}_i$INSTANCE.log"
 echo "[run] instancia=$INSTANCE ROS_DOMAIN_ID=$ROS_DOMAIN_ID GZ_PARTITION=$GZ_PARTITION modo=$MODE logs=$LOGDIR"
 
 if timeout 8 gz topic -l 2>/dev/null | grep -q "^/clock" || \

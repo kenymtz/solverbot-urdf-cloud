@@ -49,7 +49,7 @@ def main():
     ap.add_argument('--beta', type=float, default=0.0, help='DAgger: prob. de ejecutar la acción del experto')
     ap.add_argument('--source', default=None, help='etiqueta del conjunto (expert | dagger_<n>)')
     ap.add_argument('--labeler', choices=['scripted', 'local'], default='scripted',
-                    help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso, reach)')
+                    help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso)')
     args = ap.parse_args()
 
     exp = load_experiment(args.experiment)

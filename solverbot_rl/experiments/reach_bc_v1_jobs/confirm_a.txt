@@ -1,0 +1,3 @@
+# Confirmación en semillas NUEVAS (901000+) del modelo elegido (bc_v2w): evita el sesgo de selección
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2w/model.zip --level reach --seeds 901000-901019 --out runs/reach_bc_v1/eval_confirm/bc_v2w/reach
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2w/model.zip --level reach_var_s --seeds 901100-901129 --out runs/reach_bc_v1/eval_confirm/bc_v2w/reach_var_s

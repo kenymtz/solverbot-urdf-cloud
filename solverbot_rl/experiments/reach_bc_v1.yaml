@@ -17,6 +17,8 @@ overrides: {}                # sin cambios de recompensa / física / control
 extra_levels:
   - {name: reach_var_s, goal: reach, object_xy_range: 0.03, start: home, start_q_noise: 0.05}
   - {name: reach_var_m, goal: reach, object_xy_range: 0.05, start: home, start_q_noise: 0.10}
+  # Solo EVALUACIÓN de extrapolación: más allá del rango de todas las demostraciones y de DAgger (nunca entrenado)
+  - {name: reach_var_l, goal: reach, object_xy_range: 0.07, start: home, start_q_noise: 0.15}
 
 # Rangos de semillas DISJUNTOS. Con object_xy_range > 0 cada semilla es una geometría distinta (posición del cubo,
 # pose inicial y yaw). En `reach` (object_xy_range 0) las semillas solo cambian el yaw del cubo: NO son escenarios

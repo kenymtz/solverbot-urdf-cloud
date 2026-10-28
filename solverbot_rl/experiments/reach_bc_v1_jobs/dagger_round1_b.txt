@@ -1,2 +1,0 @@
-# DAgger ronda 1 (instancia adicional): semillas 110040+, mismo procedimiento que dagger_round1.txt
-py runs/reach_bc_v1 collect_demos.py --backend gazebo --experiment reach_bc_v1 --level reach_var_m --seeds 110040-110064 --policy runs/reach_bc_v1/bc_v1/model.zip --beta 0 --labeler local --source dagger_1 --out runs/reach_bc_v1/demos/dagger1_var_m_b

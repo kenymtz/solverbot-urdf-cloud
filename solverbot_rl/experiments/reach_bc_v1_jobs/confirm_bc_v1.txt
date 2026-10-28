@@ -1,0 +1,2 @@
+# Confirmación de bc_v1 en semillas nuevas del nivel original reach
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v1/model.zip --level reach --seeds 901000-901019 --out runs/reach_bc_v1/eval_confirm/bc_v1/reach
