@@ -44,6 +44,10 @@ class ChallengeWorld:
         d = self.ch['entrance_door']
         # la hoja de la puerta en el modelo 2D: cadena de círculos sobre el vano (la colisión exacta la da Gazebo)
         self.door_leaf_circles = [(d['closed_xy'][0], d['closed_xy'][1] + t, 0.06) for t in np.linspace(-0.3, 0.3, 6)]
+        # hoja abierta (girada open_yaw alrededor de su centro en open_xy): misma cadena de círculos
+        c, s_ = math.cos(d['open_yaw']), math.sin(d['open_yaw'])
+        self.door_leaf_open_circles = [(d['open_xy'][0] - s_ * t, d['open_xy'][1] + c * t, 0.06)
+                                       for t in np.linspace(-0.3, 0.3, 6)]
 
     # -------------------------------------------------------------------------------------------------- superficies
     def surface_height(self, furniture: str) -> float:
