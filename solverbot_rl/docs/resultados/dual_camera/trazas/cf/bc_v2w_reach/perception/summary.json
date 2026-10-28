@@ -1,0 +1,73 @@
+{
+ "policy": "solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip",
+ "obs_mode": "perception",
+ "privileged_obs": false,
+ "level": "reach",
+ "seeds": "901000-901019",
+ "episodes": 20,
+ "successes": 16,
+ "success_rate": 0.8,
+ "success_wilson95": [
+  0.5839782779742401,
+  0.9193436467288
+ ],
+ "d0_mm": {
+  "mean": 168.9431487948793,
+  "median": 168.9531860987015,
+  "min": 168.90944266568368,
+  "max": 168.95816480109752
+ },
+ "dmin_mm": {
+  "mean": 38.51032457113569,
+  "median": 28.878844198761605,
+  "min": 22.522792480888473,
+  "max": 82.76350282034751
+ },
+ "dfinal_mm": {
+  "mean": 46.46803260269623,
+  "median": 28.878844198761605,
+  "min": 22.522792480888473,
+  "max": 153.43536687233274
+ },
+ "improvement_mm": {
+  "mean": 130.43282422374358
+ },
+ "tcp_z2_final": {
+  "mean": -0.8840203217034066,
+  "median": -0.9355385548415572,
+  "min": -0.9387292532066118,
+  "max": -0.6061711242584105
+ },
+ "return": {
+  "mean": 7.366256867147202,
+  "median": 9.568341399144707,
+  "min": -1.5765819547051292,
+  "max": 9.65645086474741
+ },
+ "length": {
+  "mean": 58.8,
+  "median": 61.0,
+  "min": 47.0,
+  "max": 67.0
+ },
+ "length_success": 61.5,
+ "collision_rate": 0.0,
+ "stalled_rate": 0.2,
+ "timeout_rate": 0.0,
+ "detection_valid_rate": 0.38053972122508684,
+ "episodes_without_any_detection": 0,
+ "perc_err_mean_mm": {
+  "mean": 9.754820417837795,
+  "median": 9.961510664764681,
+  "min": 6.90741341044566,
+  "max": 11.675535686532838
+ },
+ "stale_images_total": 0,
+ "failed_seeds": [
+  901003,
+  901010,
+  901012,
+  901018
+ ],
+ "policy_est_err_mean_mm": 17.214213994434076
+}

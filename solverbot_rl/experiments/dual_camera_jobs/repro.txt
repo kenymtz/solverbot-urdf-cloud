@@ -1,0 +1,8 @@
+# Reproducibilidad por semilla entre lanzamientos de la simulación (fase cámara/paso distinta en cada lanzamiento)
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902009,902017 --out runs/dual_camera/repro/perception_launch1
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902009,902017 --out runs/dual_camera/repro/perception_launch2
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902009,902017 --out runs/dual_camera/repro/perception_launch3
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902009,902017 --out runs/dual_camera/repro/perception_launch4
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902009,902017 --out runs/dual_camera/repro/perception_launch5
+py runs/dual_camera diag_obs_counterfactual.py --mode oracle --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902017 --out runs/dual_camera/repro/oracle_launch1
+py runs/dual_camera diag_obs_counterfactual.py --mode oracle --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902003,902017 --out runs/dual_camera/repro/oracle_launch2
