@@ -385,17 +385,25 @@ class HRIEnv(ChallengeEnv):
         else:
             return SkillResult(ok=False, reason='persona_en_movimiento')
         here = foot_center(self.est)
-        others = [(*self.track(n)[:2], self.person_radius) for n in self.humans.people
-                  if n != p and self.track(n, 8.0) is not None]
+        # última posición CONOCIDA de cada persona, sin límite de antigüedad: los invitados sentados no se mueven, y una
+        # posición vieja solo hace al plan más conservador (HRI N5 semillas 1006 y 1007: un invitado sentado no visto
+        # en los últimos 8 s quedaba fuera del plan y la pose previa caía a 0.6 m de él)
+        others = [(*self.track(n, 1e9)[:2], self.person_radius) for n in self.humans.people
+                  if n != p and self.track(n, 1e9) is not None]
         best = None
         dyn = others + [(t[0], t[1], self.person_radius)]
+        # lo que el LiDAR ve y el mapa no explica (p. ej. un invitado sentado que la cámara no identificó), lejos de la
+        # persona objetivo (su cuerpo ya está en dyn): obstáculos de 3 cm
+        scan = [(x, y, 0.03) for x, y in self.unmapped_scan_points()
+                if math.hypot(x - t[0], y - t[1]) > self.person_radius + 0.10]
         nav_dyn = [(x, y, self.person_plan_radius()) for x, y, _ in dyn if math.hypot(x - here[0], y - here[1]) > 0.6]
+        dyn = dyn + scan
         for phi in np.linspace(-math.pi, math.pi, 24, endpoint=False):
             hand, yaw = self._hand_point(t[:2], phi), phi + math.pi / 2
             base = hand - self._rot(yaw) @ REACH_IN_BASE
             # pose final y tramo recto de entrada libres (junto a la persona no se gira en el lugar)
             # margen 0.08 m: ruido de la posición percibida (~3-4 cm) + freno por personas de skill_straight (0.03)
-            plan = self.final_approach_plan(base, yaw, dyn, margin=0.05)
+            plan = self.final_approach_plan(base, yaw, dyn, margin=0.08)
             if plan is None:
                 continue
             ref, pre = plan

@@ -714,6 +714,26 @@ class ChallengeEnv(gym.Env):
                 return True
         return False
 
+    def unmapped_scan_points(self, max_range=3.0, step=4) -> np.ndarray:
+        """Puntos LiDAR (mapa, pose estimada) que el mapa estático NO explica: personas u objetos no mapeados, aunque la
+        cámara no los haya identificado. Submuestreados (1 de cada `step`)."""
+        r = np.asarray(self.backend.scan(), float)
+        ang = np.asarray(self.backend.lidar_angles, float)
+        ok = np.isfinite(r) & (r > 0.05) & (r < max_range)
+        if not ok.any():
+            return np.zeros((0, 2))
+        P = np.stack([LASER_XY[0] + r[ok] * np.cos(ang[ok]), LASER_XY[1] + r[ok] * np.sin(ang[ok])], 1)[::step]
+        x0, x1, y0, y1 = FOOTPRINT
+        P = P[~((P[:, 0] > x0 - 0.02) & (P[:, 0] < x1 + 0.02) & (P[:, 1] > y0 - 0.02) & (P[:, 1] < y1 + 0.02))]
+        est = self.est
+        c0, s0 = math.cos(est[2]), math.sin(est[2])
+        X, Y = est[0] + c0 * P[:, 0] - s0 * P[:, 1], est[1] + s0 * P[:, 0] + c0 * P[:, 1]
+        a = self.arena
+        ii = ((Y - a.y0) // a.res).astype(int).clip(0, a.lidar_dist.shape[0] - 1)
+        jj = ((X - a.x0) // a.res).astype(int).clip(0, a.lidar_dist.shape[1] - 1)
+        um = a.lidar_dist[ii, jj] > 0.08
+        return np.stack([X[um], Y[um]], 1)
+
     def _halt_reason(self, pose, v, w, follower, in_door):
         if self._person_in_sweep(pose, v, follower, w):
             return 'person'
