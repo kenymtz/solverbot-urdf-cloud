@@ -322,6 +322,23 @@ class ArenaMap:
         clr, who = self.footprint_clearance(x, y, yaw, dynamic=dynamic)
         return clr < 0.0, clr, who
 
+    def rotation_clearance(self, ax: float, ay: float, dynamic: list | None = None) -> float:
+        """Holgura EXACTA (m) para girar en el lugar con el eje de ruedas en (ax, ay): distancia del eje a la primitiva de
+        navegación más cercana (y a los círculos dinámicos) menos el radio circunscrito de la huella."""
+        best = 1e9
+        for p in self._nav_prims()[0]:
+            dx, dy = ax - p.cx, ay - p.cy
+            if p.shape == 'box':
+                c, s = math.cos(p.yaw), math.sin(p.yaw)
+                lx, ly = abs(c * dx + s * dy) - p.sx / 2, abs(-s * dx + c * dy) - p.sy / 2
+                d = math.hypot(max(lx, 0.0), max(ly, 0.0)) + min(max(lx, ly), 0.0)
+            else:
+                d = math.hypot(dx, dy) - p.r
+            best = min(best, d)
+        for x, y, r in dynamic or []:
+            best = min(best, math.hypot(ax - x, ay - y) - r)
+        return best - CIRCUMRADIUS
+
     def on_static_surface(self, P, tol: float = 0.04) -> np.ndarray:
         """Máscara de los puntos 3D (mapa, N x 3) que caen dentro o a menos de `tol` de una primitiva estática del
         mapa (paredes, mobiliario). Para percepción: un punto de camiseta que está SOBRE un mueble conocido es el
@@ -403,7 +420,9 @@ class ArenaMap:
                 p = d.center + d.normal * t_
                 self.corridor[self.to_ij(p[0], p[1], r)] = True
         self.plan_free = free & ~self.corridor
-        self.rot_free = self.nav_dist[I, J] >= CIRCUMRADIUS + 0.01    # donde se puede girar en el lugar
+        # donde se puede girar en el lugar; + res: la distancia de la grilla puede sobrestimar hasta ~res (giro exacto:
+        # rotation_clearance)
+        self.rot_free = self.nav_dist[I, J] >= CIRCUMRADIUS + 0.01 + self.res
         # Aristas de puerta: punto previo <-> punto posterior sobre el eje de la puerta. Cada uno es el punto girable más
         # cercano (holgura >= radio circunscrito) desde el que el carril recto, con la huella REAL orientada al eje,
         # está libre hasta el otro lado. El cruce es un tramo recto entre ambos.

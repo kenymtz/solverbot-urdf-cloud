@@ -389,16 +389,19 @@ class HRIEnv(ChallengeEnv):
                   if n != p and self.track(n, 8.0) is not None]
         best = None
         dyn = others + [(t[0], t[1], self.person_radius)]
+        nav_dyn = [(x, y, self.person_plan_radius()) for x, y, _ in dyn if math.hypot(x - here[0], y - here[1]) > 0.6]
         for phi in np.linspace(-math.pi, math.pi, 24, endpoint=False):
             hand, yaw = self._hand_point(t[:2], phi), phi + math.pi / 2
             base = hand - self._rot(yaw) @ REACH_IN_BASE
             # pose final y tramo recto de entrada libres (junto a la persona no se gira en el lugar)
             # margen 0.08 m: ruido de la posición percibida (~3-4 cm) + freno por personas de skill_straight (0.03)
-            plan = self.final_approach_plan(base, yaw, dyn, margin=0.08)
+            plan = self.final_approach_plan(base, yaw, dyn, margin=0.05)
             if plan is None:
                 continue
             ref, pre = plan
-            cost = float(np.linalg.norm(pre - here))
+            # preferir poses previas con ruta que respete a las personas (inflado de navegación): si no, la navegación
+            # cae a una ruta sin personas y el gobernador la frena (HRI N5 semillas 1006 y 1007, 'bloqueado')
+            cost = float(np.linalg.norm(pre - here)) + (0.0 if self.arena.plan(here, pre, dynamic=nav_dyn) else 100.0)
             if best is None or cost < best[0]:
                 best = (cost, phi, yaw, ref, pre)
         if best is None:

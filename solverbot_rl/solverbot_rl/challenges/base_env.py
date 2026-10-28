@@ -20,7 +20,7 @@ import gymnasium as gym
 
 from ..kinematics import UrdfChain, solve_ik
 from ..config import load_urdf
-from .arena import AXLE, CIRCUMRADIUS, DOOR_STANDOFF, FOOTPRINT, HALF_WIDTH, LASER_XY, ArenaMap
+from .arena import AXLE, CIRCUMRADIUS, DOOR_STANDOFF, FOOT_RADIUS, FOOTPRINT, HALF_WIDTH, LASER_XY, ArenaMap
 from .backend import PAN_LIM, TILT_LIM, KinematicMobileBackend, wrap
 from .humans import HumanSim
 from .nav import NavController, ScanLocalizer, foot_center
@@ -114,7 +114,7 @@ class ChallengeEnv(gym.Env):
         self.events: list[dict] = []
         self.fault: str | None = None
         self.loc_errors: list[float] = []
-        self.halts = {'person': 0, 'scan': 0}
+        self.halts = {'person': 0, 'scan': 0, 'map': 0}
         self.min_clearance, self.contact_with = 9.0, ''
 
     def _entity_poses(self) -> dict:
@@ -410,6 +410,7 @@ class ChallengeEnv(gym.Env):
         replans, moving_steps, forward_gaze = 0, 0, 0
         while replans <= max_replans:
             self._exit_corridor()
+            self._exit_unrotatable()
             pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
             # margen social de 0.15 m: la ruta pasa fuera de la zona en la que el gobernador de seguridad frena
             dyn = [(*self.track(n)[:2], self.person_plan_radius()) for n in self.humans.people
@@ -494,6 +495,31 @@ class ChallengeEnv(gym.Env):
             n += 1
         if n:
             self.sim_step(0.0, 0.0, (0.0, 0.15))
+
+    def _exit_unrotatable(self, margin=0.01, max_dist=0.6):
+        """Si la navegación arranca donde NO se puede girar en el lugar (holgura exacta del giro < margin; p. ej. tras
+        una aproximación a una persona junto a una mesa), salir en línea recta (atrás o adelante, el sentido cuyo tramo
+        tiene holgura exacta) hasta un punto girable. GPSR N3 semilla 1019: el primer giro de la navegación barría la
+        tapa de la mesa."""
+        est = self.est
+        ax = foot_center(est)
+        if self.arena.rotation_clearance(*ax) >= margin:
+            return
+        fwd = np.array([math.cos(est[2]), math.sin(est[2])])
+        people = [(*t[:2], self.person_radius + 0.05) for t in (self.track(n, 4.0) for n in self.humans.people)
+                  if t is not None]
+        for sgn in (-1.0, 1.0):
+            for d in np.arange(0.05, max_dist + 1e-9, 0.05):
+                b = est[:2] + sgn * fwd * d
+                if self.arena.footprint_clearance(b[0], b[1], est[2], dynamic=people)[0] < 0.02:
+                    break
+                if self.arena.rotation_clearance(*(ax + sgn * fwd * d)) >= margin:
+                    start, n = foot_center(self.est).copy(), 0
+                    while np.linalg.norm(foot_center(self.est) - start) < d and n < 200 and not self.failed():
+                        self.sim_step(sgn * 0.10, 0.0, (0.0, 0.15))
+                        n += 1
+                    self.sim_step(0.0, 0.0, (0.0, 0.15))
+                    return
 
     def door_scan_open(self) -> bool:
         """¿El LiDAR ve a través del vano de la puerta de entrada? (rayos hacia el centro del vano > 1 m más allá)."""
@@ -665,6 +691,12 @@ class ChallengeEnv(gym.Env):
         if os.environ.get('SOLVERBOT_DEBUG_SCAN'):
             self._last_unmapped = np.stack([X[um], Y[um]], 1)
         ax0 = np.array(AXLE)
+
+        def rect_dist(Q):                            # distancia mínima de los puntos al rectángulo de la huella
+            dx = np.maximum(np.maximum(x0 - Q[:, 0], Q[:, 0] - x1), 0.0)
+            dy = np.maximum(np.maximum(y0 - Q[:, 1], Q[:, 1] - y1), 0.0)
+            return float(np.min(np.hypot(dx, dy)))
+        now = rect_dist(P)
         for t in horizon:
             th = w * t
             if abs(w) > 1e-6:
@@ -675,9 +707,10 @@ class ChallengeEnv(gym.Env):
             Rt = np.array([[c, -s], [s, c]])
             base_t = ax0 + adv - Rt @ ax0
             Q = (P - base_t) @ Rt                    # puntos en el frame de la base predicha
-            inside = ((Q[:, 0] > x0 - margin) & (Q[:, 0] < x1 + margin) & (Q[:, 1] > y0 - margin)
-                      & (Q[:, 1] < y1 + margin))
-            if inside.any():
+            d = rect_dist(Q)
+            # como el freno por personas: solo frena lo que ACERCA la huella al obstáculo; alejarse sigue permitido
+            # (antes congelaba al robot junto a un invitado sentado: HRI N5 semillas 1006 y 1007)
+            if d < margin and d < now - 1e-3:
                 return True
         return False
 
@@ -686,7 +719,29 @@ class ChallengeEnv(gym.Env):
             return 'person'
         if not in_door and self._scan_blocked(v, w):
             return 'scan'
+        if self._map_blocked(pose, v, w, margin=0.0 if in_door else 0.01):
+            return 'map'
         return None
+
+    def _map_blocked(self, pose, v, w, margin=0.01, horizon=(0.3, 0.6)) -> bool:
+        """Gobernador contra el MAPA ESTÁTICO: True si la huella real, en las poses predichas con (v, w), queda a menos
+        de `margin` (holgura geométrica exacta) de una primitiva de colisión y además se acerca. La grilla del
+        planificador supone la huella orientada a la ruta (semi-ancho + 1 cm); con rumbo oblicuo las esquinas pueden
+        tocar el extremo de una pared (GPSR N3 semilla 1002). Usa la pose estimada: el error de localización se cubre
+        con el margen."""
+        if abs(v) < 1e-3 and abs(w) < 1e-3:
+            return False
+        a = self.arena
+        i, j = a.to_ij(*foot_center(pose))
+        reach = max(abs(v), 0.05) * horizon[-1] + 0.05
+        if 0 <= i < a.nav_dist.shape[0] and 0 <= j < a.nav_dist.shape[1] and a.nav_dist[i, j] > FOOT_RADIUS + reach:
+            return False
+        now = a.footprint_clearance(pose[0], pose[1], pose[2])[0]
+        for b in self._predicted_bases(pose, v, w, horizon):
+            c = a.footprint_clearance(b[0], b[1], b[2])[0]
+            if c < margin and c < now - 1e-4:
+                return True
+        return False
 
     def _predicted_bases(self, pose, v, w, horizon=(0.3, 0.6, 0.9, 1.2)):
         """Poses de base_footprint predichas (mapa) aplicando (v, w) alrededor del eje de ruedas durante `horizon` s."""
