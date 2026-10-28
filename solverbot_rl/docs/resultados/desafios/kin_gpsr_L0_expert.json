@@ -1,0 +1,809 @@
+{
+ "challenge": "gpsr",
+ "backend": "kinematic",
+ "physical": false,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 0,
+ "seed0": 1000,
+ "nav_pose_source": "estimate",
+ "wall_s": 421.8,
+ "host": "vm",
+ "ros_domain_id": "42",
+ "gz_partition": null,
+ "error": null,
+ "summary": {
+  "episodes": 20,
+  "successes": 20,
+  "success_rate": 1.0,
+  "success_ci95": 0.0,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 8.0458,
+  "mean_sim_time": 190.90500000000003,
+  "loc_err_mean": 0.0064399999999999995,
+  "loc_err_max": 0.0464
+ },
+ "episodes": [
+  {
+   "seed": 1000,
+   "success": true,
+   "return": 8.544,
+   "skills": 4,
+   "wall_s": 15.8,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "la mesita de noche: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 91.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0078,
+   "loc_err_max": 0.0406,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1001,
+   "success": true,
+   "return": 7.931,
+   "skills": 5,
+   "wall_s": 35.5,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "el sill\u00f3n: and\u00e1 ah\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 213.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0066,
+   "loc_err_max": 0.0455,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1002,
+   "success": true,
+   "return": 7.673,
+   "skills": 5,
+   "wall_s": 34.8,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "la estanter\u00eda: and\u00e1 ah\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 265.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0058,
+   "loc_err_max": 0.0413,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1003,
+   "success": true,
+   "return": 8.11,
+   "skills": 5,
+   "wall_s": 23.6,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir a la cocina"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 178.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0056,
+   "loc_err_max": 0.0425,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1004,
+   "success": true,
+   "return": 7.698,
+   "skills": 5,
+   "wall_s": 23.6,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "and\u00e1 al lavadero"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 260.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0052,
+   "loc_err_max": 0.0376,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1005,
+   "success": true,
+   "return": 8.533,
+   "skills": 4,
+   "wall_s": 9.1,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "la habitaci\u00f3n: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 93.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0079,
+   "loc_err_max": 0.0417,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1006,
+   "success": true,
+   "return": 7.718,
+   "skills": 5,
+   "wall_s": 25.0,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "dirigite hasta el lavarropas"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 256.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0058,
+   "loc_err_max": 0.0428,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1007,
+   "success": true,
+   "return": 8.534,
+   "skills": 4,
+   "wall_s": 9.0,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "la habitaci\u00f3n: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 93.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0073,
+   "loc_err_max": 0.0371,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1008,
+   "success": true,
+   "return": 7.943,
+   "skills": 5,
+   "wall_s": 20.5,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir hasta el living"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 211.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0064,
+   "loc_err_max": 0.0427,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1009,
+   "success": true,
+   "return": 7.71,
+   "skills": 5,
+   "wall_s": 24.6,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir al lavadero"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 258.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0055,
+   "loc_err_max": 0.0436,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1010,
+   "success": true,
+   "return": 8.535,
+   "skills": 4,
+   "wall_s": 9.1,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "el dormitorio: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 93.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0076,
+   "loc_err_max": 0.0464,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1011,
+   "success": true,
+   "return": 7.692,
+   "skills": 5,
+   "wall_s": 24.4,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "dirigite a la mesa del lavadero"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 261.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0057,
+   "loc_err_max": 0.0417,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1012,
+   "success": true,
+   "return": 7.713,
+   "skills": 5,
+   "wall_s": 26.3,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "naveg\u00e1 al lavarropas"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 257.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0059,
+   "loc_err_max": 0.0402,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1013,
+   "success": true,
+   "return": 8.146,
+   "skills": 5,
+   "wall_s": 18.0,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir a la mesa redonda"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 170.8,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0065,
+   "loc_err_max": 0.0455,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1014,
+   "success": true,
+   "return": 8.531,
+   "skills": 4,
+   "wall_s": 9.0,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir hasta la cama"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 93.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0078,
+   "loc_err_max": 0.0408,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1015,
+   "success": true,
+   "return": 7.663,
+   "skills": 5,
+   "wall_s": 26.6,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "dirigite a la estanter\u00eda"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 267.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.006,
+   "loc_err_max": 0.0418,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1016,
+   "success": true,
+   "return": 8.111,
+   "skills": 5,
+   "wall_s": 18.0,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "la cocina: and\u00e1 ah\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 177.8,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0066,
+   "loc_err_max": 0.0439,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1017,
+   "success": true,
+   "return": 8.091,
+   "skills": 5,
+   "wall_s": 18.7,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ten\u00e9s que ir hasta el anafe"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 181.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0064,
+   "loc_err_max": 0.0424,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1018,
+   "success": true,
+   "return": 7.933,
+   "skills": 5,
+   "wall_s": 22.3,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ve hasta el sill\u00f3n"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 213.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0061,
+   "loc_err_max": 0.043,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1019,
+   "success": true,
+   "return": 8.107,
+   "skills": 5,
+   "wall_s": 18.6,
+   "level": 0,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ve a la cocina"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 178.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0063,
+   "loc_err_max": 0.0422,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}

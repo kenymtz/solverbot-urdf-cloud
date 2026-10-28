@@ -49,3 +49,47 @@ usuario: ver `solverbot-train@.service` (reinicio automático y `loginctl enable
 `tools/headless/run_experiment.sh 0 train <run> ...`.
 
 **No iniciar entrenamientos largos hasta que la validación física dé una tasa aceptable** en las semillas propias.
+
+## Desafíos HRI / GPSR / Doing Laundry
+
+Requisitos (además de lo anterior): reconstruir `solverbot_sim` para instalar el mundo y la configuración:
+
+```bash
+cd ~/solverbot_ws && colcon build --symlink-install --packages-select solverbot_sim
+pip install -e ~/solverbot-urdf-cloud/solverbot_rl    # registra SolverBotHRI-v0 / SolverBotGPSR-v0 / SolverBotLaundry-v0
+```
+
+Comandos (`instancia` fija `ROS_DOMAIN_ID = 42 + instancia` y `GZ_PARTITION`; nunca el dominio 10 del robot real):
+
+```bash
+# Experto de referencia en Gazebo headless + reporte JSON (runs/<desafío>_expert_<fecha>/report.json)
+tools/headless/start.sh 1 cexpert hri --level 3 --episodes 20 --seed0 1000
+tools/headless/start.sh 2 cexpert gpsr --level 2 --episodes 20
+tools/headless/start.sh 3 cexpert laundry --level 3 --episodes 20
+
+# Entrenamiento de la política de alto nivel (PPO), reanudable
+tools/headless/start.sh 1 ctrain hri hri_gz_1 --steps 20000 --checkpoint-every 512 --bc-episodes 20
+tools/headless/status.sh 1      # progreso, curriculum, evaluación, último log
+tools/headless/stop.sh 1        # SIGTERM -> checkpoint -> apaga la simulación
+
+# Reinicio de la máquina: unidad systemd de usuario
+cp tools/headless/solverbot-challenge@.service ~/.config/systemd/user/
+printf 'CHALLENGE=hri\nRUN=hri_gz_1\nARGS=--steps 20000 --checkpoint-every 512\n' > ~/.solverbot/challenge_1.env
+systemctl --user daemon-reload && systemctl --user enable --now solverbot-challenge@1
+```
+
+Sin simulador (backend cinemático, sin física; para tests y para entrenar la política de alto nivel rápido):
+
+```bash
+python3 solverbot_rl/scripts/evaluate_challenge.py --challenge gpsr --policy expert --level 3 --episodes 20 \
+    --out runs/gpsr_kin_L3.json
+python3 solverbot_rl/scripts/train_challenge.py --challenge laundry --steps 30000 --bc-episodes 20 --run ld_kin
+```
+
+Variables:
+
+- `SOLVERBOT_GZ_TIMEOUT` (s, por defecto 30): espera máxima por paso de simulación. Con las cámaras renderizadas por
+  CPU (llvmpipe) se recomienda 60–120.
+- `SIM_READY_TIMEOUT`: tiempo máximo para que la simulación quede lista al arrancar.
+
+En Gazebo con render por CPU, un episodio tarda de 1 a 5 minutos de reloj, según el desafío y el nivel.

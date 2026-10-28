@@ -206,10 +206,12 @@ class HumanSim:
             tgt = np.array(p.path[0])
             d = tgt - p.xy
             dist = float(np.linalg.norm(d))
-            if len(p.path) == 1 and dist <= stop_at:
+            if len(p.path) == 1 and dist <= stop_at + 1e-4:
                 p.path = [] if stop_at == 0.0 else p.path
                 return
             step = min(budget, dist - (stop_at if len(p.path) == 1 else 0.0))
+            if step < 1e-6 and dist > 1e-3:
+                return                       # nada que avanzar (evita iterar con pasos ínfimos)
             if dist > 1e-6:
                 p.pose[:2] = p.xy + d / dist * step
                 p.pose[2] = math.atan2(d[1], d[0])

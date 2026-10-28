@@ -1,0 +1,137 @@
+{
+ "challenge": "hri",
+ "backend": "gazebo",
+ "physical": true,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 1,
+ "seed0": 2000,
+ "nav_pose_source": "estimate",
+ "wall_s": 306.2,
+ "host": "vm",
+ "ros_domain_id": "44",
+ "gz_partition": "solverbot_dbg",
+ "error": null,
+ "summary": {
+  "episodes": 3,
+  "successes": 3,
+  "success_rate": 1.0,
+  "success_ci95": 0.0,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 8.304,
+  "mean_sim_time": 39.1,
+  "loc_err_mean": 0.0047,
+  "loc_err_max": 0.0174
+ },
+ "episodes": [
+  {
+   "seed": 2000,
+   "success": true,
+   "return": 8.298,
+   "skills": 4,
+   "wall_s": 105.8,
+   "level": 1,
+   "progress": {
+    "ask": 1,
+    "guide": 1,
+    "seat": 1,
+    "intro": 0,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 1
+   },
+   "sim_time": 40.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.005,
+   "loc_err_max": 0.0158,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 0,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 2001,
+   "success": true,
+   "return": 8.307,
+   "skills": 4,
+   "wall_s": 94.1,
+   "level": 1,
+   "progress": {
+    "ask": 1,
+    "guide": 1,
+    "seat": 1,
+    "intro": 0,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 1
+   },
+   "sim_time": 38.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.005,
+   "loc_err_max": 0.0136,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 0,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 2002,
+   "success": true,
+   "return": 8.307,
+   "skills": 4,
+   "wall_s": 100.6,
+   "level": 1,
+   "progress": {
+    "ask": 1,
+    "guide": 1,
+    "seat": 1,
+    "intro": 0,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 1
+   },
+   "sim_time": 38.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0041,
+   "loc_err_max": 0.0174,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 1,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}
