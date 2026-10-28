@@ -44,6 +44,16 @@ tools/headless/start.sh 0 train sac_gz_0 --algo sac --steps 300000   # REANUDA d
 * Duplicados: `start.sh` rechaza una instancia en marcha (archivo PID) y `run_experiment.sh` rechaza arrancar si ya
   hay Gazebo en esa partición o un `controller_manager` en ese dominio.
 
+## 4. Cualquier script y colas de trabajos
+
+```bash
+# un script de solverbot_rl/scripts contra una simulación propia (logs en <dir>/logs, sufijo _i<instancia>)
+tools/headless/run_experiment.sh 1 py runs/reach_bc_v1 eval_reach.py --policy <modelo.zip> --level reach --seeds 902000-902019 --out runs/x
+# varios trabajos en orden, cada uno con su simulación limpia (una línea = argumentos de run_experiment.sh)
+setsid nohup tools/headless/queue.sh 1 solverbot_rl/experiments/reach_bc_v1_jobs/eval_round1_a.txt > ~/.solverbot/queue_1.out 2>&1 &
+```
+Experimento de imitación + SAC de `reach`: `solverbot_rl/docs/REACH_BC_SAC.md`.
+
 Tras un reinicio sin systemd: volver a ejecutar el mismo `start.sh ... train <run>` (reanuda). Con systemd de
 usuario: ver `solverbot-train@.service` (reinicio automático y `loginctl enable-linger`). En primer plano (tmux):
 `tools/headless/run_experiment.sh 0 train <run> ...`.

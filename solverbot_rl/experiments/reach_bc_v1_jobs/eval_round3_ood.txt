@@ -1,0 +1,5 @@
+# Ronda 3: extrapolación (reach_var_l, fuera del rango de entrenamiento). Semillas 900300+.
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2/model.zip --level reach_var_l --seeds 900300-900329 --out runs/reach_bc_v1/eval/bc_v2/reach_var_l
+py runs/reach_bc_v1 eval_reach.py --policy scripted --level reach_var_l --seeds 900300-900329 --out runs/reach_bc_v1/eval/scripted/reach_var_l
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v1/model.zip --level reach_var_l --seeds 900300-900329 --out runs/reach_bc_v1/eval/bc_v1/reach_var_l
+py runs/reach_bc_v1 eval_reach.py --policy scripted --level reach_var_s --seeds 900100-900129 --out runs/reach_bc_v1/eval/scripted/reach_var_s

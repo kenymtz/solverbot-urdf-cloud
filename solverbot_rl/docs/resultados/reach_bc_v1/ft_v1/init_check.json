@@ -1,0 +1,11 @@
+{
+ "actor_params_equal": true,
+ "n_actor_params": 77582,
+ "max_abs_action_diff": 0.0,
+ "bc_policy_entropy": -19.602136611938477,
+ "ent_coef": 0.01,
+ "auto_entropy": false,
+ "target_entropy": -7.0,
+ "learning_starts": 0,
+ "init": "runs/reach_bc_v1/bc_v2/model.zip"
+}

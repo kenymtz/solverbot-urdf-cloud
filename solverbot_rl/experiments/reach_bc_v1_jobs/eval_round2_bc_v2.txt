@@ -1,0 +1,4 @@
+# Ronda 2: bc_v2 (demostraciones + DAgger ronda 1), mismas semillas de evaluación que bc_v1
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2/model.zip --level reach_var_m --seeds 900200-900229 --out runs/reach_bc_v1/eval/bc_v2/reach_var_m
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2/model.zip --level reach_var_s --seeds 900100-900129 --out runs/reach_bc_v1/eval/bc_v2/reach_var_s
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v2/model.zip --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/bc_v2/reach
