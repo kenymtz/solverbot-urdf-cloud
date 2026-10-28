@@ -1,5 +1,7 @@
 # Desafíos HRI, GPSR y Doing Laundry — especificación de simulación
 
+> Validación física, auditoría de integración y estado actualizado (iteración 2): [VALIDACION_FISICA.md](VALIDACION_FISICA.md).
+
 Fuente de reglas: `docs/referencias_desafios/` (imágenes 01, 02, 04, 05 y 12). Esta especificación separa en cada
 desafío:
 
@@ -210,10 +212,12 @@ Bolsa:
    - El borde de 0.30 m tapa el fondo, salvo que la cámara esté a menos de unos 0.5 m.
    - Por eso se usa la cámara de muñeca. Sus especificaciones reales **no están confirmadas**: el frame es provisional
      (README de referencias).
-2. **El brazo no llega al fondo del cesto.**
-   - Con el elevador en 0, la punta de la pinza no baja de unos 0.32 m (barrido de IK sobre el URDF).
-   - No se alcanza una prenda dentro de un cesto de piso de 0.30 m, ni el tambor del lavarropas.
-   - Haría falta un cesto elevado, otra altura de montaje del brazo o un elevador que baje.
+2. **El brazo no llega al fondo del cesto.** Estudio completo en [VALIDACION_FISICA.md](VALIDACION_FISICA.md) §5.
+   - Con el elevador en 0, la z mínima con la pinza hacia abajo es de 0.34–0.42 m.
+   - Con el elevador en su límite inferior (-0.19 m) baja a 0.18–0.22 m, a 0.45–0.60 m de distancia lateral.
+   - El fondo de un cesto de piso de 0.30 m sigue siendo inalcanzable: límite definitivo del robot.
+   - El tambor del lavarropas frontal tampoco es viable: 1/12 puntos, en el límite de tolerancia.
+   - Alternativas: un cesto elevado o usar el elevador en el entorno.
 3. **Dónde poner la base.** El cesto debe quedar a 0.58 m o más al costado de la base: medio ancho del cesto más la
    huella izquierda. Junto al cesto no se puede girar en el lugar, así que la aproximación final es recta, desde una
    pose previa donde sí se puede girar.
@@ -299,7 +303,7 @@ de localización y traza de cada falla.
 |---|---|---|---|---|---|---|---|
 | HRI | 20/20 | 20/20 | 20/20 | 20/20 | 20/20 | 18/20 | 0 |
 | GPSR | 20/20 | 19/20 | 19/20 | 13/20 | – | – | 0 |
-| Laundry | 20/20 | 20/20 | 20/20 | 18/20 | – | – | 0 |
+| Laundry | 20/20 | 20/20 | 20/20 | 19/20 | – | – | 0 |
 
 ### Gazebo Harmonic (física, LiDAR y cámaras simuladas; render por CPU con llvmpipe)
 
@@ -329,8 +333,9 @@ Notas sobre la cobertura:
 - La camiseta **naranja** (`person_c`) se confunde con la **madera** de los muebles en la segmentación por
   cromaticidad: distancia 0.21, por debajo de la tolerancia de 0.30.
 - El robot cree que mira a la persona (creencia 1.0), pero la mirada real no la apunta (verdad 0.0).
-- Corrección propuesta, no aplicada en esta rama: cambiar esa camiseta a un color lejos de la madera, por ejemplo cian
-  (0.1, 0.8, 0.8), y actualizar la gramática ("celeste").
+- **Actualización (iteración 2):** la detección falsa era la **naranja (fruta)** sobre la mesada. No se cambió el
+  color: se agregaron compuertas de saturación, mapa estático y altura física para personas. El falso positivo
+  desapareció, pero el episodio todavía no completa. Ver [VALIDACION_FISICA.md](VALIDACION_FISICA.md) §4.
 
 ### Entrenamiento
 
