@@ -98,6 +98,7 @@ def main():
     ap.add_argument('--device', choices=['auto', 'cpu', 'cuda'], default='cpu')
     ap.add_argument('--threads', type=int, default=0)
     ap.add_argument('--fresh', action='store_true')
+    ap.add_argument('--n-steps', type=int, default=512, help='pasos por rollout de PPO (pruebas cortas en Gazebo: 32)')
     args = ap.parse_args()
 
     import torch
@@ -181,7 +182,8 @@ def main():
         model = PPO.load(latest, env=env, device=args.device)
         print(f'[train] reanudando desde {latest} en t={model.num_timesteps}, nivel {cur.level}', flush=True)
     else:
-        model = PPO('MlpPolicy', env, seed=args.seed, verbose=1, device=args.device, n_steps=512, batch_size=128,
+        model = PPO('MlpPolicy', env, seed=args.seed, verbose=1, device=args.device, n_steps=args.n_steps,
+                    batch_size=min(128, args.n_steps),
                     learning_rate=3e-4, gamma=0.99, gae_lambda=0.95, ent_coef=0.01,
                     policy_kwargs={'net_arch': [256, 256]})
         if args.bc_episodes:

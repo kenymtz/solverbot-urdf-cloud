@@ -36,7 +36,11 @@ FOOT_CENTER = AXLE                     # nombre histórico: el punto que se plan
 LEFT_EXT = FOOTPRINT[3] - AXLE[1]      # 0.3605: extensión lateral izquierda desde el eje
 RIGHT_EXT = AXLE[1] - FOOTPRINT[2]     # 0.3085
 HALF_WIDTH = max(LEFT_EXT, RIGHT_EXT)  # holgura lateral mínima del punto de referencia
-LANE_OFFSET = (RIGHT_EXT - LEFT_EXT) / 2   # desplazamiento lateral del eje en una puerta para centrar la huella
+LANE_OFFSET = (RIGHT_EXT - LEFT_EXT) / 2
+# Distancia máxima de un punto de la huella al origen de base_footprint (prefiltro de la verificación exacta)
+FOOT_RADIUS = max(math.hypot(a, b) for a in (FOOTPRINT[0], FOOTPRINT[1]) for b in (FOOTPRINT[2], FOOTPRINT[3]))
+# Holgura mínima exigida a lo largo del carril recto de una puerta (centrado: 15.5 mm por lado con la puerta de 0.70 m)
+DOOR_MIN_CLEARANCE = 0.010   # desplazamiento lateral del eje en una puerta para centrar la huella
 # Radio barrido al girar en el lugar (alrededor del eje de las ruedas): esquina más lejana de la huella
 CIRCUMRADIUS = max(math.hypot(x - AXLE[0], y - AXLE[1]) for x in FOOTPRINT[:2] for y in FOOTPRINT[2:])
 DOOR_STANDOFF = 0.62          # distancia del eje de la pared a los puntos previo/posterior de un cruce de puerta
@@ -152,6 +156,48 @@ def collision_prims(spec: dict, extra_static: list[dict] | None = None) -> list[
     return prims
 
 
+def _poly_axes(P):
+    e = np.roll(P, -1, axis=0) - P
+    n = np.stack([-e[:, 1], e[:, 0]], 1)
+    return n / np.linalg.norm(n, axis=1, keepdims=True)
+
+
+def _seg_point_dist(a, b, p):
+    ab = b - a
+    t = np.clip(((p - a) @ ab) / max(ab @ ab, 1e-12), 0.0, 1.0)
+    return float(np.linalg.norm(a + t * ab - p))
+
+
+def _poly_distance(A, B) -> float:
+    """Distancia con signo entre dos polígonos convexos: > 0 separación mínima; < 0 profundidad de penetración
+    (mínimo solapamiento sobre los ejes separadores, teorema del eje separador)."""
+    overlap = 1e9
+    for ax in np.vstack([_poly_axes(A), _poly_axes(B)]):
+        pa, pb = A @ ax, B @ ax
+        o = min(pa.max(), pb.max()) - max(pa.min(), pb.min())
+        if o <= 0:
+            break
+        overlap = min(overlap, o)
+    else:
+        return -overlap
+    d = 1e9
+    for P, Q in ((A, B), (B, A)):
+        for i in range(len(P)):
+            a, b = P[i], P[(i + 1) % len(P)]
+            for q in Q:
+                d = min(d, _seg_point_dist(a, b, q))
+    return d
+
+
+def _poly_circle_distance(P, cx, cy, r) -> float:
+    p = np.array([cx, cy])
+    d = min(_seg_point_dist(P[i], P[(i + 1) % len(P)], p) for i in range(len(P)))
+    e = np.roll(P, -1, axis=0) - P
+    w = p - P
+    inside = bool(np.all(e[:, 0] * w[:, 1] - e[:, 1] * w[:, 0] >= 0))     # vértices en sentido antihorario
+    return (-d - r) if inside else d - r
+
+
 class ArenaMap:
     def __init__(self, spec: dict | None = None, res: float = 0.02, plan_res: float = 0.05,
                  extra_static: list[dict] | None = None, bounds=(-2.5, 7.9, -0.8, 7.9)):
@@ -224,6 +270,76 @@ class ArenaMap:
         X, Y = np.meshgrid(xs, ys)
         c, s = math.cos(yaw), math.sin(yaw)
         return np.stack([x + c * X - s * Y, y + s * X + c * Y], -1).reshape(-1, 2)
+
+    # ------------------------------------------------------------------------------------------- holgura exacta
+    def _nav_prims(self):
+        if not hasattr(self, '_nav_prims_cache'):
+            ps = [p for p in self.prims if p.z1 > 0.02 and p.z0 < ROBOT_HEIGHT]
+            ext = np.array([math.hypot(p.sx, p.sy) / 2 if p.shape == 'box' else p.r for p in ps])
+            self._nav_prims_cache = (ps, np.array([[p.cx, p.cy] for p in ps]), ext)
+        return self._nav_prims_cache
+
+    def footprint_clearance(self, x, y, yaw, dynamic: list | None = None, extra_prims: list | None = None,
+                            radius: float = 1.5) -> tuple[float, str]:
+        """Holgura GEOMÉTRICA EXACTA (m) entre la huella real del robot (rectángulo FOOTPRINT, prisma conservador que
+        contiene toda la geometría de colisión con el brazo plegado) y las primitivas de colisión del mundo (cajas
+        rotadas y cilindros, las mismas del SDF) y los círculos dinámicos (x, y, r). Negativa = interpenetración
+        (profundidad por eje separador). Devuelve (holgura, nombre del obstáculo más cercano). No usa la grilla."""
+        c, s = math.cos(yaw), math.sin(yaw)
+        R = np.array([[c, -s], [s, c]])
+        x0, x1, y0, y1 = FOOTPRINT
+        poly = (R @ np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]).T).T + [x, y]
+        ps, centers, ext = self._nav_prims()
+        near = np.hypot(centers[:, 0] - x, centers[:, 1] - y) - ext < radius
+        best, who = 1e9, ''
+        for k in np.nonzero(near)[0]:
+            p = ps[k]
+            if p.shape == 'box':
+                cb, sb = math.cos(p.yaw), math.sin(p.yaw)
+                Rb = np.array([[cb, -sb], [sb, cb]])
+                box = (Rb @ np.array([[-p.sx, -p.sy], [p.sx, -p.sy], [p.sx, p.sy], [-p.sx, p.sy]]).T / 2).T + [p.cx, p.cy]
+                d = _poly_distance(poly, box)
+            else:
+                d = _poly_circle_distance(poly, p.cx, p.cy, p.r)
+            if d < best:
+                best, who = d, p.name
+        for k, (ox, oy, r) in enumerate((dynamic or []) + (extra_prims or [])):
+            d = _poly_circle_distance(poly, ox, oy, r)
+            if d < best:
+                best, who = d, f'dyn#{k}'
+        return float(best), who
+
+    def contact_truth(self, x, y, yaw, dynamic: list | None = None) -> tuple[bool, float, str]:
+        """Verificación de CONTACTO para la verdad del simulador: holgura exacta < 0 con la huella conservadora (el
+        prisma contiene toda la geometría de colisión del robot con el brazo plegado, verificado contra el URDF), así
+        que no hay falsos negativos; puede haber falsos positivos de a lo sumo la diferencia entre el prisma y la forma
+        real. Lejos de todo (grilla) no se calcula la geometría exacta."""
+        i, j = self.to_ij(x, y)
+        far = (0 <= i < self.nav_dist.shape[0] and 0 <= j < self.nav_dist.shape[1]
+               and self.nav_dist[i, j] > FOOT_RADIUS + 0.05)
+        if far and not any(math.hypot(ox - x, oy - y) < FOOT_RADIUS + r + 0.05 for ox, oy, r in dynamic or []):
+            return False, float(self.nav_dist[i, j] - FOOT_RADIUS), ''
+        clr, who = self.footprint_clearance(x, y, yaw, dynamic=dynamic)
+        return clr < 0.0, clr, who
+
+    def on_static_surface(self, P, tol: float = 0.04) -> np.ndarray:
+        """Máscara de los puntos 3D (mapa, N x 3) que caen dentro o a menos de `tol` de una primitiva estática del
+        mapa (paredes, mobiliario). Para percepción: un punto de camiseta que está SOBRE un mueble conocido es el
+        mueble (p. ej. madera con la misma tonalidad que la camiseta naranja), no una persona."""
+        P = np.asarray(P, float)
+        hit = np.zeros(len(P), bool)
+        for p in self.prims:
+            zin = (P[:, 2] >= p.z0 - tol) & (P[:, 2] <= p.z1 + tol)
+            if not zin.any():
+                continue
+            dx, dy = P[:, 0] - p.cx, P[:, 1] - p.cy
+            if p.shape == 'box':
+                c, s = math.cos(p.yaw), math.sin(p.yaw)
+                lx, ly = c * dx + s * dy, -s * dx + c * dy
+                hit |= zin & (np.abs(lx) <= p.sx / 2 + tol) & (np.abs(ly) <= p.sy / 2 + tol)
+            else:
+                hit |= zin & (np.hypot(dx, dy) <= p.r + tol)
+        return hit
 
     def footprint_collides(self, x, y, yaw, margin=0.0, dynamic: list | None = None) -> bool:
         """Colisión de la huella REAL (sin inflar) con la geometría estática (y obstáculos dinámicos (x, y, r))."""
@@ -327,7 +443,7 @@ class ArenaMap:
             ref = point + np.array([-n[1], n[0]]) * LANE_OFFSET
             for yaw in np.arange(h0 - span, h0 + span + 1e-9, step):
                 bx, by = self.base_from_ref(ref, yaw)
-                if self.footprint_collides(bx, by, yaw, margin=0.01):
+                if self.footprint_clearance(bx, by, yaw)[0] < 0.01:      # geometría exacta, 1 cm de margen
                     return False
         return True
 
@@ -340,7 +456,7 @@ class ArenaMap:
             for t_ in np.arange(-s0, s1 + 1e-9, 0.04):
                 ref = d.center + n * t_ + np.array([-n[1], n[0]]) * LANE_OFFSET
                 bx, by = self.base_from_ref(ref, yaw)
-                if self.footprint_collides(bx, by, yaw):
+                if self.footprint_clearance(bx, by, yaw)[0] < DOOR_MIN_CLEARANCE:   # geometría exacta
                     return False
         return True
 

@@ -388,20 +388,23 @@ class HRIEnv(ChallengeEnv):
         others = [(*self.track(n)[:2], self.person_radius) for n in self.humans.people
                   if n != p and self.track(n, 8.0) is not None]
         best = None
+        dyn = others + [(t[0], t[1], self.person_radius)]
         for phi in np.linspace(-math.pi, math.pi, 24, endpoint=False):
             hand, yaw = self._hand_point(t[:2], phi), phi + math.pi / 2
             base = hand - self._rot(yaw) @ REACH_IN_BASE
-            dyn = others + [(t[0], t[1], self.person_radius)]
-            if self.arena.footprint_collides(base[0], base[1], yaw, margin=0.04, dynamic=dyn):
+            # pose final y tramo recto de entrada libres (junto a la persona no se gira en el lugar)
+            # margen 0.08 m: ruido de la posición percibida (~3-4 cm) + freno por personas de skill_straight (0.03)
+            plan = self.final_approach_plan(base, yaw, dyn, margin=0.08)
+            if plan is None:
                 continue
-            ref = base + self._rot(yaw) @ np.array([0.084, 0.0025])
-            cost = float(np.linalg.norm(ref - here))
+            ref, pre = plan
+            cost = float(np.linalg.norm(pre - here))
             if best is None or cost < best[0]:
-                best = (cost, phi, yaw, ref)
+                best = (cost, phi, yaw, ref, pre)
         if best is None:
             return SkillResult(ok=False, reason='sin_pose_de_entrega')
-        _, phi, yaw, ref = best
-        nav = self.skill_navigate(ref, yaw)
+        _, phi, yaw, ref, pre = best
+        nav = self.skill_approach(ref, pre, yaw)
         if not nav.ok:
             return SkillResult(ok=False, reason=nav.get('reason'))
         # comportamiento scriptado de la persona: se gira hacia el punto más cercano del cuerpo del robot y ofrece la bolsa
@@ -433,6 +436,9 @@ class HRIEnv(ChallengeEnv):
         self.events.append({'t': self.sim_time, 'ev': 'reach', 'person': p, 'ok': ok, 'tcp_hand_dist': round(dist, 3)})
         self.skill_wait(0.5)
         self.stow_arm()
+        # retirada recta por el mismo tramo validado: a 5-8 cm de la persona cualquier giro barre su cuerpo, y el
+        # gobernador por LiDAR (con razón) bloquea todo movimiento siguiente (HRI N5, semillas 1000 y 1012)
+        self.skill_reverse(float(np.linalg.norm(pre - foot_center(self.est))))
         return SkillResult(ok=ok, reason=None if ok else 'mano_lejos', tcp_hand_dist=dist)
 
     def _tell(self, p, terms):

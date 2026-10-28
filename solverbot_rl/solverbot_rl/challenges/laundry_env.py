@@ -418,17 +418,12 @@ class LaundryEnv(ChallengeEnv):
             fwd = R[:, 0]
             for rib in (REACH_CANDIDATES if target_xy is None else GARMENT_CANDIDATES):
                 base = p - R @ rib
-                if self.arena.footprint_collides(base[0], base[1], yaw, margin=0.03):
+                # pose final y tramo recto con holgura EXACTA >= 5 cm (la grilla de 2 cm aceptaba tramos que rozaban
+                # la pared del cesto: contacto detectado por la verificación exacta, laundry N3 semilla 1000)
+                plan = self.final_approach_plan(base, yaw, margin=0.05)
+                if plan is None:
                     continue
-                ref = base + R @ np.array([0.084, 0.0025])
-                pre = ref - fwd * 0.6
-                i, j = self.arena.to_ij(*pre, self.arena.plan_res)
-                if not (0 <= i < self.arena.rot_free.shape[0] and 0 <= j < self.arena.rot_free.shape[1]
-                        and self.arena.rot_free[i, j]):
-                    continue
-                if any(self.arena.footprint_collides(*(base - fwd * s), yaw, margin=0.03)
-                       for s in np.linspace(0.0, 0.6, 7)):
-                    continue
+                ref, pre = plan
                 if not self._ik_ok(np.array([*rib, z_check])):
                     continue
                 if self.arena.plan(here, pre) is None:

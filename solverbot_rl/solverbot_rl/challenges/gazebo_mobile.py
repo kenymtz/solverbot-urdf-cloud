@@ -55,14 +55,13 @@ class GazeboMobileBackend(MobileBackend):
     physical = True
 
     def __init__(self, arena: ArenaMap, world: str = 'home_challenges', camera: bool = False, timeout: float = 30.0,
-                 physics_step: float = 0.001, contact_margin: float = 0.005):
+                 physics_step: float = 0.001):
         if rclpy is None:
             raise RuntimeError(f'GazeboMobileBackend requiere ROS 2 Jazzy: {_IMPORT_ERROR}')
         super().__init__(arena, lidar_beams=271)
         # SOLVERBOT_GZ_TIMEOUT: espera máxima (s) por paso; con render por CPU (llvmpipe) y cámaras puede hacer falta más
         timeout = float(os.environ.get('SOLVERBOT_GZ_TIMEOUT', timeout))
         self.world, self.timeout, self.physics_step = world, timeout, physics_step
-        self.contact_margin = contact_margin
         self.use_camera = camera
         self._lock = threading.Lock()
         self._clock = 0.0
@@ -231,6 +230,7 @@ class GazeboMobileBackend(MobileBackend):
         o = self._odom_raw
         self._T_map_odom = np.array(pose, float), o.copy()
         self._collided = False
+        self.min_clearance, self.contact_with = 9.0, ''
 
     def _send_cmd(self):
         m = TwistStamped()
@@ -293,9 +293,11 @@ class GazeboMobileBackend(MobileBackend):
                 time.sleep(0.002)
             self.stale['images'] += int(self._img.get('rgb', (-1,))[0] < t_goal - 0.21)
         tr = self.pose_truth()
-        if self.arena.footprint_collides(tr[0], tr[1], tr[2], margin=-self.contact_margin,
-                                         dynamic=self.dynamic_obstacles()):
+        hit, clr, who = self.arena.contact_truth(tr[0], tr[1], tr[2], dynamic=self.dynamic_obstacles())
+        self.min_clearance = min(getattr(self, 'min_clearance', 9.0), clr)
+        if hit:
             self._collided = True
+            self.contact_with = who
 
     def odom(self):
         """Pose de base_footprint por odometría. diff_drive_controller integra el EJE de las ruedas (y lo reporta como

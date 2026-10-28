@@ -22,9 +22,13 @@ def foot_center(pose) -> np.ndarray:
     return np.array([pose[0] + c * FOOT_CENTER[0] - s * FOOT_CENTER[1], pose[1] + s * FOOT_CENTER[0] + c * FOOT_CENTER[1]])
 
 
-# Desviación máxima de rumbo al cruzar una puerta: con 1.5 cm de holgura por lado, cada grado de rumbo ocupa ~1 cm
-# (largo de la huella 0.545 m); 1.5° deja corregir ~3 cm de error lateral en el cruce.
+# Presupuesto de holgura en una puerta de 0.70 m: 15.5 mm por lado con la huella centrada y alineada. Medido con la
+# geometría exacta (validate_doors.py): cada grado de rumbo consume ~3 mm en el vano y el error lateral consume 1:1.
+# El error lateral lo domina la localización (4-8 mm medidos en Gazebo). Se probó acotar el rumbo del cruce a 0.75°:
+# la holgura mínima EMPEORÓ (0.3 mm contra 4.2 mm) porque el controlador ya no alcanza a corregir el error lateral con
+# el que entra. Queda 1.5° de desviación máxima y alineación previa < 0.5°.
 CROSS_MAX_DEV = math.radians(1.5)
+ALIGN_TOL = math.radians(0.5)
 
 
 class NavController:
@@ -65,7 +69,7 @@ class NavController:
                     return self._pursuit(pose, d, dist, slow=dist < 0.4, stop_at=True)
             if self.mode == 'align':
                 err = wrap(wp.heading - pose[2])
-                if abs(err) < math.radians(1.0):
+                if abs(err) < ALIGN_TOL:
                     self.mode, self.k = 'cross', self.k + 1
                     return 0.0, 0.0
                 return 0.0, float(np.clip(1.5 * err, -0.5, 0.5)) if abs(err) > 0.02 else float(np.sign(err) * 0.03)

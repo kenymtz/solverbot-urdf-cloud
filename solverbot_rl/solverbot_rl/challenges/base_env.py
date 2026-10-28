@@ -66,7 +66,8 @@ class ChallengeEnv(gym.Env):
         elif backend == 'gazebo':
             from .gazebo_mobile import GazeboMobileBackend
             self.backend = GazeboMobileBackend(self.arena, world=gz_world, camera=True)
-            self.detector = ColorHeadDetector(colors, persons=self.world.person_names)
+            self.detector = ColorHeadDetector(colors, persons=self.world.person_names,
+                                              static_reject=self.arena.on_static_surface)
             self.chain = self.backend.chain
         else:
             raise ValueError(backend)
@@ -114,6 +115,7 @@ class ChallengeEnv(gym.Env):
         self.fault: str | None = None
         self.loc_errors: list[float] = []
         self.halts = {'person': 0, 'scan': 0}
+        self.min_clearance, self.contact_with = 9.0, ''
 
     def _entity_poses(self) -> dict:
         ents = {}
@@ -194,8 +196,11 @@ class ChallengeEnv(gym.Env):
             return
         tr = self.truth()
         self.loc_errors.append(float(np.linalg.norm(self.est[:2] - tr[:2])))
-        if self.backend.collided_truth() or self.arena.footprint_collides(tr[0], tr[1], tr[2], margin=-0.005,
-                                                                            dynamic=self.obstacles_truth()):
+        hit, clr, who = self.arena.contact_truth(tr[0], tr[1], tr[2], dynamic=self.obstacles_truth())
+        self.min_clearance = min(self.min_clearance, clr)
+        if self.backend.collided_truth() or hit:
+            if not self.contact:
+                self.contact_with = who or getattr(self.backend, 'contact_with', '') or 'backend'
             self.contact = True
         if self.backend.tipped_truth():
             self.tipped = True
@@ -291,9 +296,40 @@ class ChallengeEnv(gym.Env):
         ok = self._command_arm(q)
         return SkillResult(ok=ok and not self.failed(), ik_err=err)
 
-    def skill_straight(self, goal_ref, yaw, v=0.10, tol=0.03, max_time=20.0) -> SkillResult:
+    def final_approach_plan(self, base_xy, yaw, dynamic=(), back=0.6, margin=0.05):
+        """Aproximación final RECTA a una pose junto a obstáculos o personas (donde no se puede girar en el lugar):
+        devuelve (ref, pre) si la pose final y todo el tramo recto desde una pose previa `back` m detrás (en la que SÍ
+        se puede girar) tienen holgura geométrica exacta >= margin contra el mapa y los círculos `dynamic`; si no, None."""
+        R = np.array([[math.cos(yaw), -math.sin(yaw)], [math.sin(yaw), math.cos(yaw)]])
+        fwd = R[:, 0]
+        base = np.asarray(base_xy, float)
+        for sgo in np.linspace(0.0, back, 7):
+            b = base - fwd * sgo
+            if self.arena.footprint_clearance(b[0], b[1], yaw, dynamic=list(dynamic))[0] < margin:
+                return None
+        ref = base + R @ np.array([AXLE[0], AXLE[1]])
+        pre = ref - fwd * back
+        i, j = self.arena.to_ij(*pre, self.arena.plan_res)
+        rf = self.arena.rot_free
+        if not (0 <= i < rf.shape[0] and 0 <= j < rf.shape[1] and rf[i, j]):
+            return None
+        if any(math.hypot(pre[0] - x, pre[1] - y) < CIRCUMRADIUS + r + 0.05 for x, y, r in dynamic):
+            return None                      # en la pose previa se gira: el barrido no puede tocar a nadie
+        return ref, pre
+
+    def skill_approach(self, ref, pre, yaw) -> SkillResult:
+        """Navega a la pose previa (girable) con el rumbo final y entra en línea recta hasta ref."""
+        res = self.skill_navigate(pre, yaw)
+        if not res.ok:
+            return res
+        return self.skill_straight(ref, yaw)
+
+    def skill_straight(self, goal_ref, yaw, v=0.10, tol=0.03, max_time=20.0, person_margin=0.03) -> SkillResult:
         """Avance en línea recta (rumbo `yaw`, corrección lateral suave) hasta que el eje de ruedas llega a goal_ref.
-        Para aproximaciones finales junto a muebles, donde no se puede girar en el lugar."""
+        Para aproximaciones finales junto a muebles o personas, donde no se puede girar en el lugar. El freno por
+        personas usa `person_margin` (< margen con que final_approach_plan validó el tramo; HRI usa 0.08 por el ruido de percepción): con el margen
+        de navegación (0.08) el robot se detenía para siempre antes de una pose de entrega válida (HRI N5, semilla 1000).
+        Si la persona se mueve hacia el tramo, el freno sigue actuando."""
         t0 = self.sim_time
         n = np.array([math.cos(yaw), math.sin(yaw)])
         lat_n = np.array([-n[1], n[0]])
@@ -308,7 +344,10 @@ class ChallengeEnv(gym.Env):
             desired = yaw - float(np.clip(math.atan2(2.0 * e_lat, v), -math.radians(4), math.radians(4)))
             w = float(np.clip(2.5 * wrap(desired - self.est[2]), -0.2, 0.2))
             vv = min(v, max(0.04, along))
-            if self._person_in_sweep(self.est, vv, None, w) or self._scan_blocked(vv, w):
+            # predicción acotada a lo que falta recorrer: más allá de la pose final validada no se va a ir
+            hz = tuple(sorted({min(t, along / vv) for t in (0.3, 0.6, 0.9)}))
+            if (self._person_in_sweep(self.est, vv, None, w, margin=person_margin, horizon=hz)
+                    or self._scan_blocked(vv, w, horizon=hz)):
                 vv, w = 0.0, 0.0
             self.sim_step(vv, w, (0.0, 0.2))
         return SkillResult(ok=False, reason='tiempo_agotado' if not self.failed() else
@@ -376,6 +415,10 @@ class ChallengeEnv(gym.Env):
             dyn = [(*self.track(n)[:2], self.person_plan_radius()) for n in self.humans.people
                    if n not in (follower, ignore) and self.track(n, 4.0) is not None
                    and np.linalg.norm(self.track(n)[:2] - foot_center(pose)) > 0.6]
+            # hoja de la puerta de entrada abierta: obstáculo de posición conocida (barrido de la puerta) que no está en
+            # el mapa estático; la verdad de contacto ya la incluye (obstacles_truth)
+            if self.door_open:
+                dyn += [(x, y, r) for x, y, r in self.world.door_leaf_open_circles]
             wps = self.arena.plan(foot_center(pose), goal_xy, dynamic=dyn) or self.arena.plan(foot_center(pose), goal_xy)
             if wps is None:
                 return SkillResult(ok=False, reason='sin_ruta', time=self.sim_time - t0)
@@ -384,14 +427,16 @@ class ChallengeEnv(gym.Env):
             while not nav.done:
                 pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
                 if nav.mode == 'align' and nav.k not in settled:
-                    # en el punto previo de una puerta: 1 s quieto para que el scan-matching converja (holgura 1.5 cm)
+                    # en el punto previo de una puerta: 2 s quieto para que el scan-matching converja (holgura 15.5 mm)
                     settled.add(nav.k)
-                    for _ in range(10):
+                    for _ in range(20):
                         self.sim_step(0.0, 0.0, (0.0, 0.15))
                     pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
                 v, w = nav.act(pose)
-                why = 'person' if self._person_in_sweep(pose, v, follower, w) else \
-                    'scan' if (not nav.in_door and self._scan_blocked(v, w)) else None
+                why = self._halt_reason(pose, v, w, follower, nav.in_door)
+                if why and abs(w) > 1e-3 and v > 0.02 and not self._halt_reason(pose, v, 0.0, follower, nav.in_door):
+                    # el giro haría barrer la huella sobre el obstáculo pero avanzar recto es seguro: alejarse primero
+                    w, why = 0.0, None
                 if why:
                     self.halts[why] += 1
                     v, w = 0.0, 0.0                  # gobernador de seguridad: persona percibida en la zona de barrido
@@ -535,8 +580,15 @@ class ChallengeEnv(gym.Env):
                     self.skill_navigate(goal, None, max_time=8.0, max_replans=0, stop_near=(goal, 0.4), ignore=p,
                                         head_fn=lambda pose: look_at_angles(pose, (*goal, 1.2)))
                     seen = seen[-1:]
-                else:
-                    self.skill_search(p)
+                elif not self.skill_search(p).ok:
+                    # búsqueda fallida (p. ej. junto a una puerta, donde el giro en el lugar está bloqueado): ir a la
+                    # habitación de destino anunciada en la instrucción, o al último punto visto, y buscar desde ahí
+                    # (HRI N5 semilla 1000: el anfitrión ya estaba en la cocina y el robot giraba en vano en el vano)
+                    loc = self.arena.locations.get(done_room) if done_room is not None else None
+                    goal = np.array([loc.x, loc.y]) if loc is not None else (last[:2] if last is not None else None)
+                    if goal is not None and np.linalg.norm(goal - foot_center(self.est)) > 0.5:
+                        self.skill_navigate(goal, None, max_time=30.0, stop_near=(goal, 0.6), ignore=p,
+                                            head_fn=lambda pose: look_at_angles(pose, (*goal, 1.2)))
                 continue
             seen.append((self.sim_time, t[:2].copy()))
             seen = [x for x in seen if self.sim_time - x[0] <= 3.0]
@@ -629,6 +681,13 @@ class ChallengeEnv(gym.Env):
                 return True
         return False
 
+    def _halt_reason(self, pose, v, w, follower, in_door):
+        if self._person_in_sweep(pose, v, follower, w):
+            return 'person'
+        if not in_door and self._scan_blocked(v, w):
+            return 'scan'
+        return None
+
     def _predicted_bases(self, pose, v, w, horizon=(0.3, 0.6, 0.9, 1.2)):
         """Poses de base_footprint predichas (mapa) aplicando (v, w) alrededor del eje de ruedas durante `horizon` s."""
         ax = foot_center(pose)
@@ -644,7 +703,7 @@ class ChallengeEnv(gym.Env):
                         a_t[1] - AXLE[0] * math.sin(th) - AXLE[1] * math.cos(th), th))
         return out
 
-    def _person_in_sweep(self, pose, v, follower=None, w=0.0, margin=0.08) -> bool:
+    def _person_in_sweep(self, pose, v, follower=None, w=0.0, margin=0.08, horizon=(0.3, 0.6, 0.9, 1.2)) -> bool:
         """True si la huella, en las poses predichas con (v, w), queda a menos de `margin` de una persona detectada hace
         < 1 s (círculo de radio person_radius). Solo frena los movimientos que la acercarían: alejarse sigue permitido."""
         if abs(v) < 1e-3 and abs(w) < 1e-3:
@@ -659,7 +718,7 @@ class ChallengeEnv(gym.Env):
         if not circles:
             return False
         now = self._foot_min_dist(pose, circles)
-        for b in self._predicted_bases(pose, v, w):
+        for b in self._predicted_bases(pose, v, w, horizon):
             d = self._foot_min_dist(b, circles)
             if d < 0.0 and d < now - 1e-3:
                 return True
@@ -691,7 +750,8 @@ class ChallengeEnv(gym.Env):
                 'fault': self.fault, 'loc_err_mean': round(float(np.mean(le)), 4),
                 'loc_err_max': round(float(np.max(le)), 4), 'nav_pose_source': self.nav_pose_source,
                 'backend': self.backend_name, 'physical': self.backend.physical,
-                'stale': dict(getattr(self.backend, 'stale', {})), 'safety_halts': dict(self.halts)}
+                'stale': dict(getattr(self.backend, 'stale', {})), 'safety_halts': dict(self.halts),
+                'min_clearance_m': round(float(self.min_clearance), 4), 'contact_with': self.contact_with}
 
     def close(self):
         self.backend.close()

@@ -121,6 +121,7 @@ class KinematicMobileBackend(MobileBackend):
         self.pan_cmd = self.tilt_cmd = 0.0
         self.entities = {k: np.array(v, float) for k, v in entities.items()}
         self._collided = False
+        self.min_clearance = 9.0
         self.odom_bias = 1.0 + rng.normal(0, self.odom_noise)          # error de escala de rueda por episodio
 
     def cmd_vel(self, v, w):
@@ -151,7 +152,9 @@ class KinematicMobileBackend(MobileBackend):
             ax, ay, yaw = ax + self.v * h * math.cos(th), ay + self.v * h * math.sin(th), wrap(self.pose[2] + self.w * h)
             c1, s1 = math.cos(yaw), math.sin(yaw)
             nxt = np.array([ax - (c1 * AXLE[0] - s1 * AXLE[1]), ay - (s1 * AXLE[0] + c1 * AXLE[1]), yaw])
-            if self.arena.footprint_collides(nxt[0], nxt[1], nxt[2], dynamic=dyn):
+            hit, clr, _ = self.arena.contact_truth(nxt[0], nxt[1], nxt[2], dynamic=dyn)
+            self.min_clearance = min(getattr(self, 'min_clearance', 9.0), clr)
+            if hit:
                 self._collided = True          # contacto: la base se detiene (sin atravesar el obstáculo)
                 self.v = self.w = 0.0
                 continue

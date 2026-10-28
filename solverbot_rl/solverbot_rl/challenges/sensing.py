@@ -79,13 +79,26 @@ class SimulatedHeadDetector:
         return out
 
 
-def locate_gated(rgb, depth, k, cam_in_map, target_rgb, zrange=None, box=None, min_pixels=15, tol=0.30):
+def saturation(rgb):
+    """Saturación HSV (0-1) por píxel: (max - min) / max."""
+    img = rgb.astype(np.float32)
+    mx = img.max(axis=2)
+    return (mx - img.min(axis=2)) / np.maximum(mx, 1e-6)
+
+
+def locate_gated(rgb, depth, k, cam_in_map, target_rgb, zrange=None, box=None, min_pixels=15, tol=0.30,
+                 min_sat=0.0, reject=None, min_height=0.0):
     """Segmentación por color + profundidad con COMPUERTA ESPACIAL: solo cuentan los píxeles cuyo punto 3D (mapa) cae
     en zrange y en box (xmin, xmax, ymin, ymax). Evita confundir objetos y camisetas de colores parecidos.
-    Devuelve el centroide (mapa) del grupo principal o None."""
+    min_sat: saturación mínima del píxel. reject: función (N x 3 puntos del mapa) -> máscara de puntos a descartar
+    (p. ej. los que están sobre un mueble del mapa estático). min_height: extensión vertical mínima (m) del grupo
+    principal (tamaño físico: una camiseta mide > 0.2 m, una fruta ~0.08 m). Devuelve el centroide (mapa) o None."""
     if rgb is None or depth is None or k is None or depth.shape[:2] != rgb.shape[:2]:
         return None
-    v, u = np.nonzero(color_mask(rgb, target_rgb, tol))
+    m = color_mask(rgb, target_rgb, tol)
+    if min_sat > 0:
+        m &= saturation(rgb) >= min_sat
+    v, u = np.nonzero(m)
     if u.size < min_pixels:
         return None
     z = depth[v, u].astype(np.float64)
@@ -99,23 +112,38 @@ def locate_gated(rgb, depth, k, cam_in_map, target_rgb, zrange=None, box=None, m
     if box is not None:
         keep &= (P[:, 0] >= box[0]) & (P[:, 0] <= box[1]) & (P[:, 1] >= box[2]) & (P[:, 1] <= box[3])
     P = P[keep, :3]
+    if reject is not None and len(P):
+        P = P[~reject(P)]
     if len(P) < min_pixels:
         return None
     med = np.median(P, axis=0)
     main = np.linalg.norm(P[:, :2] - med[:2], axis=1) < 0.30          # grupo principal (descarta otro blob)
     if main.sum() < min_pixels:
         return None
+    if min_height > 0 and np.ptp(P[main, 2]) < min_height:
+        return None
     return P[main].mean(axis=0)
 
 
 class ColorHeadDetector:
     """Gazebo: un objetivo por color (camiseta de cada persona, color de cada objeto), con compuertas espaciales:
-    personas = píxeles a altura de torso; objetos = región del mueble que se inspecciona (gates)."""
+    personas = píxeles a altura de torso; objetos = región del mueble que se inspecciona (gates).
+
+    Personas, compuertas adicionales (hallazgo GPSR semilla 2000 en Gazebo: la camiseta naranja se confundía con la
+    NARANJA (fruta, objeto de GPSR, mismo color) sobre la mesada de la cocina; además la madera (0.55, 0.36, 0.20)
+    tiene casi el mismo tono que la camiseta (0.95, 0.50, 0.05), ~27° vs ~30°):
+      * saturación >= PERSON_SAT_FRAC x la saturación nominal de la camiseta (naranja 0.95 -> 0.71; madera 0.64);
+      * se descartan los puntos 3D que caen sobre una primitiva estática del mapa (`static_reject`): una persona
+        está en espacio libre, nunca dentro de un mueble;
+      * tamaño físico: el grupo debe abarcar >= PERSON_MIN_HEIGHT en altura (torso ~0.5 m; la fruta ~0.08 m)."""
 
     PERSON_Z = (0.55, 1.55)
+    PERSON_SAT_FRAC = 0.75
+    PERSON_MIN_HEIGHT = 0.20
 
-    def __init__(self, colors: dict, persons=(), min_pixels: int = 25):
+    def __init__(self, colors: dict, persons=(), min_pixels: int = 25, static_reject=None):
         self.colors, self.persons, self.min_pixels = colors, set(persons), min_pixels
+        self.static_reject = static_reject
 
     def detect(self, rgbd, est_pose, names=None, gates: dict | None = None) -> dict:
         if rgbd is None:
@@ -130,7 +158,13 @@ class ColorHeadDetector:
         gates = gates or {}
         for name in (self.colors if names is None else names):
             zr, box = gates.get(name, (self.PERSON_Z if name in self.persons else None, None))
-            p = locate_gated(rgb, depth, k, cam, self.colors[name], zr, box, self.min_pixels)
+            if name in self.persons:
+                t = np.asarray(self.colors[name], float)
+                sat = self.PERSON_SAT_FRAC * (t.max() - t.min()) / max(t.max(), 1e-6)
+                p = locate_gated(rgb, depth, k, cam, self.colors[name], zr, box, self.min_pixels, min_sat=sat,
+                                 reject=self.static_reject, min_height=self.PERSON_MIN_HEIGHT)
+            else:
+                p = locate_gated(rgb, depth, k, cam, self.colors[name], zr, box, self.min_pixels)
             if p is not None and np.all(np.isfinite(p)):
                 out[name] = p
         return out
