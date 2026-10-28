@@ -234,7 +234,7 @@ class HRIEnv(ChallengeEnv):
         return SkillResult(ok=False, reason='desconocida')
 
     def _head_from_track(self, t):
-        return np.array([t[0], t[1], t[2] + 0.45])
+        return self.head_from_track(t)
 
     def _talk(self, p, seconds=2.0):
         return self.talk(p, seconds, self.cfg['gaze_max_angle_deg'])

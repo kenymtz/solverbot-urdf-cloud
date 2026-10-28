@@ -39,8 +39,8 @@ def _jsonable(x):
     return x
 
 
-def run_episodes(env, policy, episodes, seed0, max_steps=400, log=print):
-    rows = []
+def run_episodes(env, policy, episodes, seed0, max_steps=400, log=print, sink=None):
+    rows = [] if sink is None else sink
     for i in range(episodes):
         seed = seed0 + i
         obs, info = env.reset(seed=seed)
@@ -107,8 +107,15 @@ def main():
     args = ap.parse_args()
     env = make_env(args.challenge, backend=args.backend, level=args.level, nav_pose_source=args.nav_pose)
     t0 = time.time()
+    error = None
+    rows_partial = []
     try:
-        summary, rows = run_episodes(env, make_policy(args.policy, args.challenge), args.episodes, args.seed0)
+        summary, rows = run_episodes(env, make_policy(args.policy, args.challenge), args.episodes, args.seed0,
+                                     sink=rows_partial)
+    except Exception as exc:                    # p. ej. simulación que deja de avanzar: se guarda lo medido
+        error = repr(exc)
+        rows = rows_partial
+        summary = {'episodes': len(rows), 'successes': sum(r['success'] for r in rows), 'aborted': True}
     finally:
         env.close()
     rep = {'challenge': args.challenge, 'backend': args.backend, 'physical': args.backend == 'gazebo',
@@ -116,13 +123,15 @@ def main():
            'level': args.level, 'seed0': args.seed0, 'nav_pose_source': args.nav_pose,
            'wall_s': round(time.time() - t0, 1), 'host': platform.node(),
            'ros_domain_id': os.environ.get('ROS_DOMAIN_ID'), 'gz_partition': os.environ.get('GZ_PARTITION'),
-           'summary': summary, 'episodes': rows}
+           'error': error, 'summary': summary, 'episodes': rows}
     print(json.dumps({k: v for k, v in rep.items() if k != 'episodes'}, indent=1))
     if args.out:
         os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
         with open(args.out + '.tmp', 'w') as fh:
             json.dump(rep, fh, indent=1)
         os.replace(args.out + '.tmp', args.out)
+    if error:
+        sys.exit(f'[eval] abortado: {error}')
 
 
 if __name__ == '__main__':

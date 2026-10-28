@@ -12,6 +12,7 @@ Arquitectura jerárquica (decisión de diseño, ver DESAFIOS_SPEC.md):
 from __future__ import annotations
 
 import math
+import os
 
 import numpy as np
 
@@ -27,6 +28,7 @@ from .sensing import ColorHeadDetector, SimulatedHeadDetector, head_ray_angles, 
 from .world import ChallengeWorld
 
 DT = 0.1
+HEAD_Z_STANDING = 1.61      # altura supuesta de la cabeza de una persona de pie (modelo de persona del mundo)
 PERSON_SOCIAL = 0.15
 ARM_JOINTS = [f'joint{i}' for i in range(1, 7)]
 STOW = [math.radians(v) for v in (86.28, 173.91, -164.0, 66.98, 0.69, -146.41)]
@@ -89,8 +91,10 @@ class ChallengeEnv(gym.Env):
         base = np.array([bx, by, robot_ref_pose[2]])
         self._pushed = {}
         ents = self._entity_poses()
-        if isinstance(self.backend, KinematicMobileBackend):
-            self.backend.entity_radius = {n: (0.06 if n.startswith('door#') else self.person_radius) for n in ents}
+        # radios para la verificación de contacto del backend: personas como círculos; la hoja de la puerta se modela
+        # con su cadena de círculos ('door#k'); objetos y prendas no cuentan (son pequeños y van sobre muebles)
+        self.backend.entity_radius = {n: (0.06 if n.startswith('door#') else self.person_radius
+                                          if n in self.humans.people else 0.0) for n in ents}
         if isinstance(self.detector, SimulatedHeadDetector):
             self.detector.rng = np.random.default_rng(int(self.np_random.integers(2 ** 31)))   # reset reproducible
         self.backend.reset(self.np_random, base, {n: e[:3] for n, e in ents.items()})
@@ -109,6 +113,7 @@ class ChallengeEnv(gym.Env):
         self.events: list[dict] = []
         self.fault: str | None = None
         self.loc_errors: list[float] = []
+        self.halts = {'person': 0, 'scan': 0}
 
     def _entity_poses(self) -> dict:
         ents = {}
@@ -116,8 +121,9 @@ class ChallengeEnv(gym.Env):
             ents[p.name] = (p.pose[0], p.pose[1], p.pose[2], p.z)
         d = self.ch['entrance_door']
         if isinstance(self.backend, KinematicMobileBackend):
-            for k, (x, y, r) in enumerate(self.world.door_leaf_circles):
-                ents[f'door#{k}'] = (x, y, 0.0) if not self.door_open else (-20.0, -20.0 - k, 0.0)
+            leaf = self.world.door_leaf_circles if not self.door_open else self.world.door_leaf_open_circles
+            for k, (x, y, r) in enumerate(leaf):
+                ents[f'door#{k}'] = (x, y, 0.0)
         else:
             ents[d['name']] = ((*d['open_xy'], d['open_yaw'], 0.0) if self.door_open else
                                (*d['closed_xy'], 0.0, 0.0))
@@ -158,8 +164,7 @@ class ChallengeEnv(gym.Env):
 
     def obstacles_truth(self):
         obs = self.humans.obstacles(self.person_radius)
-        if not self.door_open:
-            obs += self.world.door_leaf_circles
+        obs += self.world.door_leaf_circles if not self.door_open else self.world.door_leaf_open_circles
         return obs
 
     def sim_step(self, v=0.0, w=0.0, head=None, perceive_every=3):
@@ -337,8 +342,11 @@ class ChallengeEnv(gym.Env):
                 self.skill_turn(math.atan2(xyz[1] - self.est[1], xyz[0] - self.est[0]))
         pan, tilt = look_at_angles(self.est, xyz)
         pan, tilt = float(np.clip(pan, -PAN_LIM, PAN_LIM)), float(np.clip(tilt, -TILT_LIM, TILT_LIM))
-        for _ in range(settle):
+        for k in range(settle + 30):
             self.sim_step(0.0, 0.0, (pan, tilt), perceive_every=1)
+            mp, mt = self.backend.head_joints()       # esperar a que los servos lleguen (en Gazebo son más lentos)
+            if k + 1 >= settle and abs(mp - pan) < 0.02 and abs(mt - tilt) < 0.02:
+                break
         return pan, tilt
 
     def gaze_error_truth(self, xyz) -> float:
@@ -366,11 +374,20 @@ class ChallengeEnv(gym.Env):
             if wps is None:
                 return SkillResult(ok=False, reason='sin_ruta', time=self.sim_time - t0)
             nav = NavController(wps, final_yaw=final_yaw)
-            last_prog, best, halted = self.sim_time, 1e9, 0.0
+            last_prog, best, halted, settled = self.sim_time, 1e9, 0.0, set()
             while not nav.done:
                 pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
+                if nav.mode == 'align' and nav.k not in settled:
+                    # en el punto previo de una puerta: 1 s quieto para que el scan-matching converja (holgura 1.5 cm)
+                    settled.add(nav.k)
+                    for _ in range(10):
+                        self.sim_step(0.0, 0.0, (0.0, 0.15))
+                    pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
                 v, w = nav.act(pose)
-                if self._person_in_sweep(pose, v, follower, w) or (not nav.in_door and self._scan_blocked(v, w)):
+                why = 'person' if self._person_in_sweep(pose, v, follower, w) else \
+                    'scan' if (not nav.in_door and self._scan_blocked(v, w)) else None
+                if why:
+                    self.halts[why] += 1
                     v, w = 0.0, 0.0                  # gobernador de seguridad: persona percibida en la zona de barrido
                     halted += DT
                     if halted > 4.0 and not nav.in_door:
@@ -457,19 +474,26 @@ class ChallengeEnv(gym.Env):
                 return SkillResult(ok=True, time=self.sim_time - t0)
         return SkillResult(ok=False, reason='puerta_cerrada')
 
+    def head_from_track(self, t) -> np.ndarray:
+        """Cabeza estimada a partir de la detección del torso: la altura sale de la POSTURA percibida (torso alto = de
+        pie, bajo = sentado) y de la altura supuesta de las personas, no del centroide de la camiseta (que sube cuando
+        la cámara mira hacia arriba y solo ve la parte superior)."""
+        seated = t[2] < 0.95
+        return np.array([t[0], t[1], HEAD_Z_STANDING + (self.ch['seated_z_offset'] if seated else 0.0)])
+
     def talk(self, p, seconds=2.0, gaze_max_deg=12.0):
         """Habla mirando a la persona p durante `seconds` siguiendo su posición PERCIBIDA (cabeza ~0.45 m sobre el
         torso detectado); devuelve la fracción del tiempo con contacto visual REAL (< gaze_max_deg) y el error final."""
         t = self.track(p, 3.0)
         if t is not None:                         # fuera del rango del pan: girar la base hacia la persona
-            pan, _ = look_at_angles(self.est, (t[0], t[1], t[2] + 0.45))
+            pan, _ = look_at_angles(self.est, self.head_from_track(t))
             if abs(pan) > PAN_LIM - 0.15:
                 self.skill_turn(math.atan2(t[1] - self.est[1], t[0] - self.est[0]))
         ok_steps, belief_steps, n, err = 0, 0, 0, 180.0
         for _ in range(int(seconds / DT)):
             t = self.track(p, 3.0)
             if t is not None:
-                head = (t[0], t[1], t[2] + 0.45)
+                head = self.head_from_track(t)
                 self.sim_step(0, 0, look_at_angles(self.est, head), perceive_every=1)
                 pan, tilt = self.backend.head_joints()
                 belief_steps += int(math.degrees(head_ray_angles(self.est, pan, tilt, head)[0]) < gaze_max_deg)
@@ -554,6 +578,9 @@ class ChallengeEnv(gym.Env):
         if not ok.any():
             return False
         P = np.stack([LASER_XY[0] + r[ok] * np.cos(ang[ok]), LASER_XY[1] + r[ok] * np.sin(ang[ok])], 1)
+        x0, x1, y0, y1 = FOOTPRINT
+        # auto-filtro: retornos dentro de la propia huella son el cuerpo del robot (brazo plegado, en Gazebo)
+        P = P[~((P[:, 0] > x0 - 0.02) & (P[:, 0] < x1 + 0.02) & (P[:, 1] > y0 - 0.02) & (P[:, 1] < y1 + 0.02))]
         # solo obstáculos NO mapeados: se descartan los puntos que el mapa estático explica (pose estimada)
         est = self.est
         c0, s0 = math.cos(est[2]), math.sin(est[2])
@@ -561,11 +588,13 @@ class ChallengeEnv(gym.Env):
         a = self.arena
         ii = ((Y - a.y0) // a.res).astype(int).clip(0, a.lidar_dist.shape[0] - 1)
         jj = ((X - a.x0) // a.res).astype(int).clip(0, a.lidar_dist.shape[1] - 1)
-        P = P[a.lidar_dist[ii, jj] > 0.08]
+        um = a.lidar_dist[ii, jj] > 0.08
+        P = P[um]
         if not len(P):
             return False
+        if os.environ.get('SOLVERBOT_DEBUG_SCAN'):
+            self._last_unmapped = np.stack([X[um], Y[um]], 1)
         ax0 = np.array(AXLE)
-        x0, x1, y0, y1 = FOOTPRINT
         for t in horizon:
             th = w * t
             if abs(w) > 1e-6:
@@ -644,7 +673,7 @@ class ChallengeEnv(gym.Env):
                 'fault': self.fault, 'loc_err_mean': round(float(np.mean(le)), 4),
                 'loc_err_max': round(float(np.max(le)), 4), 'nav_pose_source': self.nav_pose_source,
                 'backend': self.backend_name, 'physical': self.backend.physical,
-                'stale': dict(getattr(self.backend, 'stale', {}))}
+                'stale': dict(getattr(self.backend, 'stale', {})), 'safety_halts': dict(self.halts)}
 
     def close(self):
         self.backend.close()

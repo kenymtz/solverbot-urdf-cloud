@@ -128,7 +128,7 @@ class ColorHeadDetector:
         cam = base @ cam_in_base
         out = {}
         gates = gates or {}
-        for name in names or self.colors:
+        for name in (self.colors if names is None else names):
             zr, box = gates.get(name, (self.PERSON_Z if name in self.persons else None, None))
             p = locate_gated(rgb, depth, k, cam, self.colors[name], zr, box, self.min_pixels)
             if p is not None and np.all(np.isfinite(p)):

@@ -11,6 +11,7 @@ Entidades del desafío (personas, hoja de la puerta de entrada, prendas): modelo
 from __future__ import annotations
 
 import math
+import os
 import threading
 import time
 
@@ -58,6 +59,8 @@ class GazeboMobileBackend(MobileBackend):
         if rclpy is None:
             raise RuntimeError(f'GazeboMobileBackend requiere ROS 2 Jazzy: {_IMPORT_ERROR}')
         super().__init__(arena, lidar_beams=271)
+        # SOLVERBOT_GZ_TIMEOUT: espera máxima (s) por paso; con render por CPU (llvmpipe) y cámaras puede hacer falta más
+        timeout = float(os.environ.get('SOLVERBOT_GZ_TIMEOUT', timeout))
         self.world, self.timeout, self.physics_step = world, timeout, physics_step
         self.contact_margin = contact_margin
         self.use_camera = camera
@@ -255,9 +258,32 @@ class GazeboMobileBackend(MobileBackend):
         t_goal = self._clock + dt - 0.5 * self.physics_step
         js_goal = self._js_t + 0.5 * dt
         time.sleep(0.003)
+        clock0 = self._clock
         self._call(self.cli_ctrl, req)
-        self._wait(lambda: self._clock >= t_goal and self._js_t >= js_goal,
-                   f'avance del tiempo simulado (dt={dt})')
+        # con carga alta se observó una solicitud de multi_step sin efecto: si el reloj no se movió en 5 s, se reenvía
+        t_start = time.monotonic()
+        while True:
+            try:
+                self._wait(lambda: self._clock >= t_goal and self._js_t >= js_goal,
+                           f'avance del tiempo simulado (dt={dt})', timeout=5.0)
+                break
+            except TimeoutError:
+                if self._clock >= t_goal:
+                    # reloj al día pero falta un /joint_states (mensaje perdido con carga alta): seguir con el último
+                    # y contarlo como medición vencida (info['stale'])
+                    self.stale['joint_states'] += 1
+                    break
+                if time.monotonic() - t_start > self.timeout:
+                    raise TimeoutError(f'avance sin completar: reloj={self._clock:.3f} objetivo={t_goal:.3f} '
+                                       f'joint_states={self._js_t:.3f} objetivo_js={js_goal:.3f}') from None
+                if self._clock <= clock0 + 1e-9:
+                    # el reloj no se movió en 5 s (solicitud perdida o cortada): pedir los pasos que faltan
+                    self.stale['step_retries'] = self.stale.get('step_retries', 0) + 1
+                    rest = ControlWorld.Request()
+                    rest.world_control.pause = True
+                    rest.world_control.multi_step = max(1, int(round((t_goal - self._clock) / self.physics_step)) + 1)
+                    self._call(self.cli_ctrl, rest)
+                clock0 = self._clock
         t0 = time.monotonic()
         while (self._scan_t < t_goal - 0.11 or self._odom_t < t_goal - 0.05) and time.monotonic() - t0 < 2.0:
             time.sleep(0.002)
@@ -296,11 +322,11 @@ class GazeboMobileBackend(MobileBackend):
         return self._img['rgb'][1], self._img['depth'][1], self._k, T
 
     def wrist_rgb(self):
-        """(rgb, K, T cámara de muñeca en base_footprint) o None."""
+        """(rgb, K, T cámara de muñeca en base_footprint, sello de tiempo de la imagen) o None."""
         if not self.use_camera or 'wrist' not in self._img or getattr(self, '_k_wrist', None) is None:
             return None
         T = self.chain.link_pose('wrist_sim_camera_optical_frame', self.joint_positions())
-        return self._img['wrist'][1], self._k_wrist, T
+        return self._img['wrist'][1], self._k_wrist, T, self._img['wrist'][0]
 
     def pose_truth(self):
         return self._truth.copy()
