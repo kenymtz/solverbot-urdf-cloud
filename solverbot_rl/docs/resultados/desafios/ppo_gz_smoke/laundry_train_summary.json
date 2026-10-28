@@ -1,0 +1,12 @@
+{
+ "challenge": "laundry",
+ "backend": "gazebo",
+ "status": "completed",
+ "num_timesteps": 48,
+ "target_steps": 48,
+ "wall_s_this_session": 870.2,
+ "final_level": 0,
+ "success_rate_window": 0.9090909090909091,
+ "bc_pretraining": null,
+ "note": "pol\u00edtica de alto nivel aprendida (PPO); las habilidades son controladores de referencia. El experto guionado NO es esta pol\u00edtica."
+}
