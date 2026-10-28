@@ -163,6 +163,15 @@ def furniture_parts(kind, s):
                 Part('top', 'box', [x, y, 0.04], [0, 0, z - 0.02], STEEL, mu=0.8),
                 Part('basin', 'box', [x * 0.7, y * 0.6, 0.01], [0, 0, z + 0.001], (0.4, 0.42, 0.45), collide=False),
                 Part('faucet', 'cylinder', [0.03, 0.03, 0.25], [0, y / 2 - 0.06, z + 0.125], STEEL)]
+    if kind == 'door_leaf':       # hoja de puerta cerrada (bloque)
+        return [Part('leaf', 'box', [x, y, z], [0, 0, z / 2], (0.55, 0.40, 0.25))]
+    if kind == 'basket':          # cesto de ropa abierto (fondo + 4 paredes)
+        w = 0.015
+        return [Part('bottom', 'box', [x, y, w], [0, 0, w / 2], (0.55, 0.45, 0.30)),
+                Part('wall_n', 'box', [x, w, z], [0, y / 2 - w / 2, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_s', 'box', [x, w, z], [0, -y / 2 + w / 2, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_e', 'box', [w, y, z], [x / 2 - w / 2, 0, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_w', 'box', [w, y, z], [-x / 2 + w / 2, 0, z / 2], (0.55, 0.45, 0.30))]
     if kind == 'stove':
         p = [Part('body', 'box', [x, y, z - 0.04], [0, 0, (z - 0.04) / 2], WHITE),
              Part('top', 'box', [x, y, 0.04], [0, 0, z - 0.02], (0.1, 0.1, 0.1), mu=0.8)]
@@ -293,13 +302,51 @@ def training_world(task):
     return ''.join(out)
 
 
+def person_model(name, shirt_rgb, parking_xy):
+    """Persona simulada (estática, la mueve el simulador del desafío con set_pose): piernas, torso con camiseta de
+    color (identidad visual), cabeza y una mano adelantada (entrega de la bolsa en HRI). Altura total 1.72 m."""
+    skin = (0.85, 0.68, 0.55)
+    parts = [Part('legs', 'cylinder', [0.30, 0.30, 0.85], [0, 0, 0.425], (0.15, 0.15, 0.25)),
+             Part('torso', 'cylinder', [0.40, 0.40, 0.60], [0, 0, 1.15], shirt_rgb),
+             Part('head', 'sphere', [0.22, 0.22, 0.22], [0, 0, 1.61], skin),
+             Part('hand', 'sphere', [0.08, 0.08, 0.08], [0.28, -0.12, 1.00], skin, collide=False)]
+    return static_model(name, parking_xy, 0.0, parts, z=0.0)
+
+
+def challenges_world(spec, ch):
+    """home_arena + entidades de HRI/GPSR/Doing Laundry (config/challenges.yaml)."""
+    base = home_arena(spec).replace('<world name="home_arena">', f'<world name="{ch["world_name"]}">')
+    out = [base[:base.rindex('  </world>')]]
+    d = ch['entrance_door']
+    out.append(static_model(d['name'], d['closed_xy'][:2], 0.0, [
+        Part('leaf', 'box', d['size'], [0, 0, d['size'][2] / 2], (0.55, 0.40, 0.25))]))
+    for cd in ch.get('closed_doors', []):
+        out.append(static_model(cd['name'], cd['xy'], cd.get('yaw', 0.0), furniture_parts('door_leaf', cd['size'])))
+    for p, park in zip(ch['persons'], ch['person_parking']):
+        out.append(person_model(p['name'], p['shirt_rgb'], park))
+    lb = ch['laundry']['basket']
+    out.append(static_model(lb['name'], lb['xy'], lb.get('yaw', 0.0), furniture_parts('basket', lb['size'])))
+    for k, g in enumerate(ch['laundry']['garments']):
+        # PROXY rígido de prenda (placa delgada) dentro del cesto: solo localización. No modela tela.
+        off = (-0.07 + 0.14 * k, 0.0)
+        out.append(static_model(g['name'], [lb['xy'][0] + off[0], lb['xy'][1] + off[1]], 0.3 * k, [
+            Part('cloth', 'box', g['size'], [0, 0, 0.015 + g['size'][2] / 2 + 0.021 * k], g['rgb'])]))
+    out.append('  </world>\n</sdf>\n')
+    return ''.join(out)
+
+
 def main():
     with open(os.path.join(PKG, 'config', 'arena_spec.yaml')) as fh:
         spec = yaml.safe_load(fh)
     with open(os.path.join(PKG, 'config', 'pick_place.yaml')) as fh:
         task = yaml.safe_load(fh)['world']
     os.makedirs(os.path.join(PKG, 'worlds'), exist_ok=True)
-    for name, text in (('home_arena.sdf', home_arena(spec)), ('pick_place_training.sdf', training_world(task))):
+    worlds = [('home_arena.sdf', home_arena(spec)), ('pick_place_training.sdf', training_world(task))]
+    ch_path = os.path.join(PKG, 'config', 'challenges.yaml')
+    if os.path.exists(ch_path):
+        with open(ch_path) as fh:
+            worlds.append(('home_challenges.sdf', challenges_world(spec, yaml.safe_load(fh))))
+    for name, text in worlds:
         with open(os.path.join(PKG, 'worlds', name), 'w') as fh:
             fh.write(text)
         print('escrito', name)

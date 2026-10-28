@@ -22,6 +22,11 @@ def foot_center(pose) -> np.ndarray:
     return np.array([pose[0] + c * FOOT_CENTER[0] - s * FOOT_CENTER[1], pose[1] + s * FOOT_CENTER[0] + c * FOOT_CENTER[1]])
 
 
+# Desviación máxima de rumbo al cruzar una puerta: con 1.5 cm de holgura por lado, cada grado de rumbo ocupa ~1 cm
+# (largo de la huella 0.545 m); 1.5° deja corregir ~3 cm de error lateral en el cruce.
+CROSS_MAX_DEV = math.radians(1.5)
+
+
 class NavController:
     """Sigue una lista de Waypoint (planificados para el centro de la huella). act(pose) -> (v, w, estado)."""
 
@@ -34,6 +39,14 @@ class NavController:
         self.goal_tol = goal_tol
         self.mode = 'track'
         self.done = False
+
+    @property
+    def in_door(self) -> bool:
+        """True durante la maniobra de puerta (alineación o cruce): no se debe abandonar la ruta aquí."""
+        if self.done or self.k >= len(self.wps):
+            return False
+        kind = self.wps[self.k].kind
+        return kind == 'door_post' or (kind == 'door_pre' and self.mode == 'align')
 
     def act(self, pose) -> tuple[float, float]:
         if self.done or self.k >= len(self.wps):
@@ -68,8 +81,8 @@ class NavController:
                 self.mode, self.k = 'track', self.k + 1
                 return 0.0, 0.0
             v = 0.12
-            # rumbo deseado: el eje, corregido por el error lateral con una desviación máxima de 3°
-            desired = wp.heading - float(np.clip(math.atan2(3.0 * e_lat, v), -math.radians(3), math.radians(3)))
+            # rumbo deseado: el eje, corregido por el error lateral con una desviación máxima CROSS_MAX_DEV
+            desired = wp.heading - float(np.clip(math.atan2(3.0 * e_lat, v), -CROSS_MAX_DEV, CROSS_MAX_DEV))
             w = 2.5 * wrap(desired - pose[2])
             return v, float(np.clip(w, -0.2, 0.2))
         self.mode = 'track'
@@ -114,9 +127,11 @@ class ScanLocalizer:
     """Localización 2D: predicción por odometría y corrección por ajuste del LiDAR al campo de distancias."""
 
     def __init__(self, arena: ArenaMap, angles: np.ndarray, iters: int = 6, max_range: float = 4.8,
-                 subsample: int = 3, trunc: float = 0.25):
+                 subsample: int = 3, trunc: float = 0.12, prior: float = 20.0):
+        """trunc: residuo (m) a partir del cual un punto se considera ajeno al mapa (personas, objetos movidos);
+        prior: peso de la predicción por odometría (evita que pocos puntos arrastren la pose en zonas degeneradas)."""
         self.arena, self.angles = arena, angles
-        self.iters, self.max_range, self.sub, self.trunc = iters, max_range, subsample, trunc
+        self.iters, self.max_range, self.sub, self.trunc, self.prior = iters, max_range, subsample, trunc, prior
         self.pose = None
         self.last_odom = None
         self.last_residual = float('nan')
@@ -144,6 +159,7 @@ class ScanLocalizer:
         lx = LASER_XY[0] + r[ok] * np.cos(th[ok])
         ly = LASER_XY[1] + r[ok] * np.sin(th[ok])
         eps = 0.01
+        pred = pose.copy()
         for _ in range(self.iters):
             c, s = math.cos(pose[2]), math.sin(pose[2])
             X, Y = pose[0] + c * lx - s * ly, pose[1] + s * lx + c * ly
@@ -153,8 +169,11 @@ class ScanLocalizer:
             dXdth, dYdth = -s * lx - c * ly, c * lx - s * ly
             J = np.stack([gx, gy, gx * dXdth + gy * dYdth], 1)
             wgt = (f < self.trunc).astype(float)
-            H = (J * wgt[:, None]).T @ J + np.diag([1e-3, 1e-3, 1e-3])
-            step = -np.linalg.solve(H, (J * wgt[:, None]).T @ f)
+            dev = pose - pred
+            dev[2] = wrap(dev[2])
+            P = np.diag([self.prior, self.prior, self.prior * 4])
+            H = (J * wgt[:, None]).T @ J + P + np.diag([1e-3, 1e-3, 1e-3])
+            step = -np.linalg.solve(H, (J * wgt[:, None]).T @ f + P @ dev)
             step = np.clip(step, -0.05, 0.05)
             pose = pose + step
             pose[2] = wrap(pose[2])

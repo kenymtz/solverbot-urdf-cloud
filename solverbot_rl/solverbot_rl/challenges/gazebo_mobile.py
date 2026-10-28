@@ -97,6 +97,10 @@ class GazeboMobileBackend(MobileBackend):
                                   lambda m: self._on_img('depth', m), be)
             n.create_subscription(CameraInfo, '/camera/camera/color/camera_info',
                                   lambda m: setattr(self, '_k', np.array(m.k, float).reshape(3, 3)), be)
+            # cámara de muñeca (virtual, solo simulación; ver gazebo_harmonic.xacro): Doing Laundry
+            n.create_subscription(Image, '/wrist_camera/image_raw', lambda m: self._on_img('wrist', m), be)
+            n.create_subscription(CameraInfo, '/wrist_camera/camera_info',
+                                  lambda m: setattr(self, '_k_wrist', np.array(m.k, float).reshape(3, 3)), be)
         self.cli_ctrl = n.create_client(ControlWorld, f'/world/{world}/control')
         self.cli_pose = n.create_client(SetEntityPose, f'/world/{world}/set_pose')
         self.exec = MultiThreadedExecutor(num_threads=2)
@@ -290,6 +294,13 @@ class GazeboMobileBackend(MobileBackend):
             return None
         T = self.chain.link_pose('camera_color_optical_frame', self.joint_positions())
         return self._img['rgb'][1], self._img['depth'][1], self._k, T
+
+    def wrist_rgb(self):
+        """(rgb, K, T cámara de muñeca en base_footprint) o None."""
+        if not self.use_camera or 'wrist' not in self._img or getattr(self, '_k_wrist', None) is None:
+            return None
+        T = self.chain.link_pose('wrist_sim_camera_optical_frame', self.joint_positions())
+        return self._img['wrist'][1], self._k_wrist, T
 
     def pose_truth(self):
         return self._truth.copy()

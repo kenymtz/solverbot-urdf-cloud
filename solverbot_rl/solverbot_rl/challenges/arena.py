@@ -164,6 +164,7 @@ class ArenaMap:
         self.prims = collision_prims(spec, extra_static)
         self.nav_occ = self._raster(res, lambda p: p.z1 > 0.02 and p.z0 < ROBOT_HEIGHT)
         self.lidar_occ = self._raster(res, lambda p: p.z0 <= LASER_Z <= p.z1)
+        self.tall_occ = self._raster(res, lambda p: p.z1 > 1.25)     # tapan la línea de vista de la cámara de cabeza
         from scipy.ndimage import distance_transform_edt
         self.nav_dist = distance_transform_edt(~self.nav_occ) * res
         self.lidar_dist = distance_transform_edt(~self.lidar_occ) * res
