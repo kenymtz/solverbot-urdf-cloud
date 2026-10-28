@@ -1,0 +1,5 @@
+# Fases A/B: auditoría de cámaras (estática) y registro independiente de ambas cámaras con políticas congeladas
+py runs/dual_camera audit_cameras.py static --out runs/dual_camera/audit_static
+py runs/dual_camera audit_cameras.py episodes --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 902002-902003 --out runs/dual_camera/audit_ep/bc_v2w_var_m
+py runs/dual_camera audit_cameras.py episodes --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_m --seeds 903000-903009 --out runs/dual_camera/audit_ep/bc_v2w_var_m --image-every 5
+py runs/dual_camera audit_cameras.py episodes --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v1.zip --level reach --seeds 902000-902002 --out runs/dual_camera/audit_ep/bc_v1_reach --image-every 5

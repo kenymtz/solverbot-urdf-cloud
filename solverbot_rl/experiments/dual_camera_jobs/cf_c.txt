@@ -1,0 +1,4 @@
+# Fase F ampliada: niveles donde bc_v2w falla en semillas de confirmación (perception ya registrada en runs/reach_bc_v1/eval_confirm)
+py runs/dual_camera diag_obs_counterfactual.py --mode oracle --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach --seeds 901000-901019 --out runs/dual_camera/cf/bc_v2w_reach/oracle
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach --seeds 901000-901019 --out runs/dual_camera/cf/bc_v2w_reach/perception
+py runs/dual_camera diag_obs_counterfactual.py --mode first_estimate --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach --seeds 901000-901019 --out runs/dual_camera/cf/bc_v2w_reach/first_estimate
