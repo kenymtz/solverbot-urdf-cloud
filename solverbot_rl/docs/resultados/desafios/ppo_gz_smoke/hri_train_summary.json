@@ -1,0 +1,12 @@
+{
+ "challenge": "hri",
+ "backend": "gazebo",
+ "status": "completed",
+ "num_timesteps": 48,
+ "target_steps": 48,
+ "wall_s_this_session": 61.9,
+ "final_level": 0,
+ "success_rate_window": 0.0,
+ "bc_pretraining": null,
+ "note": "pol\u00edtica de alto nivel aprendida (PPO); las habilidades son controladores de referencia. El experto guionado NO es esta pol\u00edtica."
+}

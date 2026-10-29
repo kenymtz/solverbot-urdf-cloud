@@ -1,0 +1,241 @@
+{
+ "challenge": "gpsr",
+ "backend": "gazebo",
+ "physical": true,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 1,
+ "seed0": 2000,
+ "nav_pose_source": "estimate",
+ "wall_s": 1867.3,
+ "host": "vm",
+ "ros_domain_id": "44",
+ "gz_partition": "solverbot_dbg",
+ "error": null,
+ "summary": {
+  "episodes": 3,
+  "successes": 2,
+  "success_rate": 0.6666666666666666,
+  "success_ci95": 0.533444432872781,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 5.2716666666666665,
+  "mean_sim_time": 265.6666666666667,
+  "loc_err_mean": 0.0083,
+  "loc_err_max": 0.0373
+ },
+ "episodes": [
+  {
+   "seed": 2000,
+   "success": false,
+   "return": -0.582,
+   "skills": 80,
+   "wall_s": 664.5,
+   "level": 1,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ve a la cocina, encontr\u00e1 a la persona de camiseta naranja y saludala"
+   ],
+   "verbs": [
+    "greet"
+   ],
+   "sim_time": 276.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0078,
+   "loc_err_max": 0.0336,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 0,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   },
+   "last_steps": [
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ],
+    [
+     "wait",
+     0,
+     true,
+     null
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 88.39999999999925,
+     "ev": "command",
+     "k": 0,
+     "text": "ve a la cocina, encontr\u00e1 a la persona de camiseta naranja y saludala",
+     "parsed_ok": true
+    },
+    {
+     "t": 153.49999999999557,
+     "ev": "greet",
+     "k": 0,
+     "ok": false,
+     "gaze_frac": 0.0,
+     "gaze_frac_belief": 1.0
+    }
+   ]
+  },
+  {
+   "seed": 2001,
+   "success": true,
+   "return": 7.7,
+   "skills": 5,
+   "wall_s": 577.4,
+   "level": 1,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "el lavarropas: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "go"
+   ],
+   "sim_time": 260.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0085,
+   "loc_err_max": 0.0331,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 0,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 2002,
+   "success": true,
+   "return": 8.697,
+   "skills": 7,
+   "wall_s": 616.0,
+   "level": 1,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [
+     0
+    ],
+    "n": 1,
+    "mode": "one",
+    "reports": {
+     "0": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "\u00bfhay una naranja sobre el lavarropas? averigualo"
+   ],
+   "verbs": [
+    "object_yesno"
+   ],
+   "sim_time": 260.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0086,
+   "loc_err_max": 0.0373,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 2,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 7,
+    "scan": 0
+   }
+  }
+ ]
+}

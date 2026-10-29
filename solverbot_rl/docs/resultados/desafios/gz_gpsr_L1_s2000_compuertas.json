@@ -1,0 +1,143 @@
+{
+ "challenge": "gpsr",
+ "backend": "gazebo",
+ "physical": true,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 1,
+ "seed0": 2000,
+ "nav_pose_source": "estimate",
+ "wall_s": 3624.8,
+ "host": "vm",
+ "ros_domain_id": "47",
+ "gz_partition": "solverbot_val",
+ "error": null,
+ "summary": {
+  "episodes": 1,
+  "successes": 0,
+  "success_rate": 0.0,
+  "success_ci95": 0.0,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": -4.96,
+  "mean_sim_time": 1192.0,
+  "loc_err_mean": 0.0073,
+  "loc_err_max": 0.0555
+ },
+ "episodes": [
+  {
+   "seed": 2000,
+   "success": false,
+   "return": -4.96,
+   "skills": 80,
+   "wall_s": 3620.3,
+   "level": 1,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 1,
+    "complete": [],
+    "n": 1,
+    "mode": "one",
+    "reports": {}
+   },
+   "commands": [
+    "ve a la cocina, encontr\u00e1 a la persona de camiseta naranja y saludala"
+   ],
+   "verbs": [
+    "greet"
+   ],
+   "sim_time": 1192.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0073,
+   "loc_err_max": 0.0555,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 3,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   },
+   "min_clearance_m": 0.0051,
+   "contact_with": "",
+   "last_steps": [
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ],
+    [
+     "search_room",
+     1,
+     true,
+     null
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 92.39999999999903,
+     "ev": "command",
+     "k": 0,
+     "text": "ve a la cocina, encontr\u00e1 a la persona de camiseta naranja y saludala",
+     "parsed_ok": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,769 @@
+{
+ "challenge": "laundry",
+ "backend": "kinematic",
+ "physical": false,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 2,
+ "seed0": 1000,
+ "nav_pose_source": "estimate",
+ "wall_s": 230.6,
+ "host": "vm",
+ "ros_domain_id": "42",
+ "gz_partition": null,
+ "error": null,
+ "summary": {
+  "episodes": 20,
+  "successes": 20,
+  "success_rate": 1.0,
+  "success_ci95": 0.0,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 9.509450000000003,
+  "mean_sim_time": 73.06,
+  "loc_err_mean": 0.00915,
+  "loc_err_max": 0.0494
+ },
+ "episodes": [
+  {
+   "seed": 1000,
+   "success": true,
+   "return": 9.513,
+   "skills": 7,
+   "wall_s": 11.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0093,
+   "loc_err_max": 0.0426,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1001,
+   "success": true,
+   "return": 9.514,
+   "skills": 7,
+   "wall_s": 10.9,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0088,
+   "loc_err_max": 0.0405,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1002,
+   "success": true,
+   "return": 9.503,
+   "skills": 7,
+   "wall_s": 11.2,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 74.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0084,
+   "loc_err_max": 0.0373,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1003,
+   "success": true,
+   "return": 9.505,
+   "skills": 7,
+   "wall_s": 11.1,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 73.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0095,
+   "loc_err_max": 0.0449,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1004,
+   "success": true,
+   "return": 9.512,
+   "skills": 7,
+   "wall_s": 11.0,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0088,
+   "loc_err_max": 0.0403,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1005,
+   "success": true,
+   "return": 9.506,
+   "skills": 7,
+   "wall_s": 10.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 73.8,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0093,
+   "loc_err_max": 0.048,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1006,
+   "success": true,
+   "return": 9.505,
+   "skills": 7,
+   "wall_s": 11.9,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 74.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0088,
+   "loc_err_max": 0.0399,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1007,
+   "success": true,
+   "return": 9.513,
+   "skills": 7,
+   "wall_s": 11.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0093,
+   "loc_err_max": 0.0476,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1008,
+   "success": true,
+   "return": 9.516,
+   "skills": 7,
+   "wall_s": 9.7,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 71.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0085,
+   "loc_err_max": 0.0379,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1009,
+   "success": true,
+   "return": 9.517,
+   "skills": 7,
+   "wall_s": 11.7,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 71.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0095,
+   "loc_err_max": 0.0494,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1010,
+   "success": true,
+   "return": 9.517,
+   "skills": 7,
+   "wall_s": 11.5,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 71.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0089,
+   "loc_err_max": 0.0431,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1011,
+   "success": true,
+   "return": 9.502,
+   "skills": 7,
+   "wall_s": 12.5,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 74.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0099,
+   "loc_err_max": 0.0479,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1012,
+   "success": true,
+   "return": 9.498,
+   "skills": 7,
+   "wall_s": 10.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 75.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0095,
+   "loc_err_max": 0.0447,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1013,
+   "success": true,
+   "return": 9.503,
+   "skills": 7,
+   "wall_s": 10.8,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 74.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0098,
+   "loc_err_max": 0.0463,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1014,
+   "success": true,
+   "return": 9.508,
+   "skills": 7,
+   "wall_s": 12.8,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 73.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.009,
+   "loc_err_max": 0.0414,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1015,
+   "success": true,
+   "return": 9.516,
+   "skills": 7,
+   "wall_s": 11.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 71.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0085,
+   "loc_err_max": 0.0384,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1016,
+   "success": true,
+   "return": 9.511,
+   "skills": 7,
+   "wall_s": 12.7,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.01,
+   "loc_err_max": 0.0471,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1017,
+   "success": true,
+   "return": 9.513,
+   "skills": 7,
+   "wall_s": 12.7,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 72.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0094,
+   "loc_err_max": 0.0451,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1018,
+   "success": true,
+   "return": 9.509,
+   "skills": 7,
+   "wall_s": 12.0,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 73.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0087,
+   "loc_err_max": 0.0397,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1019,
+   "success": true,
+   "return": 9.508,
+   "skills": 7,
+   "wall_s": 12.0,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 73.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0091,
+   "loc_err_max": 0.0406,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}

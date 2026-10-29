@@ -1,0 +1,935 @@
+{
+ "challenge": "hri",
+ "backend": "kinematic",
+ "physical": false,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 5,
+ "seed0": 1000,
+ "nav_pose_source": "estimate",
+ "wall_s": 1460.2,
+ "host": "vm",
+ "ros_domain_id": null,
+ "gz_partition": null,
+ "error": null,
+ "summary": {
+  "episodes": 20,
+  "successes": 18,
+  "success_rate": 0.9,
+  "success_ci95": 0.13148079707698762,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 14.6464,
+  "mean_sim_time": 228.76499999999996,
+  "loc_err_mean": 0.00872,
+  "loc_err_max": 0.0604
+ },
+ "episodes": [
+  {
+   "seed": 1000,
+   "success": true,
+   "return": 16.293,
+   "skills": 18,
+   "wall_s": 46.5,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 161.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0062,
+   "loc_err_max": 0.0414,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 7,
+    "scan": 40,
+    "map": 0
+   },
+   "min_clearance_m": 0.0104,
+   "contact_with": ""
+  },
+  {
+   "seed": 1001,
+   "success": true,
+   "return": 15.555,
+   "skills": 17,
+   "wall_s": 83.6,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 209.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0061,
+   "loc_err_max": 0.0515,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 12,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0054,
+   "contact_with": ""
+  },
+  {
+   "seed": 1002,
+   "success": true,
+   "return": 16.5,
+   "skills": 16,
+   "wall_s": 40.8,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 160.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0059,
+   "loc_err_max": 0.0321,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0076,
+   "contact_with": ""
+  },
+  {
+   "seed": 1003,
+   "success": true,
+   "return": 15.744,
+   "skills": 18,
+   "wall_s": 50.6,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 171.3,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0062,
+   "loc_err_max": 0.0327,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.009,
+   "contact_with": ""
+  },
+  {
+   "seed": 1004,
+   "success": true,
+   "return": 16.502,
+   "skills": 17,
+   "wall_s": 47.2,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 159.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0071,
+   "loc_err_max": 0.0351,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0085,
+   "contact_with": ""
+  },
+  {
+   "seed": 1005,
+   "success": true,
+   "return": 16.993,
+   "skills": 16,
+   "wall_s": 80.5,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 201.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0057,
+   "loc_err_max": 0.0427,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 22,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0082,
+   "contact_with": ""
+  },
+  {
+   "seed": 1006,
+   "success": false,
+   "return": -0.666,
+   "skills": 70,
+   "wall_s": 532.9,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 2
+   },
+   "sim_time": 773.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0455,
+   "loc_err_max": 0.0578,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 288,
+    "scan": 4374,
+    "map": 0
+   },
+   "min_clearance_m": 0.1174,
+   "contact_with": "",
+   "last_steps": [
+    [
+     "reach_hand",
+     2,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     2,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     2,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     2,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     2,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 49.600000000000435,
+     "ev": "ask",
+     "person": "person_c",
+     "ok": true,
+     "gaze_frac": 1.0,
+     "gaze_err_deg": 2.6,
+     "dist": 0.92
+    },
+    {
+     "t": 72.50000000000016,
+     "ev": "guide",
+     "person": "person_c",
+     "ok": true,
+     "forward_gaze": 1.0
+    },
+    {
+     "t": 78.6999999999998,
+     "ev": "seat",
+     "person": "person_c",
+     "seat": "sofa_left",
+     "ok": true,
+     "free_truth": true,
+     "gaze_err_deg": 4.9
+    },
+    {
+     "t": 83.49999999999953,
+     "ev": "intro",
+     "person": "person_d",
+     "ok": true,
+     "gaze_frac": 0.85
+    },
+    {
+     "t": 88.29999999999926,
+     "ev": "intro",
+     "person": "person_c",
+     "ok": true,
+     "gaze_frac": 0.75
+    }
+   ]
+  },
+  {
+   "seed": 1007,
+   "success": true,
+   "return": 16.883,
+   "skills": 18,
+   "wall_s": 43.2,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 183.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0088,
+   "loc_err_max": 0.0498,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 2
+   },
+   "min_clearance_m": 0.01,
+   "contact_with": ""
+  },
+  {
+   "seed": 1008,
+   "success": true,
+   "return": 17.208,
+   "skills": 16,
+   "wall_s": 32.9,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 158.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0063,
+   "loc_err_max": 0.0296,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0103,
+   "contact_with": ""
+  },
+  {
+   "seed": 1009,
+   "success": true,
+   "return": 16.488,
+   "skills": 17,
+   "wall_s": 33.5,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 162.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0066,
+   "loc_err_max": 0.0457,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0096,
+   "contact_with": ""
+  },
+  {
+   "seed": 1010,
+   "success": true,
+   "return": 17.212,
+   "skills": 16,
+   "wall_s": 31.9,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 157.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0061,
+   "loc_err_max": 0.0272,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 3,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0103,
+   "contact_with": ""
+  },
+  {
+   "seed": 1011,
+   "success": true,
+   "return": 16.495,
+   "skills": 17,
+   "wall_s": 34.8,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 161.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0066,
+   "loc_err_max": 0.0313,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0091,
+   "contact_with": ""
+  },
+  {
+   "seed": 1012,
+   "success": true,
+   "return": 16.255,
+   "skills": 18,
+   "wall_s": 28.7,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 169.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0072,
+   "loc_err_max": 0.0474,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.009,
+   "contact_with": ""
+  },
+  {
+   "seed": 1013,
+   "success": true,
+   "return": 15.776,
+   "skills": 18,
+   "wall_s": 23.7,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 164.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0065,
+   "loc_err_max": 0.0335,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0094,
+   "contact_with": ""
+  },
+  {
+   "seed": 1014,
+   "success": true,
+   "return": 15.785,
+   "skills": 17,
+   "wall_s": 23.5,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 163.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0067,
+   "loc_err_max": 0.0288,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 1,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0088,
+   "contact_with": ""
+  },
+  {
+   "seed": 1015,
+   "success": true,
+   "return": 15.76,
+   "skills": 17,
+   "wall_s": 24.8,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 168.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0062,
+   "loc_err_max": 0.0604,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0092,
+   "contact_with": ""
+  },
+  {
+   "seed": 1016,
+   "success": true,
+   "return": 15.787,
+   "skills": 17,
+   "wall_s": 25.2,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 162.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0065,
+   "loc_err_max": 0.0483,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 3,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0115,
+   "contact_with": ""
+  },
+  {
+   "seed": 1017,
+   "success": true,
+   "return": 17.178,
+   "skills": 16,
+   "wall_s": 24.9,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 164.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0071,
+   "loc_err_max": 0.055,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0,
+    "map": 0
+   },
+   "min_clearance_m": 0.0103,
+   "contact_with": ""
+  },
+  {
+   "seed": 1018,
+   "success": true,
+   "return": 16.493,
+   "skills": 17,
+   "wall_s": 20.5,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": true,
+    "tell": true,
+    "follow": true,
+    "guests": 2
+   },
+   "sim_time": 161.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0062,
+   "loc_err_max": 0.0312,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 12,
+    "scan": 17,
+    "map": 0
+   },
+   "min_clearance_m": 0.0091,
+   "contact_with": ""
+  },
+  {
+   "seed": 1019,
+   "success": false,
+   "return": -1.313,
+   "skills": 70,
+   "wall_s": 230.4,
+   "level": 5,
+   "progress": {
+    "ask": 2,
+    "guide": 2,
+    "seat": 2,
+    "intro": 2,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 2
+   },
+   "sim_time": 762.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0109,
+   "loc_err_max": 0.0344,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 307,
+    "scan": 4173,
+    "map": 0
+   },
+   "min_clearance_m": 0.0432,
+   "contact_with": "",
+   "last_steps": [
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     3,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     3,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     3,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     3,
+     false,
+     "bloqueado"
+    ],
+    [
+     "scan_room",
+     0,
+     true,
+     null
+    ],
+    [
+     "reach_hand",
+     3,
+     false,
+     "bloqueado"
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 72.50000000000016,
+     "ev": "guide",
+     "person": "person_d",
+     "ok": true,
+     "forward_gaze": 1.0
+    },
+    {
+     "t": 73.90000000000008,
+     "ev": "seat",
+     "person": "person_d",
+     "seat": "sofa_left",
+     "ok": false,
+     "free_truth": false,
+     "gaze_err_deg": 4.9
+    },
+    {
+     "t": 80.89999999999968,
+     "ev": "seat",
+     "person": "person_d",
+     "seat": "sofa_center",
+     "ok": true,
+     "free_truth": true,
+     "gaze_err_deg": 0.1
+    },
+    {
+     "t": 85.6999999999994,
+     "ev": "intro",
+     "person": "person_a",
+     "ok": true,
+     "gaze_frac": 0.75
+    },
+    {
+     "t": 90.49999999999913,
+     "ev": "intro",
+     "person": "person_d",
+     "ok": true,
+     "gaze_frac": 0.8
+    }
+   ]
+  }
+ ]
+}

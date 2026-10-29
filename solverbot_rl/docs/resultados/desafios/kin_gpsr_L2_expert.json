@@ -1,0 +1,1159 @@
+{
+ "challenge": "gpsr",
+ "backend": "kinematic",
+ "physical": false,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 2,
+ "seed0": 1000,
+ "nav_pose_source": "estimate",
+ "wall_s": 889.7,
+ "host": "vm",
+ "ros_domain_id": "42",
+ "gz_partition": null,
+ "error": null,
+ "summary": {
+  "episodes": 20,
+  "successes": 19,
+  "success_rate": 0.95,
+  "success_ci95": 0.09551858457912789,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 13.872150000000001,
+  "mean_sim_time": 261.58000000000004,
+  "loc_err_mean": 0.00584,
+  "loc_err_max": 0.0472
+ },
+ "episodes": [
+  {
+   "seed": 1000,
+   "success": true,
+   "return": 14.917,
+   "skills": 12,
+   "wall_s": 41.1,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "0": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "\u00bfhay una botella de leche en la cama? averigualo",
+    "ten\u00e9s que ir a la mesa de luz",
+    "salud\u00e1 a la persona de camiseta verde que est\u00e1 en la cocina"
+   ],
+   "verbs": [
+    "object_yesno",
+    "go",
+    "greet"
+   ],
+   "sim_time": 216.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0066,
+   "loc_err_max": 0.0433,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1001,
+   "success": true,
+   "return": 16.062,
+   "skills": 11,
+   "wall_s": 32.7,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "0": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     },
+     "2": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "and\u00e1 a la mesa redonda y fijate si hay una pelota de tenis",
+    "ten\u00e9s que ir a la habitaci\u00f3n",
+    "\u00bfhay una naranja en la mesa del comedor? averigualo"
+   ],
+   "verbs": [
+    "object_yesno",
+    "go",
+    "object_yesno"
+   ],
+   "sim_time": 187.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.006,
+   "loc_err_max": 0.0412,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1002,
+   "success": true,
+   "return": 14.921,
+   "skills": 12,
+   "wall_s": 34.9,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "2": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "salud\u00e1 a alguien de camiseta morada que est\u00e1 en la cocina",
+    "la mesa del comedor: and\u00e1 all\u00ed",
+    "decime si hay una naranja sobre la mesa redonda"
+   ],
+   "verbs": [
+    "greet",
+    "go",
+    "object_yesno"
+   ],
+   "sim_time": 215.9,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0058,
+   "loc_err_max": 0.0428,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1003,
+   "success": true,
+   "return": 15.543,
+   "skills": 12,
+   "wall_s": 46.3,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "2": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     },
+     "1": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ve al mueble del televisor",
+    "ve a la cocina el\u00e9ctrica y decime si hay una pelota de tenis",
+    "\u00bfhay una esponja en la mesa de doblado? fijate"
+   ],
+   "verbs": [
+    "go",
+    "object_yesno",
+    "object_yesno"
+   ],
+   "sim_time": 291.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0056,
+   "loc_err_max": 0.0368,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1004,
+   "success": false,
+   "return": -8.561,
+   "skills": 80,
+   "wall_s": 36.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {}
+   },
+   "commands": [
+    "and\u00e1 a la sala de estar",
+    "salud\u00e1 a alguien de camiseta verde que est\u00e1 en la lavander\u00eda",
+    "ten\u00e9s que ir a la mesa del comedor"
+   ],
+   "verbs": [
+    "go",
+    "greet",
+    "go"
+   ],
+   "sim_time": 232.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0055,
+   "loc_err_max": 0.0413,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   },
+   "last_steps": [
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ],
+    [
+     "greet",
+     0,
+     false,
+     "persona_no_percibida"
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 88.99999999999922,
+     "ev": "command",
+     "k": 0,
+     "text": "and\u00e1 a la sala de estar",
+     "parsed_ok": true
+    },
+    {
+     "t": 88.99999999999922,
+     "ev": "command",
+     "k": 1,
+     "text": "salud\u00e1 a alguien de camiseta verde que est\u00e1 en la lavander\u00eda",
+     "parsed_ok": true
+    },
+    {
+     "t": 88.99999999999922,
+     "ev": "command",
+     "k": 2,
+     "text": "ten\u00e9s que ir a la mesa del comedor",
+     "parsed_ok": true
+    }
+   ]
+  },
+  {
+   "seed": 1005,
+   "success": true,
+   "return": 15.877,
+   "skills": 12,
+   "wall_s": 34.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     },
+     "2": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "salud\u00e1 a alguien de camiseta naranja que est\u00e1 en la cocina",
+    "cont\u00e1 cu\u00e1ntas personas hay en el dormitorio",
+    "decime si hay una botella de leche en la cama"
+   ],
+   "verbs": [
+    "greet",
+    "count_people",
+    "object_yesno"
+   ],
+   "sim_time": 224.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0057,
+   "loc_err_max": 0.0388,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1006,
+   "success": true,
+   "return": 13.613,
+   "skills": 10,
+   "wall_s": 40.5,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {}
+   },
+   "commands": [
+    "salud\u00e1 a la persona de camiseta azul que est\u00e1 en la lavander\u00eda",
+    "el mueble de la tele: and\u00e1 ah\u00ed",
+    "ve al living, encontr\u00e1 a alguien de camiseta verde y saludala"
+   ],
+   "verbs": [
+    "greet",
+    "go",
+    "greet"
+   ],
+   "sim_time": 277.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0059,
+   "loc_err_max": 0.0472,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1007,
+   "success": true,
+   "return": 14.039,
+   "skills": 9,
+   "wall_s": 34.8,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {}
+   },
+   "commands": [
+    "el refrigerador: and\u00e1 all\u00ed",
+    "ten\u00e9s que ir hasta la cocina",
+    "el anafe: and\u00e1 ah\u00ed"
+   ],
+   "verbs": [
+    "go",
+    "go",
+    "go"
+   ],
+   "sim_time": 192.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0061,
+   "loc_err_max": 0.0409,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1008,
+   "success": true,
+   "return": 14.732,
+   "skills": 10,
+   "wall_s": 43.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "2": {
+      "answer": 2,
+      "truth": 2,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "la mesa de luz: and\u00e1 all\u00ed",
+    "naveg\u00e1 al lavaplatos",
+    "and\u00e1 al living y decime cu\u00e1ntas personas hay"
+   ],
+   "verbs": [
+    "go",
+    "go",
+    "count_people"
+   ],
+   "sim_time": 253.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0063,
+   "loc_err_max": 0.0421,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1009,
+   "success": true,
+   "return": 13.73,
+   "skills": 10,
+   "wall_s": 41.9,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {}
+   },
+   "commands": [
+    "ve al sill\u00f3n",
+    "ve al dormitorio, encontr\u00e1 a alguien de camiseta violeta y saludala",
+    "dirigite hasta el anafe"
+   ],
+   "verbs": [
+    "go",
+    "greet",
+    "go"
+   ],
+   "sim_time": 254.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0056,
+   "loc_err_max": 0.0408,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1010,
+   "success": true,
+   "return": 14.75,
+   "skills": 11,
+   "wall_s": 46.1,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "2": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ten\u00e9s que ir a la alacena",
+    "el lavavajillas: and\u00e1 all\u00ed",
+    "ve al mueble de la tele y fijate si hay una botella de leche"
+   ],
+   "verbs": [
+    "go",
+    "go",
+    "object_yesno"
+   ],
+   "sim_time": 250.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0059,
+   "loc_err_max": 0.0405,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1011,
+   "success": true,
+   "return": 15.471,
+   "skills": 13,
+   "wall_s": 49.9,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     },
+     "2": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "and\u00e1 al lavadero, encontr\u00e1 a la persona de camiseta azul y saludala",
+    "and\u00e1 a la mesa del comedor y fijate si hay una lata de spam",
+    "fijate si hay una pelota de tenis sobre el lavaplatos"
+   ],
+   "verbs": [
+    "greet",
+    "object_yesno",
+    "object_yesno"
+   ],
+   "sim_time": 305.7,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0052,
+   "loc_err_max": 0.0391,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1012,
+   "success": true,
+   "return": 14.614,
+   "skills": 12,
+   "wall_s": 46.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "2": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "busc\u00e1 a la persona de camiseta azul en el cuarto y salud\u00e1",
+    "ve a la lavander\u00eda, encontr\u00e1 a la persona de camiseta morada y salud\u00e1",
+    "and\u00e1 a la cocina el\u00e9ctrica y decime si hay un cubo rubik"
+   ],
+   "verbs": [
+    "greet",
+    "greet",
+    "object_yesno"
+   ],
+   "sim_time": 277.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0058,
+   "loc_err_max": 0.0415,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1013,
+   "success": true,
+   "return": 15.128,
+   "skills": 11,
+   "wall_s": 64.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "0": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     },
+     "1": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "decime cu\u00e1ntas personas hay en la cocina",
+    "ve a la mesa del lavadero y fijate si hay una botella de leche",
+    "la mesa de luz: and\u00e1 all\u00ed"
+   ],
+   "verbs": [
+    "count_people",
+    "object_yesno",
+    "go"
+   ],
+   "sim_time": 374.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0052,
+   "loc_err_max": 0.042,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1014,
+   "success": true,
+   "return": 15.468,
+   "skills": 11,
+   "wall_s": 56.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     },
+     "2": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "salud\u00e1 a alguien de camiseta verde que est\u00e1 en el lavadero",
+    "ve a la sala y cont\u00e1 cu\u00e1ntas personas hay",
+    "ve a la sala y decime cu\u00e1ntas personas hay"
+   ],
+   "verbs": [
+    "greet",
+    "count_people",
+    "count_people"
+   ],
+   "sim_time": 306.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0057,
+   "loc_err_max": 0.0419,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1015,
+   "success": true,
+   "return": 15.551,
+   "skills": 12,
+   "wall_s": 43.6,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": false,
+      "truth": false,
+      "ok": true
+     },
+     "2": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ve al lavadero, busc\u00e1 a la persona de camiseta verde y salud\u00e1",
+    "and\u00e1 a la mesada y fijate si hay una naranja",
+    "and\u00e1 a la cocina y decime cu\u00e1ntas personas hay"
+   ],
+   "verbs": [
+    "greet",
+    "object_yesno",
+    "count_people"
+   ],
+   "sim_time": 289.8,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0057,
+   "loc_err_max": 0.0435,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1016,
+   "success": true,
+   "return": 15.807,
+   "skills": 11,
+   "wall_s": 38.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     },
+     "2": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ten\u00e9s que ir a la cocina el\u00e9ctrica",
+    "fijate si hay una lata de spam en la cocina el\u00e9ctrica",
+    "\u00bfhay una naranja sobre el mueble del televisor? fijate"
+   ],
+   "verbs": [
+    "go",
+    "object_yesno",
+    "object_yesno"
+   ],
+   "sim_time": 238.6,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0063,
+   "loc_err_max": 0.0436,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1017,
+   "success": true,
+   "return": 14.409,
+   "skills": 11,
+   "wall_s": 48.4,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "0": {
+      "answer": 1,
+      "truth": 1,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ve a la cocina y decime cu\u00e1ntas personas hay",
+    "ten\u00e9s que ir al sill\u00f3n",
+    "salud\u00e1 a la persona de camiseta naranja que est\u00e1 en el lavadero"
+   ],
+   "verbs": [
+    "count_people",
+    "go",
+    "greet"
+   ],
+   "sim_time": 318.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.006,
+   "loc_err_max": 0.0459,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1018,
+   "success": true,
+   "return": 16.529,
+   "skills": 11,
+   "wall_s": 48.8,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "0": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     },
+     "1": {
+      "answer": 2,
+      "truth": 2,
+      "ok": true
+     },
+     "2": {
+      "answer": 2,
+      "truth": 2,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "\u00bfhay una naranja sobre la mesa de doblado? fijate",
+    "ve al lavadero y decime cu\u00e1ntas personas hay",
+    "and\u00e1 a la lavander\u00eda y cont\u00e1 cu\u00e1ntas personas hay"
+   ],
+   "verbs": [
+    "object_yesno",
+    "count_people",
+    "count_people"
+   ],
+   "sim_time": 294.2,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0056,
+   "loc_err_max": 0.038,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 1019,
+   "success": true,
+   "return": 14.843,
+   "skills": 11,
+   "wall_s": 37.2,
+   "level": 2,
+   "progress": {
+    "door": true,
+    "instruction": true,
+    "received": 3,
+    "complete": [
+     0,
+     1,
+     2
+    ],
+    "n": 3,
+    "mode": "all",
+    "reports": {
+     "1": {
+      "answer": true,
+      "truth": true,
+      "ok": true
+     }
+    }
+   },
+   "commands": [
+    "ten\u00e9s que ir a la habitaci\u00f3n",
+    "decime si hay una pelota de tenis sobre el mueble del televisor",
+    "encontr\u00e1 a alguien de camiseta morada en la sala de estar y salud\u00e1"
+   ],
+   "verbs": [
+    "go",
+    "object_yesno",
+    "greet"
+   ],
+   "sim_time": 231.4,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0063,
+   "loc_err_max": 0.0427,
+   "nav_pose_source": "estimate",
+   "backend": "kinematic",
+   "physical": false,
+   "stale": {},
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}
