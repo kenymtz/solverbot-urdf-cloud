@@ -64,7 +64,12 @@ class NavController:
             if self.mode == 'track':
                 # el punto de referencia es el eje de las ruedas (centro de giro): girar en el lugar no lo desplaza
                 if dist < 0.02:
+                    # entrar en 'align' SIEMPRE con una orden de detención: así skill_navigate ve el modo y hace la
+                    # pausa de convergencia, y la alineación se verifica con el robot quieto. Antes, si el robot llegaba
+                    # girando rápido, el rumbo pasaba por la tolerancia en este mismo llamado y se saltaba a 'cross'
+                    # con giro residual: 13° de desvío y contacto con la jamba (HRI N5, semilla 1004)
                     self.mode = 'align'
+                    return 0.0, 0.0
                 else:
                     return self._pursuit(pose, d, dist, slow=dist < 0.4, stop_at=True)
             if self.mode == 'align':

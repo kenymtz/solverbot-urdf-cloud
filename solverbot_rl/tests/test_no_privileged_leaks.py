@@ -165,3 +165,21 @@ def test_truth_navigation_is_explicit_and_reported():
     env.reset(seed=0)
     assert env._nav_pose() is env.est
     env.close()
+
+
+def test_door_align_is_never_skipped_while_turning():
+    """Regresión de seguridad hallada al revalidar (HRI N5, semilla 1004): al llegar al punto previo de una puerta con el
+    rumbo pasando por la tolerancia, el controlador saltaba a 'cross' en el mismo llamado (sin pausa ni robot quieto).
+    Ahora entrar en 'align' devuelve una detención y la alineación se verifica en el llamado siguiente."""
+    import math
+    from solverbot_rl.challenges.nav import NavController, Waypoint
+    pre = Waypoint(1.0, 2.0, 'door_pre', heading=math.pi / 2)
+    post = Waypoint(1.0, 3.2, 'door_post', heading=math.pi / 2)
+    nav = NavController([pre, post])
+    from solverbot_rl.challenges.arena import AXLE
+    yaw = math.pi / 2                               # justo sobre el eje: el salto viejo ocurría aquí
+    base = np.array([1.0, 2.0]) - np.array([[math.cos(yaw), -math.sin(yaw)], [math.sin(yaw), math.cos(yaw)]]) @ AXLE
+    v, w = nav.act(np.array([*base, yaw]))
+    assert (v, w) == (0.0, 0.0) and nav.mode == 'align' and nav.k == 0
+    v, w = nav.act(np.array([*base, yaw]))
+    assert nav.mode == 'cross' and nav.k == 1
