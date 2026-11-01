@@ -434,6 +434,68 @@ def contradictions(runs, cache, env, args):
     return out
 
 
+# ======================================================================================================= labelrules
+RULES = {
+    'experto (IK global actual)': None,
+    'mínimo L2 (todas las soluciones)': lambda r: 'A' if r['cost_A_l2'] < r['cost_B_l2'] else 'B',
+    'mínimo tiempo (pasos)': lambda r: 'A' if r['cost_A_steps'] < r['cost_B_steps'] else 'B',
+    'preferir A salvo infactible': lambda r: 'A',
+    'preferir B salvo infactible': lambda r: 'B',
+}
+
+
+def cmd_labelrules(args):
+    """Coherencia de ETIQUETAS (no se ejecuta ningún etiquetador ni se entrena): para cada regla de elección de
+    familia, tasa de pares de estados INICIALES cercanos (entrada del actor, estandarizada) con familias distintas.
+    La regla solo puede elegir entre familias factibles."""
+    eps = {(r['level'], r['seed']): r for r in map(json.loads, open(os.path.join(args.analysis, 'episodes.jsonl')))
+           if r['policy'] == 'scripted' and r['backend'] == 'kinematic'}
+    runs = _load_runs(args.root)
+    X, keys = [], []
+    for name, (d, rows) in runs.items():
+        if not name.startswith('kinematic_scripted'):
+            continue
+        for s in rows:
+            k = (s['level_name'], s['seed'])
+            if k not in eps:
+                continue
+            arr = _episode_arrays(d, s['seed'])
+            X.append(B.actor_features(arr['obs'][0]))
+            keys.append(k)
+    X = np.array(X)
+    Xs = (X - X.mean(0)) / (X.std(0) + 1e-6)
+    ep = np.array([f'{a}:{b}' for a, b in keys])
+    d2 = (Xs ** 2).sum(1)[:, None] + (Xs ** 2).sum(1)[None, :] - 2 * Xs @ Xs.T
+    np.fill_diagonal(d2, np.inf)
+    nn = np.sqrt(np.maximum(d2.min(1), 0))
+    out = {'n_initial_states': len(X), 'radius_quantiles_nn': {q: float(np.quantile(nn, q / 100)) for q in (50, 75, 90)}}
+    for name, rule in RULES.items():
+        fam = []
+        for k in keys:
+            r = eps[k]
+            if not (r['feasible_A'] and r['feasible_B']):
+                fam.append('A' if r['feasible_A'] else 'B')
+            elif rule is None:
+                fam.append(r['expert_family'])
+            else:
+                fam.append(rule(r))
+        fam = np.array(fam)
+        res = {}
+        for q in (50, 75, 90):
+            rad = out['radius_quantiles_nn'][q]
+            c = B.label_conflicts(Xs, fam, ep, np.where(fam == 'A', 1.0, -1.0), rad)
+            c.pop('has_conflict')
+            res[f'p{q}'] = {'conflict_rate': round(c['conflict_rate'], 4), 'pairs': c['pairs_conflict'] + c['pairs_same']}
+        # tiempo extra respecto del óptimo en tiempo y en L2 (costo de seguir la regla)
+        extra_steps = [eps[k]['cost_' + f + '_steps'] - min(eps[k]['cost_A_steps'], eps[k]['cost_B_steps'])
+                       for k, f in zip(keys, fam) if eps[k]['feasible_A'] and eps[k]['feasible_B']]
+        out[name] = {'A_frac': float(np.mean(fam == 'A')), 'conflicts': res,
+                     'extra_steps_mean': float(np.mean(extra_steps)), 'extra_steps_max': float(np.max(extra_steps))}
+        print(name, out[name], flush=True)
+    with open(os.path.join(args.analysis, 'label_rules.json'), 'w') as fh:
+        json.dump(out, fh, indent=1)
+
+
 # ============================================================================================================ plots
 def cmd_plots(args):
     import matplotlib
@@ -626,11 +688,15 @@ def main():
     p = sub.add_parser('analyze')
     p.add_argument('--root', required=True)
     p.add_argument('--out', required=True)
+    p = sub.add_parser('labelrules')
+    p.add_argument('--root', required=True)
+    p.add_argument('--analysis', required=True)
     p = sub.add_parser('plots')
     p.add_argument('--root', required=True)
     p.add_argument('--out', required=True)
     args = ap.parse_args()
-    {'ikmap': cmd_ikmap, 'rollouts': cmd_rollouts, 'analyze': cmd_analyze, 'plots': cmd_plots}[args.cmd](args)
+    {'ikmap': cmd_ikmap, 'rollouts': cmd_rollouts, 'analyze': cmd_analyze, 'labelrules': cmd_labelrules,
+     'plots': cmd_plots}[args.cmd](args)
 
 
 if __name__ == '__main__':
