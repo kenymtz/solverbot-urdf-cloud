@@ -39,14 +39,14 @@ def family_of(q) -> str:
     return 'A' if q[J4] > 0 else 'B'
 
 
-def ik_solution_set(env, q0, p, n_starts: int = 24, seed: int = 0) -> list[dict]:
+def ik_solution_set(env, q0, p, n_starts: int = 24, seed: int = 0, tilts=TILTS) -> list[dict]:
     """Soluciones de IK de pre-agarre (eje de aproximación con yaw libre, como ScriptedExpert._ik) desde n_starts
     arranques por inclinación: el primero en q0 y el resto uniformes en los límites. Solo las convergidas (< 3 mm)."""
     u = env.unwrapped
     fixed = {'torso_lift_joint': u.cfg['robot']['lift']}
     rng = np.random.default_rng(seed)
     out = []
-    for tilt in TILTS:
+    for tilt in tilts:
         for k in range(n_starts):
             start = q0 if k == 0 else rng.uniform(u.lo, u.hi)
             q, err = solve_ik(u.chain, 'tcp_link', u.arm_joints, start, p, None, fixed,

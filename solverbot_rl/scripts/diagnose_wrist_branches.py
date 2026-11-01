@@ -144,9 +144,19 @@ def cmd_rollouts(args):
     if args.policy == 'scripted':
         from solverbot_rl.expert import ScriptedExpert
         expert = _LoggedExpert(ScriptedExpert(env))
+    elif args.policy == 'consistent':
+        from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
+        expert = _LoggedExpert(BranchConsistentLabelExpert(env))
     else:
         from solverbot_rl.imitation.bc import load_policy
-        act = load_policy(MODELS[args.policy], deterministic=True)
+        name, _, path = args.policy.partition('=')
+        if path:
+            args.policy = name
+        elif name in MODELS:
+            path = MODELS[name]
+        else:
+            raise SystemExit(f'política desconocida: {args.policy}')
+        act = load_policy(path, deterministic=True)
     out = os.path.join(args.out, f'{args.backend}_{args.policy}_{args.level}' + (f'_{args.tag}' if args.tag else ''))
     os.makedirs(out, exist_ok=True)
     done = {r['seed'] for r in D.read_index(out)}
@@ -156,6 +166,12 @@ def cmd_rollouts(args):
         arrays, s = run_episode(env, seed, li, act=act, expert=expert, rng=np.random.default_rng(seed))
         if expert is not None:
             arrays['expert_q_goal'] = np.asarray(expert.q_goal, float)
+            ex = expert.ex
+            if hasattr(ex, 'decisions'):
+                s.update({'label_family': ex.family, 'label_tilt': ex.tilt, 'label_decision': ex.decision,
+                          'label_viability': ex.viability,
+                          'label_family_changes': int(sum(1 for a, b in zip(ex.decisions[:-1], ex.decisions[1:])
+                                                          if a['family'] != b['family']))})
         s.update({'policy': args.policy, 'backend': args.backend, 'expert_in_loop': expert is not None,
                   'lo': env.unwrapped.lo.tolist(), 'hi': env.unwrapped.hi.tolist(),
                   'delta': float(env.unwrapped.delta), 'pregrasp_height': float(env.unwrapped.params.pregrasp_height)})
@@ -341,7 +357,7 @@ def contradictions(runs, cache, env, args):
     from solverbot_rl.imitation.bc import load_policy
     X, fam, ep, a4, obs_all, act_all, t_all = [], [], [], [], [], [], []
     for name, (d, rows) in runs.items():
-        if not name.startswith('kinematic_scripted'):
+        if not name.startswith(getattr(args, 'labeler_prefix', 'kinematic_scripted')):
             continue
         for s in rows:
             arr = _episode_arrays(d, s['seed'])
@@ -432,6 +448,57 @@ def contradictions(runs, cache, env, args):
                         a5_expert=act_all[:, 4], fam=fam, t=t_all, conflict=conflict_mask, conflict0=conflict0,
                         **{f'a4_{k}': v[:, 3] for k, v in preds.items()}, **{f'a5_{k}': v[:, 4] for k, v in preds.items()})
     return out
+
+
+# ====================================================================================================== feasibility
+def cmd_feasibility(args):
+    """B0: factibilidad física por (región del cubo, inclinación, familia) desde home, y en escenarios reales de un
+    nivel (pose inicial perturbada). Además un control positivo del detector de colisiones."""
+    from solverbot_rl.imitation import branch_feasibility as F
+    env = make_env()
+    u = env.unwrapped
+    geom = F.RobotGeometry()
+    lift = u.cfg['robot']['lift']
+    table = F.table_in_base(env)
+    rng = np.random.default_rng(0)
+    flagged = 0
+    for _ in range(300):
+        q = rng.uniform(u.lo, u.hi)
+        f = {**dict(zip(u.arm_joints, q)), 'torso_lift_joint': lift}
+        pts = geom.link_points(f)
+        flagged += bool(geom.body_collision(pts, q_full=f) or geom.self_collision(pts))
+    out = {'positive_control_random_configs_flagged': flagged / 300, 'table_base': table, 'rows': []}
+    print('[feasibility] control positivo: configuraciones aleatorias marcadas', flagged, '/ 300', flush=True)
+    env.reset(seed=915000, options={'level': level_index(env, 'reach')})
+    home = np.asarray(u.cfg['robot']['home'], float)
+    obj0 = np.asarray(u.backend.object_pose_truth(), float)
+    nominal = np.asarray(u.cfg['world']['object']['xy'], float)
+    g = np.linspace(-0.07, 0.07, args.grid)
+    for dx in g:
+        for dy in g:
+            xy = np.asarray(u.backend.world_xy_to_base(nominal + [dx, dy]), float)
+            cube = np.array([xy[0], xy[1], obj0[2]])
+            for tilt in (20, 30, 40):
+                for fam in B.FAMILIES:
+                    r = F.check(env, geom, home, cube, tilt, fam, table)
+                    r.update({'map': 'cube_home', 'dx': float(dx), 'dy': float(dy)})
+                    out['rows'].append(r)
+        print(f'[feasibility] dx={dx:+.3f}', flush=True)
+    for lvl, spec in ((args.level, args.seeds),) if args.seeds else ():
+        li = level_index(env, lvl)
+        for seed in parse_seeds(spec):
+            env.reset(seed=seed, options={'level': li})
+            for tilt in (20, 30):
+                for fam in B.FAMILIES:
+                    r = F.check(env, geom, u.start_q, u.backend.object_pose_truth(), tilt, fam, table)
+                    r.update({'map': 'level', 'level': lvl, 'seed': seed,
+                              'dxy': (np.asarray(u.start_obj_xy) - nominal).tolist()})
+                    out['rows'].append(r)
+        print(f'[feasibility] {lvl} listo', flush=True)
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, 'feasibility.json'), 'w') as fh:
+        json.dump(out, fh)
+    print('[feasibility] filas', len(out['rows']))
 
 
 # ======================================================================================================= labelrules
@@ -679,7 +746,8 @@ def main():
     p.add_argument('--seeds-m', default='915400-915599')
     p.add_argument('--seeds-l', default='915600-915799')
     p = sub.add_parser('rollouts')
-    p.add_argument('--policy', choices=['scripted', 'bc_v1', 'bc_v2w'], required=True)
+    p.add_argument('--policy', required=True,
+                   help='scripted | consistent | bc_v1 | bc_v2w | nombre=ruta/al/modelo.zip (BC nuevo)')
     p.add_argument('--backend', choices=['kinematic', 'gazebo'], default='kinematic')
     p.add_argument('--level', required=True)
     p.add_argument('--seeds', required=True)
@@ -688,6 +756,13 @@ def main():
     p = sub.add_parser('analyze')
     p.add_argument('--root', required=True)
     p.add_argument('--out', required=True)
+    p.add_argument('--labeler-prefix', default='kinematic_scripted',
+                   help='corridas cuyas etiquetas se analizan (contradicciones y predicciones de BC)')
+    p = sub.add_parser('feasibility')
+    p.add_argument('--out', required=True)
+    p.add_argument('--grid', type=int, default=11)
+    p.add_argument('--level', default='reach_var_l')
+    p.add_argument('--seeds', default='915600-915799')
     p = sub.add_parser('labelrules')
     p.add_argument('--root', required=True)
     p.add_argument('--analysis', required=True)
@@ -696,7 +771,7 @@ def main():
     p.add_argument('--out', required=True)
     args = ap.parse_args()
     {'ikmap': cmd_ikmap, 'rollouts': cmd_rollouts, 'analyze': cmd_analyze, 'labelrules': cmd_labelrules,
-     'plots': cmd_plots}[args.cmd](args)
+     'feasibility': cmd_feasibility, 'plots': cmd_plots}[args.cmd](args)
 
 
 if __name__ == '__main__':

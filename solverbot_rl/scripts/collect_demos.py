@@ -48,8 +48,9 @@ def main():
     ap.add_argument('--policy', default=None, help='modelo SB3 (.zip) para DAgger; sin él, el experto ejecuta')
     ap.add_argument('--beta', type=float, default=0.0, help='DAgger: prob. de ejecutar la acción del experto')
     ap.add_argument('--source', default=None, help='etiqueta del conjunto (expert | dagger_<n>)')
-    ap.add_argument('--labeler', choices=['scripted', 'local'], default='scripted',
-                    help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso)')
+    ap.add_argument('--labeler', choices=['scripted', 'local', 'consistent'], default='scripted',
+                    help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso); '
+                         'consistent = BranchConsistentLabelExpert (rama de muñeca consistente, preferencia B)')
     args = ap.parse_args()
 
     exp = load_experiment(args.experiment)
@@ -60,6 +61,9 @@ def main():
     if args.labeler == 'local':
         from solverbot_rl.imitation.label_expert import ReachLabelExpert
         expert = ReachLabelExpert(env)
+    elif args.labeler == 'consistent':
+        from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
+        expert = BranchConsistentLabelExpert(env)
     else:
         expert = ScriptedExpert(env)
     act = None
