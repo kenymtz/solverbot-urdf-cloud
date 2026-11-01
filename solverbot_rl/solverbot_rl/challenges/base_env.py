@@ -33,14 +33,32 @@ PERSON_SOCIAL = 0.15
 ARM_JOINTS = [f'joint{i}' for i in range(1, 7)]
 STOW = [math.radians(v) for v in (86.28, 173.91, -164.0, 66.98, 0.69, -146.41)]
 ROOMS = ['outside', 'living_room', 'kitchen', 'laundry', 'bedroom']
+NAV_POSE_SOURCES = ('estimate', 'truth')
+
+
+class MissingBelief(RuntimeError):
+    """Una habilidad devolvió un resultado sin `belief` observable (ver SkillResult)."""
 
 
 class SkillResult(dict):
-    """Resultado de una habilidad: ok, motivo, tiempo simulado y datos medidos."""
+    """Resultado de una habilidad: ok, motivo, tiempo simulado y datos medidos.
+
+    Dos canales separados:
+      * `ok`: verificación con la VERDAD del simulador. Solo para recompensas, métricas, terminación e `info`.
+      * `belief`: lo que el robot puede saber con sus sensores e interacciones (pose estimada, tracks perceptivos,
+        articulaciones medidas, respuestas estructuradas de las personas). Es lo único que puede llegar a la
+        observación o a la memoria del agente.
+    `belief` es OBLIGATORIO: no hay valor por defecto ni se deriva de `ok` (eso filtraba la verdad a la observación).
+    """
 
     @property
     def ok(self):
         return bool(self.get('ok'))
+
+    def observed(self) -> bool:
+        if 'belief' not in self:
+            raise MissingBelief(f'resultado de habilidad sin belief observable: {dict(self)}')
+        return bool(self['belief'])
 
 
 class ChallengeEnv(gym.Env):
@@ -54,6 +72,11 @@ class ChallengeEnv(gym.Env):
         self.ch = self.world.ch
         self.level = int(level)
         self.max_skills, self.max_sim_time = max_skills, max_sim_time
+        # 'estimate' (normal): navegación y control con la pose ESTIMADA. 'truth': solo DIAGNÓSTICO explícito (aísla
+        # errores de localización); queda registrado en info['nav_pose_source']. Cualquier otro valor es un error:
+        # antes, un valor inválido (p. ej. 'Estimate') navegaba en silencio con la verdad
+        if nav_pose_source not in NAV_POSE_SOURCES:
+            raise ValueError(f'nav_pose_source inválido: {nav_pose_source!r} (válidos: {NAV_POSE_SOURCES})')
         self.nav_pose_source = nav_pose_source
         self.backend_name = backend
         colors = dict(self.world.person_rgb)
@@ -229,8 +252,9 @@ class ChallengeEnv(gym.Env):
         return {}
 
     def detect_names(self):
-        return [n for n in self.world.person_names if self.humans.people[n].state != 'parked'] + \
-            list(self.perceivable_objects_truth())
+        # TODAS las personas (filtrar por el estado real 'parked' le diría al detector quién está presente). Solo lo usa
+        # el detector de color de Gazebo; el simulado no usa nombres (simula el sensor con la verdad)
+        return list(self.world.person_names) + list(self.perceivable_objects_truth())
 
     def track(self, name, max_age=6.0):
         t = self.tracks.get(name)
@@ -248,7 +272,7 @@ class ChallengeEnv(gym.Env):
             self.sim_step(0.0, 0.0, head)
             if self.failed():
                 break
-        return SkillResult(ok=not self.failed(), time=self.sim_time - t0)
+        return SkillResult(ok=not self.failed(), belief=not self.failed(), time=self.sim_time - t0)
 
     def stow_arm(self):
         if np.max(np.abs(self.arm_q - STOW)) < 0.02:
@@ -271,15 +295,21 @@ class ChallengeEnv(gym.Env):
         self.arm_q = np.array([js.get(j, 0.0) for j in ARM_JOINTS])
         return np.max(np.abs(self.arm_q - np.asarray(q))) < 0.05
 
-    def tcp_truth(self) -> np.ndarray:
-        """Punta de la pinza en el mapa (FK de las articulaciones MEDIDAS y pose real de la base)."""
+    def _tcp_in_map(self, base_pose) -> np.ndarray:
         js = {**dict(zip(ARM_JOINTS, self.arm_q)), 'torso_lift_joint': 0.0}
         if not isinstance(self.backend, KinematicMobileBackend):
             js = self.backend.joint_positions()
         t = self.chain.link_pose('tcp_link', js)[:3, 3]
-        tr = self.truth()
-        c, s = math.cos(tr[2]), math.sin(tr[2])
-        return np.array([tr[0] + c * t[0] - s * t[1], tr[1] + s * t[0] + c * t[1], t[2]])
+        c, s = math.cos(base_pose[2]), math.sin(base_pose[2])
+        return np.array([base_pose[0] + c * t[0] - s * t[1], base_pose[1] + s * t[0] + c * t[1], t[2]])
+
+    def tcp_truth(self) -> np.ndarray:
+        """Punta de la pinza en el mapa (FK de las articulaciones MEDIDAS y pose REAL de la base). Solo evaluación."""
+        return self._tcp_in_map(self.truth())
+
+    def tcp_est(self) -> np.ndarray:
+        """Punta de la pinza en el mapa según el robot (FK de las articulaciones MEDIDAS y pose ESTIMADA)."""
+        return self._tcp_in_map(self.est)
 
     def skill_reach(self, target_map_xyz, approach_axis=None) -> SkillResult:
         """Lleva la punta de la pinza a un punto (estimado) del mapa con IK; usa la pose ESTIMADA de la base.
@@ -292,9 +322,9 @@ class ChallengeEnv(gym.Env):
         q, err = solve_ik(self.chain, 'tcp_link', ARM_JOINTS, np.array(STOW), local, None, {'torso_lift_joint': 0.0},
                           restarts=4, reg=0.002, **kw)
         if err > 0.03:
-            return SkillResult(ok=False, reason='fuera_de_alcance', ik_err=err)
-        ok = self._command_arm(q)
-        return SkillResult(ok=ok and not self.failed(), ik_err=err)
+            return SkillResult(ok=False, belief=False, reason='fuera_de_alcance', ik_err=err)
+        ok = self._command_arm(q)                    # articulaciones MEDIDAS (propiocepción): observable
+        return SkillResult(ok=ok and not self.failed(), belief=ok and not self.failed(), ik_err=err)
 
     def final_approach_plan(self, base_xy, yaw, dynamic=(), back=0.6, margin=0.05):
         """Aproximación final RECTA a una pose junto a obstáculos o personas (donde no se puede girar en el lugar):
@@ -320,7 +350,7 @@ class ChallengeEnv(gym.Env):
     def skill_approach(self, ref, pre, yaw) -> SkillResult:
         """Navega a la pose previa (girable) con el rumbo final y entra en línea recta hasta ref."""
         res = self.skill_navigate(pre, yaw)
-        if not res.ok:
+        if not res.observed():
             return res
         return self.skill_straight(ref, yaw)
 
@@ -338,8 +368,9 @@ class ChallengeEnv(gym.Env):
             along = float((np.asarray(goal_ref) - c) @ n)
             if along < tol:
                 self.sim_step(0.0, 0.0, (0.0, 0.2))
-                ok = float(np.linalg.norm(self.ref_truth() - np.asarray(goal_ref))) < 0.08
-                return SkillResult(ok=ok, reason=None if ok else 'llegada_imprecisa', time=self.sim_time - t0)
+                ok = float(np.linalg.norm(self.ref_truth() - np.asarray(goal_ref))) < 0.08          # verdad: métrica
+                bel = float(np.linalg.norm(foot_center(self.est) - np.asarray(goal_ref))) < 0.08    # pose estimada
+                return SkillResult(ok=ok, belief=bel, reason=None if ok else 'llegada_imprecisa', time=self.sim_time - t0)
             e_lat = float((c - np.asarray(goal_ref)) @ lat_n)
             desired = yaw - float(np.clip(math.atan2(2.0 * e_lat, v), -math.radians(4), math.radians(4)))
             w = float(np.clip(2.5 * wrap(desired - self.est[2]), -0.2, 0.2))
@@ -350,7 +381,7 @@ class ChallengeEnv(gym.Env):
                     or self._scan_blocked(vv, w, horizon=hz)):
                 vv, w = 0.0, 0.0
             self.sim_step(vv, w, (0.0, 0.2))
-        return SkillResult(ok=False, reason='tiempo_agotado' if not self.failed() else
+        return SkillResult(ok=False, belief=False, reason='tiempo_agotado' if not self.failed() else
                            ('colision' if self.contact else 'falla'), time=self.sim_time - t0)
 
     def skill_reverse(self, dist, v=0.10, max_time=20.0) -> SkillResult:
@@ -359,9 +390,9 @@ class ChallengeEnv(gym.Env):
         while self.sim_time - t0 < max_time and not self.failed():
             if np.linalg.norm(foot_center(self.est) - start) >= dist:
                 self.sim_step(0.0, 0.0, (0.0, 0.2))
-                return SkillResult(ok=True, time=self.sim_time - t0)
+                return SkillResult(ok=True, belief=True, time=self.sim_time - t0)
             self.sim_step(-v, 0.0, (0.0, 0.2))
-        return SkillResult(ok=False, reason='tiempo_agotado' if not self.failed() else 'falla')
+        return SkillResult(ok=False, belief=False, reason='tiempo_agotado' if not self.failed() else 'falla')
 
     def skill_turn(self, yaw, w_max=0.5, tol=math.radians(3), max_time=20.0) -> SkillResult:
         """Giro en el lugar (alrededor del eje de ruedas) hasta el rumbo `yaw` (pose estimada), si el barrido está libre."""
@@ -370,14 +401,14 @@ class ChallengeEnv(gym.Env):
             err = wrap(yaw - self.est[2])
             if abs(err) < tol:
                 self.sim_step(0.0, 0.0, (0.0, 0.2))
-                return SkillResult(ok=True, time=self.sim_time - t0)
+                return SkillResult(ok=True, belief=True, time=self.sim_time - t0)
             w = float(np.clip(1.5 * err, -w_max, w_max))
             nxt = self.est[2] + w * DT * 3
             base = foot_center(self.est) - np.array([math.cos(nxt), math.sin(nxt)]) * AXLE[0]
             if self.arena.footprint_collides(base[0], base[1], nxt, margin=0.02):
-                return SkillResult(ok=False, reason='giro_bloqueado', time=self.sim_time - t0)
+                return SkillResult(ok=False, belief=False, reason='giro_bloqueado', time=self.sim_time - t0)
             self.sim_step(0.0, w, (0.0, 0.2))
-        return SkillResult(ok=False, reason='tiempo_agotado' if not self.failed() else 'falla')
+        return SkillResult(ok=False, belief=False, reason='tiempo_agotado' if not self.failed() else 'falla')
 
     def look_at(self, xyz, settle=4, turn=False):
         """Apunta la cabeza a xyz (pose estimada). turn=True: si queda fuera del rango del pan, gira la base antes."""
@@ -411,7 +442,7 @@ class ChallengeEnv(gym.Env):
         while replans <= max_replans:
             self._exit_corridor()
             self._exit_unrotatable()
-            pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
+            pose = self._nav_pose()
             # margen social de 0.15 m: la ruta pasa fuera de la zona en la que el gobernador de seguridad frena
             dyn = [(*self.track(n)[:2], self.person_plan_radius()) for n in self.humans.people
                    if n not in (follower, ignore) and self.track(n, 4.0) is not None
@@ -422,17 +453,17 @@ class ChallengeEnv(gym.Env):
                 dyn += [(x, y, r) for x, y, r in self.world.door_leaf_open_circles]
             wps = self.arena.plan(foot_center(pose), goal_xy, dynamic=dyn) or self.arena.plan(foot_center(pose), goal_xy)
             if wps is None:
-                return SkillResult(ok=False, reason='sin_ruta', time=self.sim_time - t0)
+                return SkillResult(ok=False, belief=False, reason='sin_ruta', time=self.sim_time - t0)
             nav = NavController(wps, final_yaw=final_yaw)
             last_prog, best, halted, settled = self.sim_time, 1e9, 0.0, set()
             while not nav.done:
-                pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
+                pose = self._nav_pose()
                 if nav.mode == 'align' and nav.k not in settled:
                     # en el punto previo de una puerta: 2 s quieto para que el scan-matching converja (holgura 15.5 mm)
                     settled.add(nav.k)
                     for _ in range(20):
                         self.sim_step(0.0, 0.0, (0.0, 0.15))
-                    pose = self.est if self.nav_pose_source == 'estimate' else self.truth()
+                    pose = self._nav_pose()
                 v, w = nav.act(pose)
                 why = self._halt_reason(pose, v, w, follower, nav.in_door)
                 if why and abs(w) > 1e-3 and v > 0.02 and not self._halt_reason(pose, v, 0.0, follower, nav.in_door):
@@ -452,11 +483,11 @@ class ChallengeEnv(gym.Env):
                     moving_steps += 1
                     forward_gaze += int(abs(self.backend.head_joints()[0]) < 0.35)
                 if self.failed():
-                    return SkillResult(ok=False, reason='colision' if self.contact else ('vuelco' if self.tipped
+                    return SkillResult(ok=False, belief=False, reason='colision' if self.contact else ('vuelco' if self.tipped
                                        else self.fault), time=self.sim_time - t0)
                 if stop_near is not None and not nav.in_door and np.linalg.norm(foot_center(pose) - np.asarray(stop_near[0])) < stop_near[1]:
                     self.sim_step(0.0, 0.0, head)
-                    return SkillResult(ok=True, time=self.sim_time - t0, traveled=float(np.linalg.norm(
+                    return SkillResult(ok=True, belief=True, time=self.sim_time - t0, traveled=float(np.linalg.norm(
                         self.ref_truth() - start_ref)))
                 dist = float(np.linalg.norm(foot_center(pose) - np.asarray(goal_xy)))
                 if dist < best - 0.05:
@@ -466,15 +497,20 @@ class ChallengeEnv(gym.Env):
                 if self.sim_time - last_prog > 12.0 or self.sim_time - t0 > max_time:
                     break
             else:
-                ok = float(np.linalg.norm(self.ref_truth() - np.asarray(goal_xy))) < 0.20
-                return SkillResult(ok=ok, reason=None if ok else 'llegada_imprecisa', time=self.sim_time - t0,
+                ok = float(np.linalg.norm(self.ref_truth() - np.asarray(goal_xy))) < 0.20            # verdad: métrica
+                bel = float(np.linalg.norm(foot_center(self.est) - np.asarray(goal_xy))) < 0.20      # pose estimada
+                return SkillResult(ok=ok, belief=bel, reason=None if ok else 'llegada_imprecisa', time=self.sim_time - t0,
                                    forward_gaze=forward_gaze / max(1, moving_steps),
                                    traveled=float(np.linalg.norm(self.ref_truth() - start_ref)))
             if self.sim_time - t0 > max_time:
                 break
             replans += 1
             self.skill_wait(1.0)
-        return SkillResult(ok=False, reason='bloqueado', time=self.sim_time - t0)
+        return SkillResult(ok=False, belief=False, reason='bloqueado', time=self.sim_time - t0)
+
+    def _nav_pose(self) -> np.ndarray:
+        """Pose con la que navega skill_navigate: la ESTIMADA salvo en el modo de diagnóstico explícito 'truth'."""
+        return self.truth() if self.nav_pose_source == 'truth' else self.est
 
     def _in_corridor(self) -> bool:
         c = foot_center(self.est)
@@ -548,8 +584,8 @@ class ChallengeEnv(gym.Env):
                     self.done['door'] = True
                     terms['door'] = reward
                 self.skill_wait(0.5)
-                return SkillResult(ok=True, time=self.sim_time - t0)
-        return SkillResult(ok=False, reason='puerta_cerrada')
+                return SkillResult(ok=True, belief=True, time=self.sim_time - t0)      # LiDAR ve el vano abierto
+        return SkillResult(ok=False, belief=False, reason='puerta_cerrada')
 
     def head_from_track(self, t) -> np.ndarray:
         """Cabeza estimada a partir de la detección del torso: la altura sale de la POSTURA percibida (torso alto = de
@@ -606,7 +642,7 @@ class ChallengeEnv(gym.Env):
                     self.skill_navigate(goal, None, max_time=8.0, max_replans=0, stop_near=(goal, 0.4), ignore=p,
                                         head_fn=lambda pose: look_at_angles(pose, (*goal, 1.2)))
                     seen = seen[-1:]
-                elif not self.skill_search(p).ok:
+                elif not self.skill_search(p).observed():
                     # búsqueda fallida (p. ej. junto a una puerta, donde el giro en el lugar está bloqueado): ir a la
                     # habitación de destino anunciada en la instrucción, o al último punto visto, y buscar desde ahí
                     # (HRI N5 semilla 1000: el anfitrión ya estaba en la cocina y el robot giraba en vano en el vano)
@@ -628,8 +664,9 @@ class ChallengeEnv(gym.Env):
             hist = [h for h in hist if self.sim_time - h[0] <= 3.5]
             if ((done_room is None or self.arena.room_of(*t[:2]) == done_room) and self.sim_time - hist[0][0] >= 3.0
                     and max(np.linalg.norm(h[1] - t[:2]) for h in hist) < 0.12):
-                return SkillResult(ok=not self.failed(), time=self.sim_time - t0)
-        return SkillResult(ok=False, reason='tiempo_agotado' if not self.failed() else 'falla', time=self.sim_time - t0)
+                return SkillResult(ok=not self.failed(), belief=not self.failed(), time=self.sim_time - t0)
+        return SkillResult(ok=False, belief=False, reason='tiempo_agotado' if not self.failed() else 'falla',
+                           time=self.sim_time - t0)
 
     def skill_search(self, name, max_turn=2 * math.pi, w=0.6, restore=False) -> SkillResult:
         """Busca a `name` girando en el lugar (si el barrido del giro está libre en el mapa) y paneando la cabeza."""
@@ -637,7 +674,7 @@ class ChallengeEnv(gym.Env):
         for pan in (-1.0, 0.0, 1.0):
             self.skill_wait(0.3, head=(pan, 0.2))
             if self.track(name, 0.4) is not None:
-                return SkillResult(ok=True, time=self.sim_time - t0)
+                return SkillResult(ok=True, belief=True, time=self.sim_time - t0)
         while turned < max_turn and not self.failed():
             est = self.est
             nxt = est[2] + w * DT * 3
@@ -660,7 +697,7 @@ class ChallengeEnv(gym.Env):
                 self.sim_step(0.0, -w, (0.0, 0.2))
                 back += w * DT
             self.sim_step(0.0, 0.0, (0.0, 0.2))
-        return SkillResult(ok=found and not self.failed(), time=self.sim_time - t0)
+        return SkillResult(ok=found and not self.failed(), belief=found and not self.failed(), time=self.sim_time - t0)
 
     def _scan_blocked(self, v, w, horizon=(0.3, 0.6, 0.9), margin=0.02) -> bool:
         """Gobernador por LiDAR: True si algún punto del último scan cae dentro de la huella (+margen) en las poses

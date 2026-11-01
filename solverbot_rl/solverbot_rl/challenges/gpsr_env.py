@@ -211,8 +211,8 @@ class GPSREnv(ChallengeEnv):
         return dict(g) if g else {}
 
     def detect_names(self):
-        return [n for n in self.world.person_names if self.humans.people[n].state != 'parked'] + \
-            (list(self._gates) if getattr(self, '_gates', None) else [])
+        # TODAS las personas: filtrar por el estado real ('parked') le diría al detector quién está presente
+        return list(self.world.person_names) + (list(self._gates) if getattr(self, '_gates', None) else [])
 
     # ================================================================================================ observación
     def _cmd(self):
@@ -275,7 +275,7 @@ class GPSREnv(ChallengeEnv):
         t0 = self.sim_time
         terms = {}
         res = self._run(skill, arg, terms)
-        self.mem['last_ok'] = float(res.get('belief', res.ok))
+        self.mem['last_ok'] = float(res.observed())       # SOLO la creencia observable; nunca res.ok (verdad)
         if not res.ok and not self.failed():
             terms['skill_fail'] = REWARD['skill_fail']
         terms['time'] = REWARD['time_per_s'] * (self.sim_time - t0)
@@ -326,16 +326,16 @@ class GPSREnv(ChallengeEnv):
             return self._receive(True)
         if skill == 'select_command':
             if arg >= len(self.received) or self.received[arg] is None:
-                return SkillResult(ok=False, reason='comando_inexistente')
+                return SkillResult(ok=False, belief=False, reason='comando_inexistente')
             self.cur = arg
-            return SkillResult(ok=True)
+            return SkillResult(ok=True, belief=True)
         if skill == 'search_room':
             return self._search_room(ROOM_IDS[arg], terms)
         c = self._cmd()
         if c is None:
-            return SkillResult(ok=False, reason='sin_comando')
+            return SkillResult(ok=False, belief=False, reason='sin_comando')
         if c.requires_grasp:
-            return SkillResult(ok=False, reason='requiere_agarre_no_implementado')
+            return SkillResult(ok=False, belief=False, reason='requiere_agarre_no_implementado')
         if skill == 'go_target':
             return self._go_target(c, terms)
         if skill == 'approach_person':
@@ -350,7 +350,7 @@ class GPSREnv(ChallengeEnv):
             return self._follow(c, terms)
         if skill == 'guide':
             return self._guide(c, terms)
-        return SkillResult(ok=False, reason='desconocida')
+        return SkillResult(ok=False, belief=False, reason='desconocida')
 
     # ---------------------------------------------------------------------------------------------- puerta / operador
     def _go_instruction(self, terms):
@@ -369,15 +369,16 @@ class GPSREnv(ChallengeEnv):
         if not self._near_operator():
             self.look_at((*self.operator_xy, 1.4))
             if not self._near_operator():
-                return SkillResult(ok=False, reason='lejos_del_operador')
+                return SkillResult(ok=False, belief=False, reason='lejos_del_operador')
         if all_three and self.given > 0 or (not all_three and self.mode == 'all'):
-            return SkillResult(ok=False, reason='modo_incompatible')
+            return SkillResult(ok=False, belief=False, reason='modo_incompatible')
         if not all_three and self.cur is not None and self.cur not in self.mem['believed_done'] \
                 and self.cur not in self.mem['reported']:
-            return SkillResult(ok=False, reason='comando_actual_pendiente')
+            return SkillResult(ok=False, belief=False, reason='comando_actual_pendiente')
         n = len(self.commands) - self.given if all_three else 1
         if n <= 0:
-            return SkillResult(ok=False, reason='sin_comandos')
+            # el operador no tiene más comandos: respuesta observable (interacción)
+            return SkillResult(ok=False, belief=False, reason='sin_comandos')
         self.mode = 'all' if all_three else 'one'
         self.talk(self.operator, 1.5, 30.0)
         for _ in range(n):
@@ -388,7 +389,8 @@ class GPSREnv(ChallengeEnv):
                                 'parsed_ok': parsed is not None and parsed.key() == truth.key()})
             self.given += 1
         self.cur = len(self.received) - n
-        return SkillResult(ok=self.received[self.cur] is not None)
+        understood = self.received[self.cur] is not None           # el robot sabe si interpretó el texto
+        return SkillResult(ok=understood, belief=understood)
 
     # ---------------------------------------------------------------------------------------------- tareas
     def _go_target(self, c, terms):
@@ -397,10 +399,10 @@ class GPSREnv(ChallengeEnv):
             loc = self.arena.locations[c.room]
             xy = np.array([loc.x, loc.y])
         if xy is None:
-            return SkillResult(ok=False, reason='sin_destino')
+            return SkillResult(ok=False, belief=False, reason='sin_destino')
         name = c.location if c.verb == 'go' else c.furniture if c.verb == 'object_yesno' else c.room
         res = self.skill_navigate(xy, self.arena.locations[name].yaw)
-        if c.verb == 'go' and res.ok:
+        if c.verb == 'go' and res.observed():          # creencia por pose ESTIMADA (antes: res.ok, verdad)
             self.mem['believed_done'].add(self.cur)
             k = self.cur
             if float(np.linalg.norm(self.ref_truth() - xy)) < 0.3 and self._truth_cmd(k).verb == 'go' \
@@ -414,7 +416,7 @@ class GPSREnv(ChallengeEnv):
     def _search_room(self, room, terms):
         loc = self.arena.locations[room]
         nav = self.skill_navigate((loc.x, loc.y), None)
-        if not nav.ok and (nav.get('reason') in ('colision', 'vuelco') or self.arena.room_of(*foot_center(self.est)) != room):
+        if not nav.observed() and (nav.get('reason') in ('colision', 'vuelco') or self.arena.room_of(*foot_center(self.est)) != room):
             return nav                                 # no buscar en otra habitación
         t0 = self.sim_time
         seen_before = {n: self.tracks.get(n, (None, -1))[1] for n in self.world.person_names}
@@ -437,7 +439,7 @@ class GPSREnv(ChallengeEnv):
         """Ir a ~1 m de la persona percibida: punto libre de su misma habitación (anillo de 0.9-1.2 m) con ruta."""
         t = self.track(c.person, 20.0) if c.person else None
         if t is None:
-            return SkillResult(ok=False, reason='persona_no_percibida')
+            return SkillResult(ok=False, belief=False, reason='persona_no_percibida')
         a = self.arena
         here = foot_center(self.est)
         others = [(*self.track(n, 20.0)[:2], self.person_radius + PERSON_SOCIAL) for n in self.humans.people
@@ -445,22 +447,22 @@ class GPSREnv(ChallengeEnv):
         if float(np.linalg.norm(t[:2] - here)) < 1.9:          # ya a distancia de interacción: orientarse
             self.skill_turn(math.atan2(t[1] - self.est[1], t[0] - self.est[0]))
             self.look_at(self.head_from_track(t), turn=True)
-            return SkillResult(ok=not self.failed())
+            return SkillResult(ok=not self.failed(), belief=not self.failed())
         cands = [(float(np.linalg.norm(q - here)), q) for q in self._approach_spots(t[:2], others)]
         for d, q in sorted(cands, key=lambda x: x[0])[:4]:
             yaw = math.atan2(t[1] - q[1], t[0] - q[0])
             if d < 0.15:                                   # ya está en el punto: solo orientarse
-                res = SkillResult(ok=True)
+                res = SkillResult(ok=True, belief=True)
             elif a.plan(here, q) is None:
                 continue
             else:
                 res = self.skill_navigate(q, None, max_time=90.0, ignore=c.person,
                                           head_fn=lambda pose: look_at_angles(pose, (t[0], t[1], 1.3)))
-            if res.ok:
+            if res.observed():
                 self.skill_turn(yaw)
                 self.look_at(self.head_from_track(t), turn=True)
             return res
-        return SkillResult(ok=False, reason='sin_ruta')
+        return SkillResult(ok=False, belief=False, reason='sin_ruta')
 
     def _reacquire(self, person):
         """Track reciente de la persona: si es viejo, volver a mirar donde se la vio por última vez."""
@@ -492,7 +494,7 @@ class GPSREnv(ChallengeEnv):
 
     def _greet(self, c, terms):
         if self._reacquire(c.person) is None:
-            return SkillResult(ok=False, reason='persona_no_percibida')
+            return SkillResult(ok=False, belief=False, reason='persona_no_percibida')
         frac, err = self.talk(c.person, 2.0, GREET_GAZE_DEG)
         dist = float(np.linalg.norm(self.humans.people[c.person].xy - self.ref_truth()))
         k = self.cur
@@ -530,12 +532,12 @@ class GPSREnv(ChallengeEnv):
 
     def _report(self, terms):
         if not self._near_operator():
-            return SkillResult(ok=False, reason='lejos_del_operador')
+            return SkillResult(ok=False, belief=False, reason='lejos_del_operador')
         pend = [k for k in self.mem['answers'] if k not in self.mem['reported']]
         if self.mode == 'one':
             pend = [k for k in pend if k == self.cur]
         if not pend:
-            return SkillResult(ok=False, reason='nada_que_informar')
+            return SkillResult(ok=False, belief=False, reason='nada_que_informar')
         self.talk(self.operator, 1.0 + 0.5 * len(pend), 30.0)
         ok_all = True
         for k in pend:
@@ -562,7 +564,8 @@ class GPSREnv(ChallengeEnv):
     def _follow(self, c, terms):
         t = self._reacquire(c.person)
         if t is None:
-            return SkillResult(ok=False, reason='persona_no_percibida')
+            return SkillResult(ok=False, belief=False, reason='persona_no_percibida')
+        # SIMULACIÓN del escenario (no control): la persona decide caminar si es la del comando y está cerca
         p = self.humans.people[c.person]
         k = self.cur
         tc = self._truth_cmd(k)
@@ -580,17 +583,18 @@ class GPSREnv(ChallengeEnv):
               and np.linalg.norm(p.xy - self.ref_truth()) < 1.8 and not self.failed())
         if ok:
             self._complete(k, terms)
-        if res.ok:
+        if res.observed():                              # skill_follow termina por percepción
             self.mem['believed_done'].add(k)
         self.events.append({'t': self.sim_time, 'ev': 'follow', 'k': k, 'ok': ok})
-        return SkillResult(ok=ok, belief=res.ok, reason=res.get('reason'))
+        return SkillResult(ok=ok, belief=res.observed(), reason=res.get('reason'))
 
     def _guide(self, c, terms):
         t = self._reacquire(c.person)
         if t is None or np.linalg.norm(t[:2] - foot_center(self.est)) > 2.0:
-            return SkillResult(ok=False, reason='persona_lejos_o_no_percibida')
+            return SkillResult(ok=False, belief=False, reason='persona_lejos_o_no_percibida')
         k = self.cur
         tc = self._truth_cmd(k)
+        # SIMULACIÓN del escenario (no control): la persona acepta seguir al robot si es la del comando y está cerca
         p = self.humans.people[c.person]
         if tc.verb == 'guide' and tc.person == c.person and np.linalg.norm(p.xy - self.ref_truth()) < 2.5:
             self.humans.follow(c.person)                 # la persona acepta seguir al robot
@@ -605,8 +609,8 @@ class GPSREnv(ChallengeEnv):
         if ok:
             self._complete(k, terms)
         t = self.track(c.person, 3.0)
-        belief = res.ok and t is not None and np.linalg.norm(t[:2] - foot_center(self.est)) < 1.8
-        if res.ok:
+        belief = res.observed() and t is not None and np.linalg.norm(t[:2] - foot_center(self.est)) < 1.8
+        if belief:                                      # antes: res.ok (llegada REAL del robot)
             self.mem['believed_done'].add(k)
         self.events.append({'t': self.sim_time, 'ev': 'guide', 'k': k, 'ok': ok})
         return SkillResult(ok=ok, belief=belief, reason=res.get('reason'))
@@ -694,4 +698,3 @@ class GPSRPlanner:
         here = foot_center(e.est)
         return sorted(ROOM_IDS, key=lambda r: np.hypot(e.arena.locations[r].x - here[0],
                                                        e.arena.locations[r].y - here[1]))
-

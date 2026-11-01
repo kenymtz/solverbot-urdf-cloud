@@ -208,7 +208,7 @@ class LaundryEnv(ChallengeEnv):
         t0 = self.sim_time
         terms = {}
         res = self._run(skill, arg, terms)
-        self.mem['last_ok'] = float(res.get('belief', res.ok))
+        self.mem['last_ok'] = float(res.observed())       # SOLO la creencia observable; nunca res.ok (verdad)
         if not res.ok and not self.failed():
             terms['skill_fail'] = REWARD['skill_fail']
         terms['time'] = REWARD['time_per_s'] * (self.sim_time - t0)
@@ -257,7 +257,7 @@ class LaundryEnv(ChallengeEnv):
             return self._approach_basket()
         if skill == 'pregrasp':
             return self._pregrasp(terms)
-        return SkillResult(ok=False, reason='desconocida')
+        return SkillResult(ok=False, belief=False, reason='desconocida')
 
     def _go_laundry(self, terms):
         loc = self.arena.locations['laundry']
@@ -283,7 +283,7 @@ class LaundryEnv(ChallengeEnv):
             self._gates = None
         t = self.track(key, 1.0)
         if t is None:
-            return SkillResult(ok=False, reason='no_detectado')
+            return SkillResult(ok=False, belief=False, reason='no_detectado')
         pan, tilt = self.backend.head_joints()
         gaze = math.degrees(head_ray_angles(self.truth(), pan, tilt, c)[0])
         err = float(np.linalg.norm(t[:2] - c[:2]))
@@ -350,12 +350,12 @@ class LaundryEnv(ChallengeEnv):
 
     def _look_into_basket(self, terms):
         if not self.mem['at_basket']:
-            return SkillResult(ok=False, reason='no_en_pose')
+            return SkillResult(ok=False, belief=False, reason='no_en_pose')
         b = self._basket_est()
         r = self.skill_reach(np.array([b[0], b[1], LOOK_HEIGHT]), approach_axis=DOWN)
-        if not r.ok:
+        if not r.observed():
             self.stow_arm()
-            return SkillResult(ok=False, reason=r.get('reason') or 'brazo')
+            return SkillResult(ok=False, belief=False, reason=r.get('reason') or 'brazo')
         dets = {}
         settled = getattr(self.backend, '_clock', 0.0)      # reloj del simulador (el de los sellos de las imágenes)
         for _ in range(10):
@@ -433,38 +433,39 @@ class LaundryEnv(ChallengeEnv):
                     best = (cost, yaw, ref, pre)
                 break
         if best is None:
-            return SkillResult(ok=False, reason='sin_pose_de_manipulacion')
+            return SkillResult(ok=False, belief=False, reason='sin_pose_de_manipulacion')
         _, yaw, ref, pre = best
         if self.mem['at_basket']:                      # junto al cesto no se puede girar: salir en recta primero
             self.stow_arm()
             back = self.skill_reverse(0.6)
             self.mem['at_basket'] = False
-            if not back.ok:
+            if not back.observed():
                 return back
         res = self.skill_navigate(pre, yaw)
-        if not res.ok:
+        if not res.observed():
             return res
         res = self.skill_straight(ref, yaw)
-        self.mem['at_basket'] = bool(res.ok)
+        # junto al cesto según la pose ESTIMADA (antes: res.ok, posición real; 'at_basket' va a la observación)
+        self.mem['at_basket'] = res.observed()
         return res
 
     def _pregrasp(self, terms):
         g, p = self._pregrasp_target()
         if g is None or not self.mem['at_basket']:
-            return SkillResult(ok=False, reason='no_en_pose')
+            return SkillResult(ok=False, belief=False, reason='no_en_pose')
         R = self._rot(self.est[2])
         if not self._ik_ok(np.array([*(R.T @ (p[:2] - self.est[:2])), p[2]])):
             # ninguna prenda alcanzable desde este lado: re-aproximarse por el lado más cercano a la prenda elegida
             res = self._approach_basket(target_xy=p[:2], z_check=p[2])
-            if not res.ok:
-                return SkillResult(ok=False, reason=res.get('reason') or 'sin_pose_de_pre_agarre')
+            if not res.observed():
+                return SkillResult(ok=False, belief=False, reason=res.get('reason') or 'sin_pose_de_pre_agarre')
         r = self.skill_reach(p, approach_axis=DOWN)
         tcp = self.tcp_truth()
         gt = np.array(self.objects_truth[g])
         dxy = float(np.linalg.norm(tcp[:2] - gt[:2]))
         above = tcp[2] - self.basket_size[2]
         ok = r.ok and dxy < PREGRASP_XY_M and PREGRASP_ABOVE_RIM[0] <= above <= PREGRASP_ABOVE_RIM[1]
-        self.mem['pregrasp'] = bool(r.ok)
+        self.mem['pregrasp'] = r.observed()             # IK + articulaciones medidas (propiocepción)
         if ok and not self.done['pregrasp']:
             self.done['pregrasp'] = True
             terms['pregrasp'] = REWARD['pregrasp']
@@ -472,7 +473,7 @@ class LaundryEnv(ChallengeEnv):
                             'tcp_above_rim': round(float(above), 3), 'ik': r.get('reason')})
         self.skill_wait(0.5)
         self.stow_arm()
-        return SkillResult(ok=ok, belief=bool(r.ok), reason=r.get('reason'))
+        return SkillResult(ok=ok, belief=r.observed(), reason=r.get('reason'))
 
 
 

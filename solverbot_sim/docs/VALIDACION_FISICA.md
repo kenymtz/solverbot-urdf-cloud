@@ -343,3 +343,104 @@ Verificado:
 | **Entrenamiento** | **Probado:** pipeline de PPO en cinemático (iteración anterior) y en Gazebo (esta). **No probado:** aprendizaje, es decir, política entrenada y evaluada |
 | **Fallas restantes** | - HRI N5: 1006 y 1019 (persona sentada junto a la ruta)<br>- GPSR N3: 7, por sin ruta, personas en pasos angostos, búsqueda y percepción<br>- GPSR Gazebo, semilla 2000: falso positivo resuelto, pero el episodio no completa<br>- Laundry N3: 1017 |
 | **Regresiones verificadas** | - P&P: A/B en Gazebo 5/5 contra 5/5 y 4 tests<br>- Suite completa: 80 tests pasan<br>- Los cambios de navegación (gobernador contra el mapa, giro exacto, freno LiDAR) se verificaron con los barridos de 20 semillas de los tres desafíos |
+
+## 8. Auditoría de información privilegiada (iteración 3)
+
+**Regla.**
+
+- La verdad del simulador puede usarse para:
+  - recompensas;
+  - métricas;
+  - terminación;
+  - simulación de sensores;
+  - comportamiento guionado del escenario (personas, árbitro);
+  - evaluación física.
+- No puede darle al agente información que no obtendría con sus sensores o interacciones.
+
+**Dos canales por habilidad** (`SkillResult`):
+
+| Canal | Contenido | Destino |
+|---|---|---|
+| `ok` | Verificación con la verdad | Recompensa, `info['skill_ok']` y métricas |
+| `belief` | Lo que el robot puede saber: pose estimada, tracks perceptivos, articulaciones medidas, respuestas estructuradas | Lo único que llega a la memoria y la observación |
+
+- `belief` ahora es **obligatorio**: `SkillResult.observed()` lanza `MissingBelief` si falta.
+- Ya no existe el respaldo `res.get('belief', res.ok)`.
+
+### 8.1 Fugas encontradas y corregidas
+
+| # | Dónde | Fuga | Llegaba a | Corrección |
+|---|---|---|---|---|
+| 1 | `step` de HRI, GPSR y Laundry | `mem['last_ok'] = res.get('belief', res.ok)`: sin `belief`, se usaba `ok` (verdad) | Observación de HRI (último elemento) y de Laundry (`lvl[0]`); memoria de GPSR | `res.observed()`; `belief` obligatorio en los 85 `SkillResult` |
+| 2 | `skill_navigate` y `skill_straight` | `ok` = llegada según la pose REAL; sin `belief` | `last_ok` y decisiones de las habilidades compuestas | `belief` = llegada según la pose ESTIMADA (mismos umbrales: 0.20 y 0.08 m) |
+| 3 | Laundry `_approach_basket` | `mem['at_basket'] = res.ok` | Observación (`status[3]`) y precondición de `look_into_basket` y `pregrasp` | `res.observed()` |
+| 4 | GPSR `_go_target` y `_guide` | `believed_done` se agregaba con `res.ok` de la navegación | Observación (`slots`, `len(believed_done)`) y decisiones del planificador | Creencia de la navegación y del track de la persona |
+| 5 | HRI `_reach` | `mem['reached']` con la distancia REAL pinza-mano | Observación (`mem[2]`) y precondición de `tell_host` | `belief` = brazo en la pose comandada (articulaciones medidas) y pinza a < `hand_reach_m` de la mano ESTIMADA (FK + pose estimada) |
+| 6 | HRI `_offer_seat` | El invitado al que se le ofrece salía del estado REAL (`state != 'seated'`); `mem['offered']` se escribía con `ok` (sentado de verdad); la espera terminaba con el estado real | Observación (`f[9]`), decisión y duración de la habilidad | Elección por memoria (guiado sin asiento ofrecido); espera hasta VER al invitado sentado (torso bajo a < 0.4 m del asiento); `offered` = esa percepción |
+| 7 | HRI `_guide` (precondiciones) | Usaba el estado real `seated` y la distancia REAL al invitado | Motivo de falla y `last_ok` | Memoria (`offered`) y track del invitado |
+| 8 | HRI `_introduce` (precondición) | Usaba la habitación REAL de los invitados | Motivo de falla y `last_ok` | Última posición percibida de cada invitado |
+| 9 | Control: `skill_approach`, `skill_search` en `skill_follow`, `_search_room`, `_reach`, HRI `_guide`, `_follow`, Laundry `_approach_basket`, `_look_into_basket`, `_pregrasp` | Ramas `if res.ok` (verdad) que decidían el siguiente movimiento | Comportamiento del robot | `res.observed()` |
+| 10 | `detect_names` (base y GPSR, Gazebo) | El detector de color solo buscaba a las personas no `parked` (presencia REAL) | Evitaba falsos positivos de personas ausentes usando la verdad | Se buscan TODAS las personas: la cámara decide |
+| 11 | `nav_pose_source` | Cualquier valor distinto de `'estimate'`, por ejemplo `'Estimate'`, navegaba **en silencio con la verdad** | Control | Validación (`ValueError`); `'truth'` solo como diagnóstico explícito, registrado en `info` |
+
+### 8.2 Accesos a la verdad que se mantienen (clasificados)
+
+Clasificación:
+
+- **E** = evaluación (recompensa, métrica, éxito, terminación);
+- **S** = simulación de sensores;
+- **G** = comportamiento guionado del escenario (personas, árbitro, objetos);
+- **D** = diagnóstico.
+
+| Acceso | Uso | Clase |
+|---|---|---|
+| `sim_step`: `truth()`, `obstacles_truth()`, `contact_truth` | Contacto, vuelco, error de localización, holgura mínima. Fin del episodio | E |
+| `failed()` en `belief` (contacto, vuelco, falla de sensor) | El contacto **termina** el episodio: ninguna decisión posterior lo usa. La falla de sensor es observable | E (terminal) |
+| `perceive()` cinemático: `truth()`, `humans.head_xyz`, `perceivable_objects_truth()` | `SimulatedHeadDetector`: campo visual, línea de vista, ruido y pérdidas; la salida se lleva al mapa con la pose ESTIMADA | S |
+| Laundry `_wrist_detect` cinemático y `_visible_over_rim` | Cámara de muñeca simulada (cono, oclusión por el borde, ruido de 8 mm) | S |
+| `humans.update(…, foot_center(truth))`, `_robot_block()`, `_nearest_body_point()` | Las personas simuladas reaccionan a la posición REAL del robot | G |
+| HRI `_scenario_tick` (llegadas, cambios de asiento, oferta de la bolsa), `_tell` (el anfitrión se levanta y camina) | Escenario | G |
+| GPSR `_follow` y `_guide`: `humans.people`, `_truth_cmd`, `ref_truth` | La persona decide caminar o seguir al robot si es la del comando y está cerca | G |
+| GPSR `_scenario_tick` y Laundry `sim_step` | El árbitro abre la puerta; el robot lo detecta con el LiDAR (`door_scan_open`) | G |
+| HRI `_ask` y `_tell` | La persona RESPONDE solo con contacto visual real y cerca, como en el mundo real. La respuesta es observable (`belief` = respondió) | G (interacción) |
+| HRI `persona[p]` | Contenido de la respuesta estructurada (nombre y bebida) | G (interacción) |
+| `gaze_error_truth`, `talk()` (`ok_steps`), HRI `look_person`, `offer_seat` (`err`, `free`) | Calidad real de la mirada o indicación; ocupación real del asiento | E |
+| HRI `_ask` (`dist`), `_guide` (`in_room`, `near`), `_reach` (`tcp_truth`, `hand_xyz`), `_follow`, `_success` | Verificación de cada tarea | E |
+| GPSR `_at_instruction_truth`, `_go_target`, `_greet`, `_report` (`object_on`, `count_truth`, habitación real) | Verificación de comandos y respuestas | E |
+| Laundry `_go_laundry`, `_identify` (`gaze`), `_look_into_basket` (`err`), `_pregrasp` (`tcp_truth`) | Verificación | E |
+| `skill_navigate` (`traveled`, `start_ref`) y `SkillResult.tcp_hand_dist` / `pos_err` | Campos de diagnóstico; ningún control los lee | D |
+| `_nav_pose()` con `nav_pose_source='truth'` | Aísla errores de localización; queda en `info['nav_pose_source']` | D |
+| Iteraciones `for n in self.humans.people` (planificación, frenos, búsqueda) | Solo enumeran NOMBRES (conocidos); la posición sale de `track()` | — (no es verdad) |
+| Laundry `_target_truth` y `_basket_est` | Mapa semántico conocido a priori (plano 10 / `challenges.yaml`); muebles y cesto estáticos | Conocimiento previo |
+
+### 8.3 Expertos guionados
+
+Los expertos (`HRIExpert`, `GPSRPlanner`, `LaundryExpert`) deciden con la memoria y los tracks del robot. Usan, además,
+parámetros del escenario que fija la regla:
+
+- **HRI:** `guests` y `host`; la cantidad de invitados.
+- **GPSR:** `len(commands)` y `given`: el operador da 3 comandos.
+
+Ninguno lee posiciones ni estados reales. No son políticas aprendidas.
+
+### 8.4 Pruebas
+
+`tests/test_no_privileged_leaks.py` (20 tests):
+
+- **Estático:** todo `SkillResult(...)` declara `belief`, y el patrón `.get('belief'` no puede volver.
+- **`MissingBelief`:** un resultado sin `belief` es un error, nunca la verdad.
+- **Divergencia verdad ≠ creencia en el paso:** en los 3 desafíos, `last_ok` sigue a `belief` en ambos sentidos, y
+  `info['skill_ok']` y la recompensa siguen a `ok`.
+- **Divergencia física real:** con el localizador sesgado 0.5 m, `skill_straight` llega según la verdad (`ok`) pero
+  no según la creencia (`belief`).
+- **Memorias observables con verdad y creencia opuestas:** `at_basket` (Laundry) y `believed_done` (GPSR).
+- **Observación invariante** ante cambios solo de la verdad (personas y objetos movidos sin percibirlos), en los 3
+  desafíos.
+- **`detect_names`** no depende de la presencia real.
+- **`nav_pose_source`:** `'estimate'` por defecto; inválidos rechazados; `'truth'` explícito y reportado.
+
+Contra el código anterior (`468497f`), 11 de los 20 tests fallan.
+
+### 8.5 Efecto en los resultados
+
+PENDIENTE_FUGAS

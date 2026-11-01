@@ -152,7 +152,7 @@ class HRIEnv(ChallengeEnv):
         terms = {}
         res = self._run(skill, arg, terms)
         # creencia del robot sobre su última habilidad (no la verificación con la verdad, que solo va a la recompensa)
-        self.mem['last_ok'] = float(res.get('belief', res.ok))
+        self.mem['last_ok'] = float(res.observed())       # SOLO la creencia observable; nunca res.ok (verdad)
         if not res.ok and not self.failed():
             terms['skill_fail'] = REWARD['skill_fail']
         terms['time'] = REWARD['time_per_s'] * (self.sim_time - t0)
@@ -206,12 +206,12 @@ class HRIEnv(ChallengeEnv):
         if skill == 'scan_room':
             for pan in np.linspace(-1.3, 1.3, 7):
                 self.skill_wait(0.4, head=(pan, 0.25))
-            return SkillResult(ok=not self.failed())
+            return SkillResult(ok=not self.failed(), belief=not self.failed())
         p = self._person_target(arg)
         if skill == 'look_person':
             t = self.track(p)
             if t is None:
-                return SkillResult(ok=False, reason='no_percibida')
+                return SkillResult(ok=False, belief=False, reason='no_percibida')
             self.look_at(self._head_from_track(t))
             pan, tilt = self.backend.head_joints()
             est_err = math.degrees(head_ray_angles(self.est, pan, tilt, self._head_from_track(t))[0])
@@ -231,7 +231,7 @@ class HRIEnv(ChallengeEnv):
             return self._tell(p, terms)
         if skill == 'follow':
             return self._follow(p, terms)
-        return SkillResult(ok=False, reason='desconocida')
+        return SkillResult(ok=False, belief=False, reason='desconocida')
 
     def _head_from_track(self, t):
         return self.head_from_track(t)
@@ -242,9 +242,9 @@ class HRIEnv(ChallengeEnv):
     def _ask(self, p, terms):
         from .base_env import SkillResult
         if p is None or p not in self.arrived or p == self.host:
-            return SkillResult(ok=False, reason='no_es_invitado_presente')
+            return SkillResult(ok=False, belief=False, reason='no_es_invitado_presente')
         if self.track(p, 3.0) is None:
-            return SkillResult(ok=False, reason='no_percibida')
+            return SkillResult(ok=False, belief=False, reason='no_percibida')
         frac, err = self._talk(p)
         dist = float(np.linalg.norm(self.humans.people[p].xy - self.ref_truth()))
         ok = frac >= 0.6 and err < self.cfg['gaze_max_angle_deg'] and dist < 1.6
@@ -257,14 +257,20 @@ class HRIEnv(ChallengeEnv):
                 terms['ask'] = REWARD['ask']
         self.events.append({'t': self.sim_time, 'ev': 'ask', 'person': p, 'ok': ok, 'gaze_frac': round(frac, 2),
                             'gaze_err_deg': round(err, 1), 'dist': round(dist, 2)})
-        return SkillResult(ok=ok, reason=None if ok else 'sin_contacto_visual_o_lejos', gaze_frac=frac)
+        # creencia = el invitado RESPONDIÓ (interacción estructurada: el robot oye nombre y bebida). Que responda depende
+        # de la verdad (contacto visual real y distancia), como en el mundo real; la respuesta en sí es observable
+        return SkillResult(ok=ok, belief=ok, reason=None if ok else 'sin_contacto_visual_o_lejos', gaze_frac=frac)
 
     def _guide(self, p, terms):
         from .base_env import SkillResult
-        if p not in self.mem['name'] or self.humans.people[p].state == 'seated':
-            return SkillResult(ok=False, reason='no_saludado_o_ya_sentado')
-        if np.linalg.norm(self.humans.people[p].xy - self.ref_truth()) > 2.5:
-            return SkillResult(ok=False, reason='invitado_lejos')
+        # precondiciones con la MEMORIA y la PERCEPCIÓN del robot (antes: estado y posición reales de la persona)
+        if p not in self.mem['name'] or p in self.mem['offered']:
+            return SkillResult(ok=False, belief=False, reason='no_saludado_o_ya_sentado')
+        tp = self.track(p, 6.0)
+        if tp is None:
+            return SkillResult(ok=False, belief=False, reason='no_percibida')
+        if np.linalg.norm(tp[:2] - foot_center(self.est)) > 2.5:
+            return SkillResult(ok=False, belief=False, reason='invitado_lejos')
         self.humans.follow(p)
         res = self.skill_navigate(LIVING_VIEW[:2], LIVING_VIEW[2], follower=p)
         self.humans.people[p].state = 'standing'
@@ -273,10 +279,10 @@ class HRIEnv(ChallengeEnv):
         ok = res.ok and in_room and near
         # creencia: el invitado se percibe cerca al llegar (no la verdad); girar a buscarlo si quedó detrás
         t0 = self.sim_time
-        if res.ok and self.track(p, 1.0) is None:
+        if res.observed() and self.track(p, 1.0) is None:
             self.skill_search(p, restore=True)
         t = self.track(p, self.sim_time - t0 + 1.0)
-        belief = res.ok and t is not None and np.linalg.norm(t[:2] - foot_center(self.est)) < 1.8
+        belief = res.observed() and t is not None and np.linalg.norm(t[:2] - foot_center(self.est)) < 1.8
         if belief:
             self.mem['guided'].add(p)
         if ok:
@@ -290,12 +296,12 @@ class HRIEnv(ChallengeEnv):
     def _offer_seat(self, k, terms):
         from .base_env import SkillResult
         if k >= len(self.world.seats):
-            return SkillResult(ok=False, reason='asiento_invalido')
+            return SkillResult(ok=False, belief=False, reason='asiento_invalido')
         seat = self.world.seats[k]
-        waiting = [g for g in self.mem['guided'] if self.humans.people[g].state != 'seated'
-                   and g not in self.done['seat']]
+        # a quién se le ofrece: por la MEMORIA (guiado y sin asiento ofrecido), no por el estado real de la persona
+        waiting = [g for g in self.mem['guided'] if g not in self.mem['offered']]
         if not waiting:
-            return SkillResult(ok=False, reason='nadie_esperando_asiento')
+            return SkillResult(ok=False, belief=False, reason='nadie_esperando_asiento')
         g = waiting[0]
         point = np.array([seat['xy'][0], seat['xy'][1], 0.8])
         self.look_at(point)
@@ -305,30 +311,39 @@ class HRIEnv(ChallengeEnv):
         ok = err < self.cfg['seat_indicate_max_angle_deg'] and free
         if ok:
             self.humans.walk_and_sit(g, seat['name'], blocked=self._robot_block())
+            # esperar a VER al invitado sentado en ese asiento (torso bajo junto al asiento), no al estado real
             for _ in range(150):
-                self.sim_step(0, 0, self.backend.head_joints())
-                if self.humans.people[g].state == 'seated' or self.failed():
+                self.sim_step(0, 0, self.backend.head_joints(), perceive_every=1)
+                if self._seen_seated_at(g, seat) or self.failed():
                     break
             ok = self.humans.people[g].state == 'seated' and self.humans.people[g].seat == seat['name']
         elif not free:
             terms['wrong_seat'] = REWARD['wrong_seat']
-        if ok:
+        belief = self._seen_seated_at(g, seat) and not self.failed()
+        if belief:
             self.mem['offered'][g] = seat['name']
+        if ok:
             self.done['seat'].add(g)
             terms['seat'] = REWARD['seat']
         self.events.append({'t': self.sim_time, 'ev': 'seat', 'person': g, 'seat': seat['name'], 'ok': ok,
                             'free_truth': free, 'gaze_err_deg': round(err, 1)})
-        return SkillResult(ok=ok, reason=None if ok else ('asiento_ocupado' if not free else 'no_indicado'))
+        return SkillResult(ok=ok, belief=belief, reason=None if ok else ('asiento_ocupado' if not free else 'no_indicado'))
+
+    def _seen_seated_at(self, g, seat) -> bool:
+        t = self.track(g, 1.0)
+        return t is not None and t[2] < 0.95 and float(np.linalg.norm(t[:2] - np.array(seat['xy']))) < 0.4
 
     def _introduce(self, p, terms):
         from .base_env import SkillResult
         others = [g for g in self.guests if g != p]
         if p not in self.guests or not others or p not in self.mem['name']:
-            return SkillResult(ok=False, reason='datos_desconocidos')
-        if any(self.arena.room_of(*self.humans.people[g].xy) != 'living_room' for g in self.guests):
-            return SkillResult(ok=False, reason='invitados_fuera_de_la_sala')
+            return SkillResult(ok=False, belief=False, reason='datos_desconocidos')
+        # ¿están los invitados en la sala? según la última posición PERCIBIDA (antes: posición real)
+        last = [self.track(g, 1e9) for g in self.guests]
+        if any(t is None or self.arena.room_of(*t[:2]) != 'living_room' for t in last):
+            return SkillResult(ok=False, belief=False, reason='invitados_fuera_de_la_sala')
         if self.track(p, 6.0) is None:
-            return SkillResult(ok=False, reason='no_percibida')
+            return SkillResult(ok=False, belief=False, reason='no_percibida')
         frac, err = self._talk(p, 2.0)
         content_ok = (self.mem['name'][p] == self.persona[p]['name'] and self.mem['drink'][p] == self.persona[p]['drink'])
         ok = frac >= 0.6 and content_ok
@@ -365,10 +380,10 @@ class HRIEnv(ChallengeEnv):
     def _reach(self, p, terms):
         from .base_env import SkillResult
         if not self.bag_offered or len(self.guests) < 2 or p != self.guests[1]:
-            return SkillResult(ok=False, reason='no_ofrece_bolsa')
+            return SkillResult(ok=False, belief=False, reason='no_ofrece_bolsa')
         t = self.track(p, 6.0)
         if t is None:
-            return SkillResult(ok=False, reason='no_percibida')
+            return SkillResult(ok=False, belief=False, reason='no_percibida')
         # Pose para tener la mano a la IZQUIERDA del robot (el Piper va montado en el costado izquierdo). Convención
         # del protocolo (conocida por el robot): la persona extiende la mano derecha, 0.28 m al frente y 0.12 m a su
         # derecha, hacia el robot. Se buscan direcciones de aproximación alrededor de la persona ESTIMADA cuya pose de
@@ -383,7 +398,7 @@ class HRIEnv(ChallengeEnv):
                 break
             prev = cur[:2].copy() if cur is not None else prev
         else:
-            return SkillResult(ok=False, reason='persona_en_movimiento')
+            return SkillResult(ok=False, belief=False, reason='persona_en_movimiento')
         here = foot_center(self.est)
         # última posición CONOCIDA de cada persona, sin límite de antigüedad: los invitados sentados no se mueven, y una
         # posición vieja solo hace al plan más conservador (HRI N5 semillas 1006 y 1007: un invitado sentado no visto
@@ -413,11 +428,11 @@ class HRIEnv(ChallengeEnv):
             if best is None or cost < best[0]:
                 best = (cost, phi, yaw, ref, pre)
         if best is None:
-            return SkillResult(ok=False, reason='sin_pose_de_entrega')
+            return SkillResult(ok=False, belief=False, reason='sin_pose_de_entrega')
         _, phi, yaw, ref, pre = best
         nav = self.skill_approach(ref, pre, yaw)
-        if not nav.ok:
-            return SkillResult(ok=False, reason=nav.get('reason'))
+        if not nav.observed():
+            return SkillResult(ok=False, belief=False, reason=nav.get('reason'))
         # comportamiento scriptado de la persona: se gira hacia el punto más cercano del cuerpo del robot y ofrece la bolsa
         self.humans.face(p, self._nearest_body_point(self.humans.people[p].xy))
         # observar ~1.5 s y promediar las detecciones (reduce el ruido de la estimación de la persona)
@@ -437,25 +452,31 @@ class HRIEnv(ChallengeEnv):
         phi_seen = math.atan2(near[1] - pxy[1], near[0] - pxy[0])
         hand_est = np.array([*self._hand_point(pxy, phi_seen), 1.0])
         r = self.skill_reach(hand_est)
-        dist = float(np.linalg.norm(self.tcp_truth() - self.humans.hand_xyz(p)))
+        dist = float(np.linalg.norm(self.tcp_truth() - self.humans.hand_xyz(p)))       # verdad: evaluación
         ok = r.ok and dist < self.cfg['hand_reach_m']
-        if ok:
+        # creencia: brazo en la pose comandada (articulaciones medidas) y pinza cerca de la mano ESTIMADA (FK + pose
+        # estimada). Antes la memoria 'reached' (observación) se escribía con la distancia real pinza-mano
+        dist_est = float(np.linalg.norm(self.tcp_est() - hand_est))
+        belief = r.observed() and dist_est < self.cfg['hand_reach_m']
+        if belief:
             self.mem['reached'] = True
+        if ok:
             if not self.done['reach']:
                 self.done['reach'] = True
                 terms['reach'] = REWARD['reach']
-        self.events.append({'t': self.sim_time, 'ev': 'reach', 'person': p, 'ok': ok, 'tcp_hand_dist': round(dist, 3)})
+        self.events.append({'t': self.sim_time, 'ev': 'reach', 'person': p, 'ok': ok, 'belief': belief,
+                            'tcp_hand_dist': round(dist, 3), 'tcp_hand_dist_est': round(dist_est, 3)})
         self.skill_wait(0.5)
         self.stow_arm()
         # retirada recta por el mismo tramo validado: a 5-8 cm de la persona cualquier giro barre su cuerpo, y el
         # gobernador por LiDAR (con razón) bloquea todo movimiento siguiente (HRI N5, semillas 1000 y 1012)
         self.skill_reverse(float(np.linalg.norm(pre - foot_center(self.est))))
-        return SkillResult(ok=ok, reason=None if ok else 'mano_lejos', tcp_hand_dist=dist)
+        return SkillResult(ok=ok, belief=belief, reason=None if ok else 'mano_lejos', tcp_hand_dist=dist)
 
     def _tell(self, p, terms):
         from .base_env import SkillResult
         if p != self.host or not self.mem['reached'] or self.track(p, 8.0) is None:
-            return SkillResult(ok=False, reason='no_corresponde')
+            return SkillResult(ok=False, belief=False, reason='no_corresponde')
         frac, err = self._talk(p, 2.0)
         ok = frac >= 0.6
         if ok and not self.done['tell']:
@@ -474,14 +495,15 @@ class HRIEnv(ChallengeEnv):
                 hp.pose[:2] = (st['xy'][0] + 0.65 * math.cos(st['yaw']), st['xy'][1] + 0.65 * math.sin(st['yaw']))
             self.humans.people[p].seat = None
             self.humans.lead_to(p, (loc.x, loc.y), blocked=self._robot_block())
-        return SkillResult(ok=ok)
+        # creencia = el anfitrión respondió con el destino (interacción estructurada observable)
+        return SkillResult(ok=ok, belief=self.mem['told'])
 
     def _follow(self, p, terms):
         from .base_env import SkillResult
         if p != self.host or self.dest is None:
-            return SkillResult(ok=False, reason='nadie_a_quien_seguir')
+            return SkillResult(ok=False, belief=False, reason='nadie_a_quien_seguir')
         fr = self.skill_follow(p, done_room=self.dest)
-        if fr.ok:
+        if fr.observed():
             self.mem['followed'] = True          # creencia por percepción (persona quieta en el destino)
         hp = self.humans.people[p]
         ok = (hp.state == 'standing' and self.arena.room_of(*hp.xy) == self.dest
@@ -490,7 +512,7 @@ class HRIEnv(ChallengeEnv):
             self.done['follow'] = True
             terms['follow'] = REWARD['follow']
         self.events.append({'t': self.sim_time, 'ev': 'follow', 'ok': ok, 'dest': self.dest})
-        return SkillResult(ok=ok, belief=fr.ok, reason=None if ok else 'no_llego_con_el_anfitrion')
+        return SkillResult(ok=ok, belief=fr.observed(), reason=None if ok else 'no_llego_con_el_anfitrion')
 
 
 class HRIExpert:
