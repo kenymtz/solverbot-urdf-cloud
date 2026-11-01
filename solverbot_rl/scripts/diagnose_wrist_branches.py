@@ -147,6 +147,9 @@ def cmd_rollouts(args):
     elif args.policy == 'consistent':
         from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
         expert = _LoggedExpert(BranchConsistentLabelExpert(env))
+    elif args.policy == 'dynamic':
+        from solverbot_rl.imitation.dynamic_label_expert import MeasuredIKLabelExpert
+        expert = _LoggedExpert(MeasuredIKLabelExpert(env))
     else:
         from solverbot_rl.imitation.bc import load_policy
         name, _, path = args.policy.partition('=')
@@ -173,13 +176,200 @@ def cmd_rollouts(args):
                 s.update({'label_family': ex.family, 'label_tilt': ex.tilt, 'label_decision': ex.decision,
                           'label_viability': ex.viability,
                           'label_family_changes': int(sum(1 for a, b in zip(ex.decisions[:-1], ex.decisions[1:])
-                                                          if a['family'] != b['family']))})
+                                                          if a['family'] != b['family'])),
+                          'label_decisions': _decision_counts(ex.decisions)})
         s.update({'policy': args.policy, 'backend': args.backend, 'expert_in_loop': expert is not None,
                   'lo': env.unwrapped.lo.tolist(), 'hi': env.unwrapped.hi.tolist(),
                   'delta': float(env.unwrapped.delta), 'pregrasp_height': float(env.unwrapped.params.pregrasp_height)})
         D.save_episode(out, arrays, s)
         print(f'[rollouts] {i + 1}/{len(seeds)} seed={seed} éxito={s["success"]} pasos={s["length"]} '
               f'dfin={s["dfinal_mm"]:.1f} zf={s["tcp_z2_final"]:.2f} det={s["valid_rate"]:.2f}', flush=True)
+    env.close()
+
+
+def _decision_counts(decisions):
+    out = {}
+    for d in decisions:
+        out[d['decision']] = out.get(d['decision'], 0) + 1
+        if d.get('singular'):
+            out['singular_steps'] = out.get('singular_steps', 0) + 1
+    return out
+
+
+def label_quality(arr, s, q_goal=None):
+    """Métricas de calidad de etiquetas/trayectoria de un episodio con experto en el lazo (Fase C1)."""
+    lo, hi = np.asarray(s['lo']), np.asarray(s['hi'])
+    q = B.denorm_q(arr['obs'], lo, hi)
+    m = np.minimum(q - lo, hi - q)
+    out = {'success': bool(s['success']), 'length': int(s['length']), 'dfinal_mm': float(s['dfinal_mm']),
+           'collision': bool(s['collision']), 'stalled': bool(s['stalled']), 'valid_rate': float(s['valid_rate']),
+           'wrist_limit_frac': B.wrist_limit_frac(q, lo, hi), 'margin_j4_min': float(m[:, 3].min()),
+           'margin_j5_min': float(m[:, 4].min()), 'margin_min': float(m.min()),
+           'stuck_at_wrist_limit': bool(B.wrist_limit_frac(q[-10:], lo, hi) > 0.8),
+           'final_family': B.family_of(q[-1]), 'final_j5_abs': float(abs(q[-1, 4])),
+           'action_rate': float(np.mean(np.sum(np.diff(arr['actions'][:, :6], axis=0) ** 2, axis=1)))
+           if len(arr['actions']) > 1 else 0.0}
+    if q_goal is not None and len(q_goal) > 1:
+        g = np.asarray(q_goal, float)
+        ok = np.all(np.isfinite(g), axis=1)
+        jumps = [float(np.linalg.norm(g[t] - g[t - 1])) for t in range(1, len(g)) if ok[t] and ok[t - 1]]
+        fams = [B.family_of(x) for x, k in zip(g, ok) if k and abs(x[4]) >= 0.12]
+        out.update({'goal_jump_max': max(jumps) if jumps else 0.0,
+                    'goal_jumps_gt_0p1': int(sum(j > 0.1 for j in jumps)),
+                    'goal_family_changes': int(sum(1 for a, b in zip(fams[:-1], fams[1:]) if a != b)),
+                    'goal_j6_travel': float(np.nansum(np.abs(np.diff(g[ok][:, 5])))) if ok.sum() > 1 else 0.0})
+    return out
+
+
+def cmd_labelquality(args):
+    """C1: tabla de calidad por etiquetador y escenario desde rollouts con experto en el lazo (expert_q_goal)."""
+    out = {}
+    for d in sorted(glob.glob(os.path.join(args.root, 'rollouts', 'kinematic_*'))):
+        name = os.path.basename(d)
+        lab = next((k for k in ('scripted', 'consistent', 'dynamic') if name.startswith(f'kinematic_{k}_')), None)
+        if lab is None:
+            continue
+        sc = name[len(f'kinematic_{lab}_'):]
+        recs = []
+        for r in D.read_index(d):
+            arr = _episode_arrays(d, r['seed'])
+            recs.append(label_quality(arr, r, arr.get('expert_q_goal')))
+        n = len(recs)
+        f = lambda k: [x[k] for x in recs if k in x]
+        out.setdefault(lab, {})[sc] = {
+            'n': n, 'success': sum(f('success')), 'collisions': sum(f('collision')), 'stalled': sum(f('stalled')),
+            'stuck_at_wrist_limit': sum(f('stuck_at_wrist_limit')),
+            'wrist_limit_frac_mean': round(float(np.mean(f('wrist_limit_frac'))), 4),
+            'episodes_wrist_margin_lt_0p05': int(sum(min(x['margin_j4_min'], x['margin_j5_min']) < 0.05 for x in recs)),
+            'margin_j45_min_p05': round(float(np.percentile([min(x['margin_j4_min'], x['margin_j5_min'])
+                                                              for x in recs], 5)), 3),
+            'goal_jump_max_p95': round(float(np.percentile(f('goal_jump_max'), 95)), 3) if f('goal_jump_max') else None,
+            'goal_jump_max_max': round(float(np.max(f('goal_jump_max'))), 3) if f('goal_jump_max') else None,
+            'episodes_goal_jump_gt_0p1': int(sum(x.get('goal_jumps_gt_0p1', 0) > 0 for x in recs)),
+            'episodes_goal_family_change': int(sum(x.get('goal_family_changes', 0) > 0 for x in recs)),
+            'goal_j6_travel_mean': round(float(np.mean(f('goal_j6_travel'))), 3) if f('goal_j6_travel') else None,
+            'final_family': {k: sum(1 for x in recs if x['final_family'] == k) for k in ('A', 'B')},
+            'length_mean': round(float(np.mean(f('length'))), 1),
+            'dfinal_mm_mean': round(float(np.mean(f('dfinal_mm'))), 1),
+            'detection_rate_mean': round(float(np.mean(f('valid_rate'))), 3),
+            'action_rate_mean': round(float(np.mean(f('action_rate'))), 3)}
+        print(lab, sc, {k: v for k, v in out[lab][sc].items() if k in ('n', 'success', 'collisions', 'stuck_at_wrist_limit',
+                                                                         'episodes_wrist_margin_lt_0p05',
+                                                                         'goal_jump_max_max', 'length_mean')}, flush=True)
+    os.makedirs(args.out, exist_ok=True)
+    json.dump(out, open(os.path.join(args.out, 'label_quality.json'), 'w'), indent=1)
+
+
+def cmd_gridlabel(args):
+    """C0: ejecuta etiquetadores desde home exacto con el cubo en cada celda de la grilla de B0 (cinemático)."""
+    from solverbot_rl.expert import ScriptedExpert
+    from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
+    from solverbot_rl.imitation.dynamic_label_expert import MeasuredIKLabelExpert
+    from solverbot_rl.imitation.start_override import override_start_cube_home
+    env = make_env()
+    holder = {'dxy': None}
+    override_start_cube_home(env, holder)
+    li = level_index(env, 'reach')
+    kinds = {'scripted': ScriptedExpert, 'consistent': BranchConsistentLabelExpert, 'dynamic': MeasuredIKLabelExpert}
+    feas = json.load(open(args.feasibility))
+    cat = {}
+    for c, cells in feas.get('cells_list', {}).items():
+        for xy in cells:
+            cat[(round(xy[0], 3), round(xy[1], 3))] = c
+    g = np.linspace(-0.07, 0.07, args.grid)
+    os.makedirs(args.out, exist_ok=True)
+    path = os.path.join(args.out, 'gridlabel.jsonl')
+    done = set()
+    if os.path.exists(path):
+        done = {(r['labeler'], r['dx'], r['dy']) for r in map(json.loads, open(path))}
+    with open(path, 'a') as fh:
+        for name in args.labelers.split(','):
+            ex = _LoggedExpert(kinds[name](env))
+            for dx in g:
+                for dy in g:
+                    key = (round(float(dx), 3), round(float(dy), 3))
+                    if (name, key[0], key[1]) in done:
+                        continue
+                    holder['dxy'] = (float(dx), float(dy))
+                    arr, s = run_episode(env, args.seed, li, expert=ex, rng=np.random.default_rng(args.seed))
+                    s.update({'lo': env.unwrapped.lo.tolist(), 'hi': env.unwrapped.hi.tolist()})
+                    rec = {'labeler': name, 'dx': key[0], 'dy': key[1], 'cell': cat.get(key, 'B@20')}
+                    rec.update(label_quality(arr, s, ex.q_goal))
+                    e = ex.ex
+                    if hasattr(e, 'decisions'):
+                        rec.update({'label_family': e.family, 'label_tilt': e.tilt, 'label_decision': e.decision,
+                                    'label_decisions': _decision_counts(e.decisions)})
+                    fh.write(json.dumps(rec) + '\n')
+                    fh.flush()
+            print(f'[gridlabel] {name} listo', flush=True)
+    env.close()
+
+
+def cmd_noisetest(args):
+    """C1: sensibilidad del etiquetador a ruido articular pequeño. Toma estados de rollouts del experto (misma
+    semilla y nivel -> mismo cubo), fija el brazo en el estado medido (y en versiones con ruido N(0, sigma)) y compara
+    familia, inclinación, objetivo y acción de la etiqueta calculada por un etiquetador NUEVO en cada estado."""
+    from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
+    from solverbot_rl.imitation.dynamic_label_expert import MeasuredIKLabelExpert
+    kinds = {'consistent': BranchConsistentLabelExpert, 'dynamic': MeasuredIKLabelExpert}
+    env = make_env()
+    u = env.unwrapped
+    rng = np.random.default_rng(args.seed)
+    rows = []
+    for d in sorted(glob.glob(os.path.join(args.root, 'rollouts', f'kinematic_{args.source}_*'))):
+        idx = D.read_index(d)[:args.episodes]
+        for r in idx:
+            arr = _episode_arrays(d, r['seed'])
+            q_all = B.denorm_q(arr['obs'], np.asarray(r['lo']), np.asarray(r['hi']))
+            ts = sorted(rng.choice(len(q_all), size=min(args.states, len(q_all)), replace=False))
+            for t in ts:
+                for name in args.labelers.split(','):
+                    res = []
+                    for k in range(args.reps + 1):
+                        env.reset(seed=r['seed'], options={'level': level_index(env, r['level_name'])})
+                        q = q_all[t] + (0 if k == 0 else rng.normal(0, args.sigma, 6))
+                        q = np.clip(q, u.lo, u.hi)
+                        b = u.backend
+                        b.reset(b.rng, u.start_obj_xy, b.obj_yaw, q, u.cfg['robot']['gripper_open'],
+                                u.cfg['robot']['lift'], u.cfg['robot']['head'])
+                        u._q_cmd = q.copy()
+                        ex = kinds[name](env)
+                        ex.reset()
+                        p = b.object_pose_truth() + np.array([0, 0, u.params.pregrasp_height])
+                        g = ex.choose(p) if name == 'dynamic' else ex._ik(p)
+                        if g is None:
+                            res.append(None)
+                            continue
+                        a = np.clip((np.asarray(g) - q) / u.delta, -1, 1)
+                        res.append((ex.family, ex.tilt, np.asarray(g, float), a))
+                    base = res[0]
+                    for x in res[1:]:
+                        if base is None or x is None:
+                            rows.append({'labeler': name, 'run': os.path.basename(d), 'seed': r['seed'], 't': int(t),
+                                         'none': True})
+                            continue
+                        rows.append({'labeler': name, 'run': os.path.basename(d), 'seed': r['seed'], 't': int(t),
+                                     'family_flip': base[0] != x[0], 'tilt_flip': base[1] != x[1],
+                                     'goal_delta': float(np.linalg.norm(base[2][:5] - x[2][:5])),
+                                     'action_delta': float(np.max(np.abs(base[3][:5] - x[3][:5])))})
+        print(f'[noisetest] {os.path.basename(d)} listo', flush=True)
+    os.makedirs(args.out, exist_ok=True)
+    summ = {}
+    for name in args.labelers.split(','):
+        rr = [x for x in rows if x['labeler'] == name and not x.get('none')]
+        if not rr:
+            continue
+        gd = np.array([x['goal_delta'] for x in rr])
+        ad = np.array([x['action_delta'] for x in rr])
+        summ[name] = {'n_pairs': len(rr), 'sigma_rad': args.sigma,
+                      'family_flip_rate': float(np.mean([x['family_flip'] for x in rr])),
+                      'tilt_flip_rate': float(np.mean([x['tilt_flip'] for x in rr])),
+                      'goal_delta_p50': float(np.median(gd)), 'goal_delta_p95': float(np.percentile(gd, 95)),
+                      'goal_delta_gt_0p1': float(np.mean(gd > 0.1)),
+                      'action_delta_p50': float(np.median(ad)), 'action_delta_p95': float(np.percentile(ad, 95)),
+                      'none_pairs': sum(1 for x in rows if x['labeler'] == name and x.get('none'))}
+    json.dump({'summary': summ, 'rows': rows}, open(os.path.join(args.out, 'noisetest.json'), 'w'))
+    print(json.dumps(summ, indent=1))
     env.close()
 
 
@@ -789,7 +979,7 @@ def main():
     p.add_argument('--seeds-l', default='915600-915799')
     p = sub.add_parser('rollouts')
     p.add_argument('--policy', required=True,
-                   help='scripted | consistent | bc_v1 | bc_v2w | nombre=ruta/al/modelo.zip (BC nuevo)')
+                   help='scripted | consistent | dynamic | bc_v1 | bc_v2w | nombre=ruta/al/modelo.zip (BC nuevo)')
     p.add_argument('--backend', choices=['kinematic', 'gazebo'], default='kinematic')
     p.add_argument('--level', required=True)
     p.add_argument('--seeds', required=True)
@@ -806,6 +996,25 @@ def main():
     p.add_argument('--grid', type=int, default=11)
     p.add_argument('--level', default='reach_var_l')
     p.add_argument('--seeds', default='915600-915799')
+    p = sub.add_parser('gridlabel')
+    p.add_argument('--out', required=True)
+    p.add_argument('--feasibility', default='docs/resultados/wrist_branches/fase_b/feasibility_summary.json')
+    p.add_argument('--labelers', default='scripted,consistent,dynamic')
+    p.add_argument('--grid', type=int, default=11)
+    p.add_argument('--seed', type=int, default=942000)
+    p = sub.add_parser('labelquality')
+    p.add_argument('--root', required=True)
+    p.add_argument('--out', required=True)
+    p = sub.add_parser('noisetest')
+    p.add_argument('--root', required=True)
+    p.add_argument('--out', required=True)
+    p.add_argument('--source', default='dynamic', help='etiquetador cuyas trayectorias dan los estados')
+    p.add_argument('--labelers', default='consistent,dynamic')
+    p.add_argument('--episodes', type=int, default=10)
+    p.add_argument('--states', type=int, default=4)
+    p.add_argument('--reps', type=int, default=3)
+    p.add_argument('--sigma', type=float, default=0.005)
+    p.add_argument('--seed', type=int, default=0)
     p = sub.add_parser('labelrules')
     p.add_argument('--root', required=True)
     p.add_argument('--analysis', required=True)
@@ -814,7 +1023,8 @@ def main():
     p.add_argument('--out', required=True)
     args = ap.parse_args()
     {'ikmap': cmd_ikmap, 'rollouts': cmd_rollouts, 'analyze': cmd_analyze, 'labelrules': cmd_labelrules,
-     'feasibility': cmd_feasibility, 'plots': cmd_plots}[args.cmd](args)
+     'feasibility': cmd_feasibility, 'plots': cmd_plots, 'gridlabel': cmd_gridlabel,
+     'noisetest': cmd_noisetest, 'labelquality': cmd_labelquality}[args.cmd](args)
 
 
 if __name__ == '__main__':

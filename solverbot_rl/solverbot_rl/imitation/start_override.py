@@ -47,3 +47,33 @@ def override_start_j4(env, value: float | None = None, low: float | None = None,
 
     env.reset = reset
     return env
+
+
+def override_start_cube_home(env, holder: dict):
+    """Envuelve env.reset (Fase C, verificación de la grilla de B0): si holder['dxy'] no es None, reubica el cubo en
+    la posición nominal del mundo + dxy y el brazo en `home` exacto, como la grilla de factibilidad. SOLO cinemático;
+    no cambia niveles, recompensa ni criterio de éxito. holder es mutable para cambiar de celda entre episodios."""
+    if env.unwrapped.backend.physical:
+        raise ValueError('override_start_cube_home: solo en el backend cinemático')
+    orig = env.reset
+
+    def reset(*a, **k):
+        obs, info = orig(*a, **k)
+        if holder.get('dxy') is None:
+            return obs, info
+        u = env.unwrapped
+        q = np.asarray(u.cfg['robot']['home'], float)
+        xy = np.asarray(u.cfg['world']['object']['xy'], float) + np.asarray(holder['dxy'], float)
+        b = u.backend
+        r = u.cfg['robot']
+        b.reset(b.rng, xy, b.obj_yaw, q, r['gripper_open'], r['lift'], r['head'])
+        u.start_q, u.start_obj_xy = q, xy
+        u._q_cmd = q.copy()
+        u._state = u._task_state(u._joints())
+        u.flags.best_phi = T.potential(u._state, u.params)
+        info = dict(info)
+        info['start_cube_dxy'] = [float(v) for v in holder['dxy']]
+        return u._obs(u._state), info
+
+    env.reset = reset
+    return env
