@@ -1,0 +1,50 @@
+{
+ "data": [
+  "runs/wrist_c2/demos/dynamic_reach",
+  "runs/wrist_c2/demos/dynamic_var_s",
+  "runs/wrist_c2/demos/dynamic_var_m_a",
+  "runs/wrist_c2/demos/dynamic_var_m_b",
+  "runs/wrist_c2/demos/dynamic_rot_var_m",
+  "runs/wrist_c2/demos/dynamic_rot_var_s",
+  "runs/wrist_c2/demos/dagger_e1_var_m",
+  "runs/wrist_c2/demos/dagger_e1_rot_var_m",
+  "runs/wrist_c2/demos/dagger_e1_var_s",
+  "runs/wrist_c2/demos/dagger_e1_reach"
+ ],
+ "episodes": 910,
+ "samples": 23584,
+ "train_samples": 20178,
+ "val_samples": 3406,
+ "args": {
+  "data": [
+   "runs/wrist_c2/demos/dynamic_reach",
+   "runs/wrist_c2/demos/dynamic_var_s",
+   "runs/wrist_c2/demos/dynamic_var_m_a",
+   "runs/wrist_c2/demos/dynamic_var_m_b",
+   "runs/wrist_c2/demos/dynamic_rot_var_m",
+   "runs/wrist_c2/demos/dynamic_rot_var_s",
+   "runs/wrist_c2/demos/dagger_e1_var_m",
+   "runs/wrist_c2/demos/dagger_e1_rot_var_m",
+   "runs/wrist_c2/demos/dagger_e1_var_s",
+   "runs/wrist_c2/demos/dagger_e1_reach"
+  ],
+  "out": "runs/wrist_c2/bc_e2",
+  "include_failed": false,
+  "val_frac": 0.15,
+  "seed": 0,
+  "epochs": 600,
+  "batch_size": 256,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "w_nll": 0.1,
+  "patience": 80,
+  "hide": "prev_action",
+  "net_arch": "256,256",
+  "weight_near": 0.0
+ },
+ "val_mse_predict_zero": 0.6353434324264526,
+ "best_epoch": 25,
+ "epochs_run": 106,
+ "best_val_mse": 0.06371408700942993,
+ "train_wall_s": 23.6
+}

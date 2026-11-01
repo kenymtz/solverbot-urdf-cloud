@@ -1,0 +1,149 @@
+{
+ "setup": "brazo en home exacto, cubo en cada celda de la grilla 11x11 de B0 (semilla 942000), cinem\u00e1tico",
+ "by_labeler": {
+  "scripted": {
+   "B@20": {
+    "n": 88,
+    "success": 88,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "B": 32,
+     "A": 56
+    },
+    "label_tilt": {
+     "None": 88
+    },
+    "wrist_margin_min": 0.071,
+    "goal_jump_max": 0.0,
+    "length_mean": 38.5
+   },
+   "B@30": {
+    "n": 27,
+    "success": 27,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "A": 15,
+     "B": 12
+    },
+    "label_tilt": {
+     "None": 27
+    },
+    "wrist_margin_min": 0.304,
+    "goal_jump_max": 0.0,
+    "length_mean": 32.0
+   },
+   "solo_A": {
+    "n": 6,
+    "success": 6,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "A": 6
+    },
+    "label_tilt": {
+     "None": 6
+    },
+    "wrist_margin_min": 0.271,
+    "goal_jump_max": 0.0,
+    "length_mean": 38.0
+   }
+  },
+  "consistent": {
+   "B@20": {
+    "n": 88,
+    "success": 88,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "B": 88
+    },
+    "label_tilt": {
+     "20": 88
+    },
+    "wrist_margin_min": 0.022,
+    "goal_jump_max": 0.0,
+    "length_mean": 33.6
+   },
+   "B@30": {
+    "n": 27,
+    "success": 27,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "B": 27
+    },
+    "label_tilt": {
+     "30": 27
+    },
+    "wrist_margin_min": 0.304,
+    "goal_jump_max": 0.0,
+    "length_mean": 20.2
+   },
+   "solo_A": {
+    "n": 6,
+    "success": 6,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "A": 6
+    },
+    "label_tilt": {
+     "20": 6
+    },
+    "wrist_margin_min": 0.304,
+    "goal_jump_max": 0.0,
+    "length_mean": 37.3
+   }
+  },
+  "dynamic": {
+   "B@20": {
+    "n": 88,
+    "success": 88,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "B": 88
+    },
+    "label_tilt": {
+     "20": 28,
+     "30": 60
+    },
+    "wrist_margin_min": 0.151,
+    "goal_jump_max": 0.057,
+    "length_mean": 26.7
+   },
+   "B@30": {
+    "n": 27,
+    "success": 27,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "B": 27
+    },
+    "label_tilt": {
+     "30": 27
+    },
+    "wrist_margin_min": 0.304,
+    "goal_jump_max": 0.011,
+    "length_mean": 20.3
+   },
+   "solo_A": {
+    "n": 6,
+    "success": 6,
+    "collisions": 0,
+    "stuck_at_wrist_limit": 0,
+    "final_family": {
+     "A": 6
+    },
+    "label_tilt": {
+     "30": 6
+    },
+    "wrist_margin_min": 0.304,
+    "goal_jump_max": 0.015,
+    "length_mean": 16.7
+   }
+  }
+ }
+}
