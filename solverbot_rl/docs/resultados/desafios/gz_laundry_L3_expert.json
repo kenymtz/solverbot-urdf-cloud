@@ -1,0 +1,253 @@
+{
+ "challenge": "laundry",
+ "backend": "gazebo",
+ "physical": true,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 3,
+ "seed0": 2000,
+ "nav_pose_source": "estimate",
+ "wall_s": 588.9,
+ "host": "vm",
+ "ros_domain_id": "44",
+ "gz_partition": "solverbot_dbg",
+ "error": null,
+ "summary": {
+  "episodes": 3,
+  "successes": 2,
+  "success_rate": 0.6666666666666666,
+  "success_ci95": 0.533444432872781,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 6.7843333333333335,
+  "mean_sim_time": 86.43333333333334,
+  "loc_err_mean": 0.0106,
+  "loc_err_max": 0.0426
+ },
+ "episodes": [
+  {
+   "seed": 2000,
+   "success": true,
+   "return": 11.096,
+   "skills": 8,
+   "wall_s": 182.5,
+   "level": 3,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_2"
+    ],
+    "pregrasp": true
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 80.8,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0108,
+   "loc_err_max": 0.042,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 1,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  },
+  {
+   "seed": 2001,
+   "success": false,
+   "return": -2.123,
+   "skills": 40,
+   "wall_s": 182.2,
+   "level": 3,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": false
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 79.5,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0113,
+   "loc_err_max": 0.0426,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 1,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   },
+   "last_steps": [
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ],
+    [
+     "pregrasp",
+     0,
+     false,
+     "sin_pose_de_manipulacion"
+    ]
+   ],
+   "last_events": [
+    {
+     "t": 53.100000000000485,
+     "ev": "identify",
+     "target": "washing_machine",
+     "ok": true,
+     "gaze_deg": 0.1,
+     "pos_err": 0.201
+    },
+    {
+     "t": 54.500000000000504,
+     "ev": "identify",
+     "target": "laundry_table",
+     "ok": true,
+     "gaze_deg": 0.4,
+     "pos_err": 0.163
+    },
+    {
+     "t": 63.90000000000064,
+     "ev": "identify",
+     "target": "basket",
+     "ok": true,
+     "gaze_deg": 8.3,
+     "pos_err": 0.169
+    },
+    {
+     "t": 79.49999999999976,
+     "ev": "locate",
+     "garment": "tshirt_1",
+     "ok": true,
+     "err": 0.053
+    },
+    {
+     "t": 79.49999999999976,
+     "ev": "locate",
+     "garment": "tshirt_2",
+     "ok": true,
+     "err": 0.032
+    }
+   ]
+  },
+  {
+   "seed": 2002,
+   "success": true,
+   "return": 11.38,
+   "skills": 8,
+   "wall_s": 217.5,
+   "level": 3,
+   "progress": {
+    "door": true,
+    "laundry": true,
+    "identify": [
+     "basket",
+     "laundry_table",
+     "washing_machine"
+    ],
+    "locate": [
+     "tshirt_1",
+     "tshirt_2"
+    ],
+    "pregrasp": true
+   },
+   "garment_model": "rigid_proxy",
+   "sim_time": 99.0,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0097,
+   "loc_err_max": 0.0339,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 3,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}

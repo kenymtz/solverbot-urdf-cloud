@@ -56,6 +56,11 @@ def launch_setup(context):
         with open(os.path.join(sim_share, 'config', 'arena_spec.yaml')) as fh:
             st = yaml.safe_load(fh)['start_locations']['pick_place_demo']
         x, y, yaw = str(st['xy'][0]), str(st['xy'][1]), str(st['yaw'])
+    elif x == '' and world_name == 'home_challenges':
+        # HRI / GPSR / Laundry: el robot aparece afuera de la casa; el entorno lo reubica en cada reset
+        with open(os.path.join(sim_share, 'config', 'challenges.yaml')) as fh:
+            st = yaml.safe_load(fh)['spawn']
+        x, y, yaw = str(st['xy'][0]), str(st['xy'][1]), str(st['yaw'])
     x, y, yaw = x or '0.0', y or '0.0', yaw or '0.0'
 
     controllers_yaml = os.path.join(sim_share, 'config', 'controllers_rl.yaml') if a['controllers'] == 'rl' else \

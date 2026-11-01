@@ -1,0 +1,65 @@
+{
+ "challenge": "hri",
+ "backend": "gazebo",
+ "physical": true,
+ "policy": "expert",
+ "policy_is_learned": false,
+ "level": 0,
+ "seed0": 3000,
+ "nav_pose_source": "estimate",
+ "wall_s": 34.2,
+ "host": "vm",
+ "ros_domain_id": "45",
+ "gz_partition": "solverbot_sim_3",
+ "error": null,
+ "summary": {
+  "episodes": 1,
+  "successes": 1,
+  "success_rate": 1.0,
+  "success_ci95": 0.0,
+  "collisions": 0,
+  "tipped": 0,
+  "mean_return": 5.95,
+  "mean_sim_time": 10.1,
+  "loc_err_mean": 0.0074,
+  "loc_err_max": 0.0162
+ },
+ "episodes": [
+  {
+   "seed": 3000,
+   "success": true,
+   "return": 5.95,
+   "skills": 2,
+   "wall_s": 30.2,
+   "level": 0,
+   "progress": {
+    "ask": 1,
+    "guide": 0,
+    "seat": 0,
+    "intro": 0,
+    "reach": false,
+    "tell": false,
+    "follow": false,
+    "guests": 1
+   },
+   "sim_time": 10.1,
+   "contact": false,
+   "tipped": false,
+   "fault": null,
+   "loc_err_mean": 0.0074,
+   "loc_err_max": 0.0162,
+   "nav_pose_source": "estimate",
+   "backend": "gazebo",
+   "physical": true,
+   "stale": {
+    "scan": 0,
+    "joint_states": 0,
+    "images": 0
+   },
+   "safety_halts": {
+    "person": 0,
+    "scan": 0
+   }
+  }
+ ]
+}

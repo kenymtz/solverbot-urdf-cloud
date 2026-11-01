@@ -1,0 +1,515 @@
+{
+ "descripcion": "Regresi\u00f3n de Pick and Place (PR #4): validate_grasp.py en Gazebo, semillas 40000-40004, nivel 4 (pick). B = controllers_rl.yaml de fix/solverbot-grasp-headless (sin l\u00edmites de aceleraci\u00f3n de la base); A = el de esta PR. Misma simulaci\u00f3n (pick_place_training, ROS_DOMAIN_ID 46, GZ_PARTITION solverbot_ab), una corrida por configuraci\u00f3n. Deriva de la base: pose real (PosePublisher) durante toda la corrida.",
+ "params_diff_drive_B_aceleracion": "max_acceleration: .nan (sin l\u00edmite)",
+ "B": {
+  "summary": {
+   "backend": "gazebo",
+   "physical": true,
+   "level": 4,
+   "criterion": "rise >= 30 mm during >= 10 steps, cube < 4 cm from TCP",
+   "overrides": {
+    "control.max_episode_steps": 10000,
+    "task.no_progress_steps": 10000,
+    "observation.object_source": "privileged"
+   },
+   "successes": 5,
+   "episodes": 5,
+   "success_rate": 1.0,
+   "seeds": [
+    {
+     "seed": 40000,
+     "cube_xy0": [
+      0.2294,
+      0.5917
+     ],
+     "cube_yaw0_deg": -5.1,
+     "max_mimic_err_mm": 1.982,
+     "drift_before_close_mm": 1.23,
+     "q7_at_block_mm": 20.04,
+     "max_rise_mm": 99.85,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.85,
+     "final_q7_mm": 19.69,
+     "final_q8_mm": -20.34,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 102,
+     "wall_s": 41.5,
+     "success": true
+    },
+    {
+     "seed": 40001,
+     "cube_xy0": [
+      0.1798,
+      0.5161
+     ],
+     "cube_yaw0_deg": 6.0,
+     "max_mimic_err_mm": 1.896,
+     "drift_before_close_mm": 0.36,
+     "q7_at_block_mm": 19.25,
+     "max_rise_mm": 86.09,
+     "best_hold_steps": 15,
+     "final_rise_mm": 86.09,
+     "final_q7_mm": 20.93,
+     "final_q8_mm": -19.09,
+     "grasp_tilt_deg": 10.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 104,
+     "wall_s": 33.5,
+     "success": true
+    },
+    {
+     "seed": 40002,
+     "cube_xy0": [
+      0.2522,
+      0.5227
+     ],
+     "cube_yaw0_deg": -13.3,
+     "max_mimic_err_mm": 1.946,
+     "drift_before_close_mm": 1.48,
+     "q7_at_block_mm": 19.83,
+     "max_rise_mm": 99.9,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.9,
+     "final_q7_mm": 20.88,
+     "final_q8_mm": -19.12,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 100,
+     "wall_s": 41.8,
+     "success": true
+    },
+    {
+     "seed": 40003,
+     "cube_xy0": [
+      0.2514,
+      0.5473
+     ],
+     "cube_yaw0_deg": -7.1,
+     "max_mimic_err_mm": 1.948,
+     "drift_before_close_mm": 0.79,
+     "q7_at_block_mm": 20.83,
+     "max_rise_mm": 99.93,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.93,
+     "final_q7_mm": 20.85,
+     "final_q8_mm": -19.15,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 98,
+     "wall_s": 39.3,
+     "success": true
+    },
+    {
+     "seed": 40004,
+     "cube_xy0": [
+      0.1968,
+      0.6049
+     ],
+     "cube_yaw0_deg": 5.5,
+     "max_mimic_err_mm": 1.842,
+     "drift_before_close_mm": 1.14,
+     "q7_at_block_mm": 20.02,
+     "max_rise_mm": 84.75,
+     "best_hold_steps": 15,
+     "final_rise_mm": 84.75,
+     "final_q7_mm": 19.18,
+     "final_q8_mm": -20.83,
+     "grasp_tilt_deg": 10.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 105,
+     "wall_s": 29.5,
+     "success": true
+    }
+   ]
+  },
+  "base_drift": {
+   "samples": 5680,
+   "segments": 1,
+   "max_xy_drift_m": 0.030204447584806223,
+   "max_yaw_drift_rad": 0.08196885320334381,
+   "start": [
+    -0.002790074419009514,
+    0.0019592381224496137,
+    0.0004826627729379495,
+    0.011545192238755888
+   ]
+  }
+ },
+ "A": {
+  "summary": {
+   "backend": "gazebo",
+   "physical": true,
+   "level": 4,
+   "criterion": "rise >= 30 mm during >= 10 steps, cube < 4 cm from TCP",
+   "overrides": {
+    "control.max_episode_steps": 10000,
+    "task.no_progress_steps": 10000,
+    "observation.object_source": "privileged"
+   },
+   "successes": 5,
+   "episodes": 5,
+   "success_rate": 1.0,
+   "seeds": [
+    {
+     "seed": 40000,
+     "cube_xy0": [
+      0.2294,
+      0.5917
+     ],
+     "cube_yaw0_deg": -5.1,
+     "max_mimic_err_mm": 1.865,
+     "drift_before_close_mm": 1.23,
+     "q7_at_block_mm": 20.04,
+     "max_rise_mm": 99.87,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.87,
+     "final_q7_mm": 19.16,
+     "final_q8_mm": -20.86,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 102,
+     "wall_s": 43.4,
+     "success": true
+    },
+    {
+     "seed": 40001,
+     "cube_xy0": [
+      0.1798,
+      0.5161
+     ],
+     "cube_yaw0_deg": 6.0,
+     "max_mimic_err_mm": 1.988,
+     "drift_before_close_mm": 0.37,
+     "q7_at_block_mm": 20.05,
+     "max_rise_mm": 86.36,
+     "best_hold_steps": 15,
+     "final_rise_mm": 86.36,
+     "final_q7_mm": 20.95,
+     "final_q8_mm": -19.08,
+     "grasp_tilt_deg": 10.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 104,
+     "wall_s": 32.5,
+     "success": true
+    },
+    {
+     "seed": 40002,
+     "cube_xy0": [
+      0.2522,
+      0.5227
+     ],
+     "cube_yaw0_deg": -13.3,
+     "max_mimic_err_mm": 1.914,
+     "drift_before_close_mm": 0.9,
+     "q7_at_block_mm": 20.04,
+     "max_rise_mm": 99.87,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.87,
+     "final_q7_mm": 20.89,
+     "final_q8_mm": -19.12,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 98,
+     "wall_s": 39.0,
+     "success": true
+    },
+    {
+     "seed": 40003,
+     "cube_xy0": [
+      0.2514,
+      0.5473
+     ],
+     "cube_yaw0_deg": -7.1,
+     "max_mimic_err_mm": 1.913,
+     "drift_before_close_mm": 0.72,
+     "q7_at_block_mm": 19.88,
+     "max_rise_mm": 99.86,
+     "best_hold_steps": 15,
+     "final_rise_mm": 99.86,
+     "final_q7_mm": 20.96,
+     "final_q8_mm": -19.07,
+     "grasp_tilt_deg": 20.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 99,
+     "wall_s": 40.2,
+     "success": true
+    },
+    {
+     "seed": 40004,
+     "cube_xy0": [
+      0.1968,
+      0.6049
+     ],
+     "cube_yaw0_deg": 5.5,
+     "max_mimic_err_mm": 1.766,
+     "drift_before_close_mm": 1.14,
+     "q7_at_block_mm": 20.02,
+     "max_rise_mm": 84.8,
+     "best_hold_steps": 15,
+     "final_rise_mm": 84.8,
+     "final_q7_mm": 19.17,
+     "final_q8_mm": -20.85,
+     "grasp_tilt_deg": 10.0,
+     "phases": [
+      "pregrasp",
+      "descend",
+      "close",
+      "squeeze",
+      "lift"
+     ],
+     "collision": false,
+     "dropped": false,
+     "steps": 105,
+     "wall_s": 30.7,
+     "success": true
+    }
+   ]
+  },
+  "base_drift": {
+   "samples": 5883,
+   "segments": 1,
+   "max_xy_drift_m": 0.030183369842442326,
+   "max_yaw_drift_rad": 0.07391382729840601,
+   "start": [
+    -0.002790074419009514,
+    0.0019592381224496137,
+    0.0004826627729379495,
+    0.011545192238755888
+   ]
+  }
+ },
+ "A_orquestador_headless": {
+  "backend": "gazebo",
+  "physical": true,
+  "level": 4,
+  "criterion": "rise >= 30 mm during >= 10 steps, cube < 4 cm from TCP",
+  "overrides": {
+   "control.max_episode_steps": 10000,
+   "task.no_progress_steps": 10000,
+   "observation.object_source": "privileged"
+  },
+  "successes": 5,
+  "episodes": 5,
+  "success_rate": 1.0,
+  "seeds": [
+   {
+    "seed": 40000,
+    "cube_xy0": [
+     0.2294,
+     0.5917
+    ],
+    "cube_yaw0_deg": -5.1,
+    "max_mimic_err_mm": 1.941,
+    "drift_before_close_mm": 1.23,
+    "q7_at_block_mm": 20.33,
+    "max_rise_mm": 99.85,
+    "best_hold_steps": 15,
+    "final_rise_mm": 99.85,
+    "final_q7_mm": 19.12,
+    "final_q8_mm": -20.91,
+    "grasp_tilt_deg": 20.0,
+    "phases": [
+     "pregrasp",
+     "descend",
+     "close",
+     "squeeze",
+     "lift"
+    ],
+    "collision": false,
+    "dropped": false,
+    "steps": 102,
+    "wall_s": 49.3,
+    "success": true
+   },
+   {
+    "seed": 40001,
+    "cube_xy0": [
+     0.1798,
+     0.5161
+    ],
+    "cube_yaw0_deg": 6.0,
+    "max_mimic_err_mm": 1.833,
+    "drift_before_close_mm": 0.36,
+    "q7_at_block_mm": 20.02,
+    "max_rise_mm": 86.35,
+    "best_hold_steps": 15,
+    "final_rise_mm": 86.35,
+    "final_q7_mm": 20.89,
+    "final_q8_mm": -19.14,
+    "grasp_tilt_deg": 10.0,
+    "phases": [
+     "pregrasp",
+     "descend",
+     "close",
+     "squeeze",
+     "lift"
+    ],
+    "collision": false,
+    "dropped": false,
+    "steps": 103,
+    "wall_s": 34.6,
+    "success": true
+   },
+   {
+    "seed": 40002,
+    "cube_xy0": [
+     0.2522,
+     0.5227
+    ],
+    "cube_yaw0_deg": -13.3,
+    "max_mimic_err_mm": 1.93,
+    "drift_before_close_mm": 0.89,
+    "q7_at_block_mm": 20.04,
+    "max_rise_mm": 99.93,
+    "best_hold_steps": 15,
+    "final_rise_mm": 99.93,
+    "final_q7_mm": 20.83,
+    "final_q8_mm": -19.18,
+    "grasp_tilt_deg": 20.0,
+    "phases": [
+     "pregrasp",
+     "descend",
+     "close",
+     "squeeze",
+     "lift"
+    ],
+    "collision": false,
+    "dropped": false,
+    "steps": 98,
+    "wall_s": 39.9,
+    "success": true
+   },
+   {
+    "seed": 40003,
+    "cube_xy0": [
+     0.2514,
+     0.5473
+    ],
+    "cube_yaw0_deg": -7.1,
+    "max_mimic_err_mm": 1.77,
+    "drift_before_close_mm": 0.61,
+    "q7_at_block_mm": 20.12,
+    "max_rise_mm": 99.89,
+    "best_hold_steps": 15,
+    "final_rise_mm": 99.89,
+    "final_q7_mm": 20.46,
+    "final_q8_mm": -19.54,
+    "grasp_tilt_deg": 20.0,
+    "phases": [
+     "pregrasp",
+     "descend",
+     "close",
+     "squeeze",
+     "lift"
+    ],
+    "collision": false,
+    "dropped": false,
+    "steps": 97,
+    "wall_s": 41.0,
+    "success": true
+   },
+   {
+    "seed": 40004,
+    "cube_xy0": [
+     0.1968,
+     0.6049
+    ],
+    "cube_yaw0_deg": 5.5,
+    "max_mimic_err_mm": 1.878,
+    "drift_before_close_mm": 1.13,
+    "q7_at_block_mm": 20.27,
+    "max_rise_mm": 84.76,
+    "best_hold_steps": 15,
+    "final_rise_mm": 84.76,
+    "final_q7_mm": 19.13,
+    "final_q8_mm": -20.89,
+    "grasp_tilt_deg": 10.0,
+    "phases": [
+     "pregrasp",
+     "descend",
+     "close",
+     "squeeze",
+     "lift"
+    ],
+    "collision": false,
+    "dropped": false,
+    "steps": 105,
+    "wall_s": 31.2,
+    "success": true
+   }
+  ]
+ }
+}

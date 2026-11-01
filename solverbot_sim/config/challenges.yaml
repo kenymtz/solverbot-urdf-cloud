@@ -1,0 +1,69 @@
+# =====================================================================================
+#  Desafíos HRI, GPSR y Doing Laundry: entidades del mundo `home_challenges` y parámetros de escenario.
+#  Fuente de reglas: docs/referencias_desafios/01, 02, 04, 05, 12 (ver solverbot_sim/docs/DESAFIOS_SPEC.md).
+#  Coordenadas en el frame de arena_spec.yaml. Lo marcado "supuesto" es una decisión de simulación, no una regla.
+# =====================================================================================
+
+world_name: home_challenges
+# Aparición del robot: afuera de la puerta de entrada (inicio oficial de GPSR y DL, imagen 12). Espacio libre para
+# plegar el brazo sin chocar (en la cocina el brazo extendido golpeaba la mesa al plegarse).
+spawn: {xy: [-1.30, 2.56], yaw: 0.0}
+
+# Hoja de la puerta de entrada (sala, pared oeste): "el robot comienza fuera de la arena; cuando se abre la puerta..."
+# (imágenes 01 y 02). La abre el árbitro (evento del escenario); el robot debe detectarlo con el LiDAR.
+entrance_door:
+  name: entrance_door_leaf
+  size: [0.04, 0.70, 2.00]
+  closed_xy: [0.08, 2.59]        # en el vano
+  open_xy: [0.30, 3.05]          # girada/apartada hacia adentro (supuesto: hoja corrediza fuera del paso)
+  open_yaw: 1.5708
+  parking_z: -5.0                # bajo el piso cuando no se usa
+
+# Puertas que permanecen CERRADAS en los desafíos (decisión de simulación: las reglas solo mencionan la apertura de la
+# puerta de entrada; la puerta exterior del lavadero no se usa).
+closed_doors:
+  - {name: laundry_door_leaf, xy: [0.08, 6.14], size: [0.04, 0.70, 2.00]}
+
+# Personas simuladas (HRI y GPSR): modelos estáticos movidos por el simulador del desafío con set_pose. La identidad
+# visual es el color de la camiseta (proxy de reconocimiento de personas, documentado como tal).
+persons:
+  - {name: person_a, shirt_rgb: [0.10, 0.30, 0.90]}   # azul
+  - {name: person_b, shirt_rgb: [0.10, 0.75, 0.20]}   # verde
+  - {name: person_c, shirt_rgb: [0.95, 0.50, 0.05]}   # naranja
+  - {name: person_d, shirt_rgb: [0.60, 0.15, 0.80]}   # violeta
+person_parking: [[-4.0, -1.0], [-4.0, -2.0], [-5.0, -1.0], [-5.0, -2.0]]   # fuera de la casa y del alcance del LiDAR
+person_radius: 0.22
+standing_height: 1.72
+seated_z_offset: -0.42           # persona sentada: el modelo baja (piernas dentro del asiento)
+
+# Nombres y bebidas (vocabulario cerrado para el diálogo estructurado de HRI)
+names: [Ana, Bruno, Carla, Diego, Elena, Felipe, Gabriela, Hugo]
+drinks: [agua, jugo, gaseosa, te, cafe, leche]
+
+hri:
+  start: {xy: [2.90, 3.55], yaw: 3.1416}      # "Start Point" (imagen 12): sala, arriba a la derecha
+  # Asientos de la sala: 3 plazas del sofá (planta del plano 10) + 1 silla supuesta junto a la mesa baja.
+  seats:
+    - {name: sofa_left,   xy: [1.30, 0.55], yaw: 1.5708}
+    - {name: sofa_center, xy: [1.80, 0.55], yaw: 1.5708}
+    - {name: sofa_right,  xy: [2.30, 0.55], yaw: 1.5708}
+  guest_arrival_xy: [-0.75, 2.59]            # afuera de la puerta de entrada
+  door_inside_xy: [0.75, 2.59]               # punto de recepción dentro de la sala
+  seat_indicate_max_angle_deg: 15            # "indicar el asiento": mirar/apuntar con la cabeza a < 15°
+  gaze_max_angle_deg: 12                     # contacto visual: eje de la cámara de cabeza a < 12° de la cabeza
+  hand_reach_m: 0.10                         # bolsa: manipulador a < 10 cm de la mano (imagen 04)
+  bag_destinations: [kitchen, laundry, bedroom]
+
+gpsr:
+  instruction_point: {xy: [5.00, 5.70], yaw: 1.5708}   # "Instruction Location" (imagen 12): dormitorio
+  operator_xy: [5.00, 6.75]                             # operador de pie frente al robot (supuesto)
+  commands_per_episode: 3
+
+laundry:
+  # Cesto de ropa: el plano no lo ubica (supuesto: junto a la pared este de la lavandería)
+  basket: {name: laundry_basket, kind: basket, xy: [3.20, 5.55], size: [0.45, 0.36, 0.30]}
+  # Prendas: PROXIES rígidos (placas delgadas) solo para localización/aproximación. NO modelan tela.
+  garments:
+    - {name: tshirt_1, model: rigid_proxy, rgb: [0.20, 0.45, 0.80], size: [0.30, 0.25, 0.02]}
+    - {name: tshirt_2, model: rigid_proxy, rgb: [0.85, 0.85, 0.15], size: [0.30, 0.25, 0.02]}
+  folding_table: laundry_table

@@ -76,3 +76,40 @@ fallido con TCP +3.4 mm / cubo +0.5 mm). Cambios y evidencias en `docs/evidencia
 sostenido sobre 30 mm, |j7 + j8| ≤ 2.0 mm, deriva del cubo antes del cierre ≤ 1.24 mm, apertura al sostener 19–21 mm
 por dedo, sin colisiones ni caídas. Alcance: un solo objeto (cubo de 4 cm), una mesa y la física de DART; no cubre
 otros objetos, fricciones ni la pinza real.
+
+## Navegación y desafíos HRI / GPSR / Laundry (2026-10-28, rama feat/solverbot-other-challenges-gymnasium)
+
+Los detalles están en `DESAFIOS_SPEC.md`.
+
+- **Ancho contra puerta.** La huella con el brazo plegado mide 0.669 m y la puerta de la regla 0.70 m: quedan unos
+  1.5 cm por lado. Una desviación de rumbo de 3° al cruzar ya alcanza para que la esquina trasera toque el marco; el
+  cruce quedó limitado a 1.5°.
+- **Centro de giro.** El robot gira alrededor del eje de ruedas (x = 0.084 m), no de `base_footprint`. Al girar 90°,
+  `base_footprint` se desplaza 129 mm (medido en Gazebo). Planificador, controlador, backend cinemático y conversión
+  de odometría usan el eje como referencia.
+- **Vuelco.** El robot volcaba en Gazebo sin límites de aceleración en `diff_drive_controller`
+  (`controllers_rl.yaml`): ahora son 0.4 m/s² y 1.2 rad/s².
+- **Mobiliario.**
+  - La puerta lavadero–dormitorio es intransitable: el lavarropas está a 5 cm del eje de la puerta.
+  - Con la profundidad de la heladera medida en el plano (0.44 m), la puerta dormitorio–cocina queda transitable.
+  - Mesa del comedor con 2 sillas: con 4 sillas, la pasada cocina–dormitorio no tenía holgura.
+- **Localización.** Las personas pegadas al robot arrastraban el scan-matching hasta 0.6 m. Se resolvió con rechazo
+  de puntos a más de 12 cm del mapa y un prior de odometría: el error volvió a menos de 5 cm.
+- **Cámara de cabeza.** Con la cámara a 1.37 m, centrada en la base, y tilt máximo de 45°, el piso visible más cercano
+  está a unos 0.6 m. No se ve el fondo de un cesto de 0.30 m de alto.
+- **Alcance del brazo.** Con el elevador en 0, la punta de la pinza no baja de unos 0.32 m: el fondo de un cesto de
+  piso o el tambor del lavarropas quedan fuera de alcance.
+- **Gazebo (cámaras renderizadas por CPU con llvmpipe), problemas que el modelo cinemático no mostraba:**
+  - **El LiDAR ve el propio cuerpo del robot.** Hay retornos dentro de la huella, por el brazo plegado. Se agregó un
+    auto-filtro en el gobernador de seguridad; sin él, el robot nunca arrancaba.
+  - **Mensajes perdidos con carga alta.**
+    - A veces se pierde un `/joint_states`. El backend lo espera hasta 5 s y, si el reloj ya llegó, sigue con la
+      última medición y lo cuenta en `info['stale']`.
+    - Si el reloj no avanzó, se reenvía `multi_step`.
+  - **Colores desaturados por la iluminación.** El amarillo de la prenda queda, en cromaticidad, más cerca del cesto
+    marrón que de su valor nominal. Para las prendas, la cámara de muñeca segmenta por tono y saturación.
+  - **Altura de la cabeza.** Al mirar hacia arriba, el centroide de la camiseta sube. La altura de la cabeza ahora
+    sale de la postura percibida (de pie o sentada).
+  - **Sellos de tiempo.** Los sellos de las imágenes usan el reloj absoluto del simulador, no el del episodio.
+  - **Detector con lista vacía.** Con una lista de nombres vacía, el detector de color buscaba todos los colores: la
+    madera de los muebles daba "personas fantasma" que frenaban al robot.

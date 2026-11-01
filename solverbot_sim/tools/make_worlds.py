@@ -163,6 +163,15 @@ def furniture_parts(kind, s):
                 Part('top', 'box', [x, y, 0.04], [0, 0, z - 0.02], STEEL, mu=0.8),
                 Part('basin', 'box', [x * 0.7, y * 0.6, 0.01], [0, 0, z + 0.001], (0.4, 0.42, 0.45), collide=False),
                 Part('faucet', 'cylinder', [0.03, 0.03, 0.25], [0, y / 2 - 0.06, z + 0.125], STEEL)]
+    if kind == 'door_leaf':       # hoja de puerta cerrada (bloque)
+        return [Part('leaf', 'box', [x, y, z], [0, 0, z / 2], (0.55, 0.40, 0.25))]
+    if kind == 'basket':          # cesto de ropa abierto (fondo + 4 paredes)
+        w = 0.015
+        return [Part('bottom', 'box', [x, y, w], [0, 0, w / 2], (0.55, 0.45, 0.30)),
+                Part('wall_n', 'box', [x, w, z], [0, y / 2 - w / 2, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_s', 'box', [x, w, z], [0, -y / 2 + w / 2, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_e', 'box', [w, y, z], [x / 2 - w / 2, 0, z / 2], (0.55, 0.45, 0.30)),
+                Part('wall_w', 'box', [w, y, z], [-x / 2 + w / 2, 0, z / 2], (0.55, 0.45, 0.30))]
     if kind == 'stove':
         p = [Part('body', 'box', [x, y, z - 0.04], [0, 0, (z - 0.04) / 2], WHITE),
              Part('top', 'box', [x, y, 0.04], [0, 0, z - 0.02], (0.1, 0.1, 0.1), mu=0.8)]
@@ -170,6 +179,24 @@ def furniture_parts(kind, s):
             p.append(Part(f'burner{i}', 'cylinder', [0.16, 0.16, 0.005], [bx, by, z + 0.003], (0.25, 0.25, 0.25), collide=False))
         return p
     raise ValueError(kind)
+
+
+# Sillas de la mesa del comedor. El plano 10 muestra sillas alrededor; se dejan 2 (este y norte): con una silla al
+# oeste el robot (radio de giro 0.43 m) no puede girar tras cruzar la puerta sala-cocina (alineada con la mesa) y el
+# lado sur queda para la demo de Pick and Place. Decisión de simulación, no dato del plano.
+CHAIR_ANGLES = (0.0, math.pi / 2)
+
+
+def table_chairs(fu):
+    """(nombre, xy, yaw, partes) de cada silla de una mesa redonda (fuente única para el SDF y el mapa 2D)."""
+    out = []
+    for k, ang in enumerate(CHAIR_ANGLES):
+        cx, cy = fu['xy'][0] + 0.75 * math.cos(ang), fu['xy'][1] + 0.75 * math.sin(ang)
+        out.append((f'{fu["name"]}_chair{k}', [cx, cy], ang + math.pi, [
+            Part('seat', 'box', [0.42, 0.42, 0.04], [0, 0, 0.45], DARK),
+            Part('back', 'box', [0.04, 0.42, 0.45], [-0.19, 0, 0.70], DARK),
+            Part('legs', 'box', [0.36, 0.36, 0.43], [0, 0, 0.215], DARK)]))
+    return out
 
 
 # ---------------------------------------------------------------------------------------------- mundo
@@ -249,13 +276,8 @@ def home_arena(spec):
         # superficie de apoyo: tapa del mueble, o el segundo estante en estanterías/armarios abiertos
         top[fu['name']] = (fu['xy'], 0.03 + (z - 0.04) / 3 if fu['kind'] in ('shelf', 'cabinet_open') else z)
         if fu['kind'] == 'round_table':
-            # 3 sillas (este, norte, oeste): el lado sur queda libre para el robot (demo de Pick and Place)
-            for k, ang in enumerate((0.0, math.pi / 2, math.pi)):
-                cx, cy = fu['xy'][0] + 0.75 * math.cos(ang), fu['xy'][1] + 0.75 * math.sin(ang)
-                out.append(static_model(f'{fu["name"]}_chair{k}', [cx, cy], ang + math.pi, [
-                    Part('seat', 'box', [0.42, 0.42, 0.04], [0, 0, 0.45], DARK),
-                    Part('back', 'box', [0.04, 0.42, 0.45], [-0.19, 0, 0.70], DARK),
-                    Part('legs', 'box', [0.36, 0.36, 0.43], [0, 0, 0.215], DARK)]))
+            for name, xy, yaw, parts in table_chairs(fu):
+                out.append(static_model(name, xy, yaw, parts))
     for o in spec['objects']:
         (fx, fy), h = top[o['place_on']]
         z = h + o['size'][2] / 2 + 0.005
@@ -280,13 +302,51 @@ def training_world(task):
     return ''.join(out)
 
 
+def person_model(name, shirt_rgb, parking_xy):
+    """Persona simulada (estática, la mueve el simulador del desafío con set_pose): piernas, torso con camiseta de
+    color (identidad visual), cabeza y una mano adelantada (entrega de la bolsa en HRI). Altura total 1.72 m."""
+    skin = (0.85, 0.68, 0.55)
+    parts = [Part('legs', 'cylinder', [0.30, 0.30, 0.85], [0, 0, 0.425], (0.15, 0.15, 0.25)),
+             Part('torso', 'cylinder', [0.40, 0.40, 0.60], [0, 0, 1.15], shirt_rgb),
+             Part('head', 'sphere', [0.22, 0.22, 0.22], [0, 0, 1.61], skin),
+             Part('hand', 'sphere', [0.08, 0.08, 0.08], [0.28, -0.12, 1.00], skin, collide=False)]
+    return static_model(name, parking_xy, 0.0, parts, z=0.0)
+
+
+def challenges_world(spec, ch):
+    """home_arena + entidades de HRI/GPSR/Doing Laundry (config/challenges.yaml)."""
+    base = home_arena(spec).replace('<world name="home_arena">', f'<world name="{ch["world_name"]}">')
+    out = [base[:base.rindex('  </world>')]]
+    d = ch['entrance_door']
+    out.append(static_model(d['name'], d['closed_xy'][:2], 0.0, [
+        Part('leaf', 'box', d['size'], [0, 0, d['size'][2] / 2], (0.55, 0.40, 0.25))]))
+    for cd in ch.get('closed_doors', []):
+        out.append(static_model(cd['name'], cd['xy'], cd.get('yaw', 0.0), furniture_parts('door_leaf', cd['size'])))
+    for p, park in zip(ch['persons'], ch['person_parking']):
+        out.append(person_model(p['name'], p['shirt_rgb'], park))
+    lb = ch['laundry']['basket']
+    out.append(static_model(lb['name'], lb['xy'], lb.get('yaw', 0.0), furniture_parts('basket', lb['size'])))
+    for k, g in enumerate(ch['laundry']['garments']):
+        # PROXY rígido de prenda (placa delgada) dentro del cesto: solo localización. No modela tela.
+        off = (-0.07 + 0.14 * k, 0.0)
+        out.append(static_model(g['name'], [lb['xy'][0] + off[0], lb['xy'][1] + off[1]], 0.3 * k, [
+            Part('cloth', 'box', g['size'], [0, 0, 0.015 + g['size'][2] / 2 + 0.021 * k], g['rgb'])]))
+    out.append('  </world>\n</sdf>\n')
+    return ''.join(out)
+
+
 def main():
     with open(os.path.join(PKG, 'config', 'arena_spec.yaml')) as fh:
         spec = yaml.safe_load(fh)
     with open(os.path.join(PKG, 'config', 'pick_place.yaml')) as fh:
         task = yaml.safe_load(fh)['world']
     os.makedirs(os.path.join(PKG, 'worlds'), exist_ok=True)
-    for name, text in (('home_arena.sdf', home_arena(spec)), ('pick_place_training.sdf', training_world(task))):
+    worlds = [('home_arena.sdf', home_arena(spec)), ('pick_place_training.sdf', training_world(task))]
+    ch_path = os.path.join(PKG, 'config', 'challenges.yaml')
+    if os.path.exists(ch_path):
+        with open(ch_path) as fh:
+            worlds.append(('home_challenges.sdf', challenges_world(spec, yaml.safe_load(fh))))
+    for name, text in worlds:
         with open(os.path.join(PKG, 'worlds', name), 'w') as fh:
             fh.write(text)
         print('escrito', name)

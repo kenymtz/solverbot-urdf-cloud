@@ -1,0 +1,21 @@
+# Unidad systemd de USUARIO para entrenar un DESAFÍO (HRI / GPSR / Laundry) en Gazebo headless; reanuda tras un
+# reinicio desde runs/<run>/checkpoints/latest.zip. La instancia %i fija ROS_DOMAIN_ID / GZ_PARTITION (sim_env.sh).
+#   mkdir -p ~/.config/systemd/user ~/.solverbot && cp tools/headless/solverbot-challenge@.service ~/.config/systemd/user/
+#   printf 'CHALLENGE=hri\nRUN=hri_gz_1\nARGS=--steps 20000 --checkpoint-every 512\n' > ~/.solverbot/challenge_1.env
+#   systemctl --user daemon-reload && systemctl --user enable --now solverbot-challenge@1
+#   loginctl enable-linger $USER ; journalctl --user -u solverbot-challenge@1 -f
+[Unit]
+Description=SolverBot desafio headless (instancia %i) - solo simulacion
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.solverbot/challenge_%i.env
+ExecStart=/bin/bash -c 'exec %h/solverbot-urdf-cloud/tools/headless/run_experiment.sh %i ctrain "$CHALLENGE" "$RUN" $ARGS'
+KillSignal=SIGTERM
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target

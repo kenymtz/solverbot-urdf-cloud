@@ -2,6 +2,8 @@
 # Inicia un experimento en segundo plano (sobrevive al cierre de la terminal). Una instancia a la vez por número.
 #   tools/headless/start.sh <instancia> train <run> [args de train.py]
 #   tools/headless/start.sh <instancia> validate [args de validate_grasp.py]
+#   tools/headless/start.sh <instancia> ctrain <hri|gpsr|laundry> <run> [args de train_challenge.py]
+#   tools/headless/start.sh <instancia> cexpert <hri|gpsr|laundry> --level 2 --episodes 20
 set -e
 INSTANCE="$1"
 source "$(dirname "$0")/common.sh" "$INSTANCE"
