@@ -1,0 +1,105 @@
+{
+ "command": "tools/headless/run_experiment.sh 2 validate (validate_grasp, experto ScriptedExpert original, backend gazebo, ROS_DOMAIN_ID 44, GZ_PARTITION solverbot_sim_2)",
+ "run": "runs/validate_20261101_130748",
+ "success": 5,
+ "n": 5,
+ "max_mimic_err_mm": 1.931,
+ "min_rise_mm": 84.77,
+ "episodes": [
+  {
+   "seed": 40000,
+   "success": true,
+   "max_rise_mm": 99.87,
+   "best_hold_steps": 15,
+   "final_q7_mm": 19.17,
+   "final_q8_mm": -20.85,
+   "max_mimic_err_mm": 1.792,
+   "drift_before_close_mm": 1.23,
+   "q7_at_block_mm": 20.04,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ]
+  },
+  {
+   "seed": 40001,
+   "success": true,
+   "max_rise_mm": 89.49,
+   "best_hold_steps": 15,
+   "final_q7_mm": 20.96,
+   "final_q8_mm": -19.06,
+   "max_mimic_err_mm": 1.931,
+   "drift_before_close_mm": 0.36,
+   "q7_at_block_mm": 19.17,
+   "grasp_tilt_deg": 10.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ]
+  },
+  {
+   "seed": 40002,
+   "success": true,
+   "max_rise_mm": 99.91,
+   "best_hold_steps": 15,
+   "final_q7_mm": 20.86,
+   "final_q8_mm": -19.14,
+   "max_mimic_err_mm": 1.842,
+   "drift_before_close_mm": 0.97,
+   "q7_at_block_mm": 20.04,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ]
+  },
+  {
+   "seed": 40003,
+   "success": true,
+   "max_rise_mm": 99.87,
+   "best_hold_steps": 15,
+   "final_q7_mm": 20.88,
+   "final_q8_mm": -19.14,
+   "max_mimic_err_mm": 1.875,
+   "drift_before_close_mm": 0.69,
+   "q7_at_block_mm": 19.44,
+   "grasp_tilt_deg": 20.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ]
+  },
+  {
+   "seed": 40004,
+   "success": true,
+   "max_rise_mm": 84.77,
+   "best_hold_steps": 15,
+   "final_q7_mm": 19.15,
+   "final_q8_mm": -20.85,
+   "max_mimic_err_mm": 1.764,
+   "drift_before_close_mm": 1.14,
+   "q7_at_block_mm": 20.02,
+   "grasp_tilt_deg": 10.0,
+   "phases": [
+    "pregrasp",
+    "descend",
+    "close",
+    "squeeze",
+    "lift"
+   ]
+  }
+ ]
+}

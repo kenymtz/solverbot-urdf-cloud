@@ -1,5 +1,9 @@
 # Ramas de muñeca en `reach` — Fase A (diagnóstico)
 
+> La Fase B (etiquetado consistente, factibilidad corregida, BC nuevos y evaluación) está en
+> [`WRIST_BRANCHES_FASE_B.md`](WRIST_BRANCHES_FASE_B.md). Corrige la afirmación "B factible en 620/620" de §8 (contaba
+> 40°, que nunca cumple el criterio de éxito).
+
 Rama `exp/solverbot-wrist-branch-consistency`, desde `feat/solverbot-reach-bc-sac` (PR #3, `a38c2e2`).
 
 **Solo diagnóstico.** No se entrenó ningún modelo. No se modificaron:
