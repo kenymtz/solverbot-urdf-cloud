@@ -48,9 +48,10 @@ def main():
     ap.add_argument('--policy', default=None, help='modelo SB3 (.zip) para DAgger; sin él, el experto ejecuta')
     ap.add_argument('--beta', type=float, default=0.0, help='DAgger: prob. de ejecutar la acción del experto')
     ap.add_argument('--source', default=None, help='etiqueta del conjunto (expert | dagger_<n>)')
-    ap.add_argument('--labeler', choices=['scripted', 'local', 'consistent'], default='scripted',
+    ap.add_argument('--labeler', choices=['scripted', 'local', 'consistent', 'dynamic'], default='scripted',
                     help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso); '
-                         'consistent = BranchConsistentLabelExpert (rama de muñeca consistente, preferencia B)')
+                         'consistent = BranchConsistentLabelExpert (rama de muñeca consistente, preferencia B); '
+                         'dynamic = MeasuredIKLabelExpert (IK recalculada en cada paso desde el estado medido, Fase C)')
     ap.add_argument('--start-j4-range', default=None,
                     help='lo,hi: joint4 inicial uniforme (solo cinemático; cobertura de arranques girados)')
     args = ap.parse_args()
@@ -70,6 +71,9 @@ def main():
     elif args.labeler == 'consistent':
         from solverbot_rl.imitation.branch_label_expert import BranchConsistentLabelExpert
         expert = BranchConsistentLabelExpert(env)
+    elif args.labeler == 'dynamic':
+        from solverbot_rl.imitation.dynamic_label_expert import MeasuredIKLabelExpert
+        expert = MeasuredIKLabelExpert(env)
     else:
         expert = ScriptedExpert(env)
     act = None
