@@ -25,7 +25,13 @@ Regresiones honestas:
 - **Orientación final:** con el etiquetador nuevo los episodios terminan más cerca del límite de orientación de éxito
   (ver C1). En la confirmación no produjo ningún fallo de bc_e2, pero es el margen más estrecho del candidato.
 
-**Gazebo:** ver C4.
+**Gazebo:** 100 episodios por política en las mismas semillas nuevas, una sola instancia aislada.
+
+- bc_e2: **99/100**; bc_v2w: 91/100. McNemar 9 frente a 1, p = 0,021.
+- bc_e2: 0 colisiones y detección del cubo de 0,82–0,88 (bc_v2w: 0,39–0,56).
+- La regresión de agarre del experto original sigue en 5/5.
+
+Gazebo **no** reproduce los arranques con muñeca girada; eso solo está validado en cinemático.
 
 ## Qué no se tocó
 
@@ -247,13 +253,79 @@ IC95 del total de bc_v2w: 0,950–0,974.
 - Detección del cubo: 0,95 en todas las políticas.
 - La alternancia de bc_v2w (255 episodios con cambio de intención) casi desaparece (18).
 
-## C4 — Gazebo
+## C4 — Gazebo (`eval_gazebo.json`, `gazebo_timeouts.json`, `grasp_regression_gazebo.json`)
 
-*(pendiente: se completa con los resultados de la corrida física)*
+bc_e2 superó claramente los filtros cinemáticos, así que pasó a una evaluación física acotada. Condiciones:
+
+- **una sola instancia:** ROS_DOMAIN_ID 44, GZ_PARTITION `solverbot_sim_2`, una simulación limpia por trabajo;
+- **mismas semillas nuevas para bc_e2 y bc_v2w (962xxx):** `reach` 10, `var_s` 30, `var_m` 30 y `var_l` 30, es decir
+  100 episodios por política;
+- **sin arranques con muñeca girada:** `start_override` es solo cinemático por diseño.
+
+| Escenario | bc_v2w | **bc_e2** | IC95 de bc_e2 |
+|---|---|---|---|
+| reach | 8/10 | **10/10** | 0,72–1,00 |
+| var_s | 27/30 | **30/30** | 0,89–1,00 |
+| var_m | 29/30 | 29/30 | 0,83–0,99 |
+| var_l | 27/30 | **30/30** | 0,89–1,00 |
+| **Total** | **91/100** | **99/100** | |
+
+**McNemar pareado:** 9 frente a 1, **p = 0,021** con `reach`; sin `reach`, 7 frente a 1, p = 0,07.
+
+| Métrica en Gazebo | bc_v2w | bc_e2 |
+|---|---|---|
+| Colisiones | 0 | **0** |
+| Estancamientos | 9 | **1** |
+| Distancia final media del TCP (mm) | 29–41 | **23–26** |
+| Pasos medios | 44–58 | **29–33** |
+| Detección del cubo (fracción de pasos con detección válida) | 0,39–0,56 | **0,82–0,88** |
+| Margen articular mínimo (p05, rad) | 0,011–0,046 | 0,02–0,046 |
+| Tasa de cambio de acción (continuidad articular) | 0,061–0,075 | **0,050–0,068** |
+| Familia final ejecutada | A 73 / B 27 | B 97 / indefinida 3 |
+| Episodios con cambio de intención | 26 | **2** |
+
+- **Fallos de bc_v2w (9).** Todos son estancamientos a 48–208 mm y los 9 tienen cambio de intención. 7 de ellos tienen
+  la orientación fuera del criterio de éxito (`tcp_z[2]` entre −0,65 y −0,79).
+- **Fallo de bc_e2 (1).** Estancamiento a 37 mm con orientación válida (`tcp_z[2]` −0,90), `var_m`, semilla 962205.
+- **Coherencia con cinemático.** bc_e2 conserva en Gazebo lo que muestra en cinemático: 99 % frente a 98,9 % en la
+  confirmación. La mejora en detección del cubo es exclusiva de Gazebo, donde la percepción es real. Coincide con la
+  mayor visibilidad de la familia B medida en B0 y con joint6 sin girar.
+
+**Incidencias de infraestructura (también son resultados).** 42 trabajos se interrumpieron por un `TimeoutError` del
+backend: `joint_states` no alcanza el reloj simulado después de un paso.
+
+- No se modificó el backend.
+- Cada trabajo se reintentó (máximo 15 veces) y el episodio interrumpido se repitió desde cero con la misma semilla.
+- Las interrupciones fueron más frecuentes con bc_v2w (34) que con bc_e2 (8), con episodios más largos.
+- De las 42 semillas interrumpidas, al repetirse 41 terminaron con éxito y 1 falló (bc_v2w).
+- Los registros por semilla están en `gazebo_timeouts.json`.
+
+**Regresión de agarre del experto original** (`validate_grasp`, misma instancia, semillas 40000–40004):
+
+- **5/5** levantamientos sostenidos;
+- subida mínima 85,2 mm;
+- error máximo del mimic de la pinza 2,0 mm (en la Fase B: 5/5, 1,93 mm).
 
 ## Recomendación
 
-*(se completa tras C4)*
+1. **bc_e2 es candidato a nueva referencia de `reach`**, pendiente de la revisión en WSL. Es la única política de
+   las Fases A–C que cumple a la vez los cinco criterios acordados en dos conjuntos reservados independientes.
+   Además, en Gazebo supera a bc_v2w (99 frente a 91 de 100, p = 0,021) con mejor detección y continuidad. **No se
+   hizo merge**; la PR #6 sigue en borrador.
+2. **Conclusión técnica sobre la pregunta de la fase.** Recalcular el objetivo desde el estado medido es la pieza que
+   faltaba, pero **no basta por sí sola**:
+   - bc_e1, sin la ronda de corrección, empata con bc_v2w (p = 0,23) y falla con muñeca girada a 0,5 (33/50).
+   - El salto lo da la combinación de etiquetas markovianas con una ronda de corrección supervisada: 847 → 880 de 890.
+   - En la Fase B esa misma ronda **empeoraba** (bc_d2), porque las etiquetas dependían del arranque.
+
+   La hipótesis de la Fase B (DAgger amplifica etiquetas que no son función de la observación) queda confirmada.
+3. **Riesgos pendientes:**
+   - **Orientación final más cerca del límite de éxito** con el etiquetador nuevo. No produjo fallos en bc_e2, pero
+     convendría vigilarla si cambian el criterio de éxito o la inclinación permitida.
+   - **Gazebo sin arranques de muñeca girada.**
+   - **Zonas límite pequeñas**: con 30 episodios por zona, la diferencia en B30 (28 frente a 30) no se puede resolver.
+4. **No se inicia nada más.** Mezcla de políticas, diffusion, SAC o una Fase D quedan para una decisión posterior. Esta
+   evidencia no los justifica.
 
 ## Reproducción
 
@@ -263,6 +335,10 @@ IC95 del total de bc_v2w: 0,950–0,974.
 | C1 | `diagnose_wrist_branches.py rollouts --policy dynamic …` (semillas 943xxx) y luego `labelquality`, `noisetest` y `analyze --labeler-prefix kinematic_dynamic` |
 | C2 | `collect_demos.py --backend kinematic --labeler dynamic …`; `train_bc.py` (receta por defecto); DAgger con `--policy runs/wrist_c2/bc_e1/model.zip --beta 0` |
 | C3 | `boundary_seeds.py --pool 945000-945999 --per-zone 15` y `--pool 961000-961999`; `diagnose_wrist_branches.py rollouts …`; `summarize_wrist_phase_b.py` |
+| C4 | `tools/headless/run_experiment.sh 2 py solverbot_rl/runs/wrist_c4 diagnose_wrist_branches.py rollouts --backend gazebo --policy bc_e2 …`; `tools/headless/run_experiment.sh 2 validate` |
+
+El modelo candidato está versionado en `resultados/wrist_branches/fase_c/modelos/bc_e2.zip` (sha256 `ae6d240b…`) y se
+usa con `--policy bc_e2`.
 
 Semillas de la Fase C (todas nuevas):
 

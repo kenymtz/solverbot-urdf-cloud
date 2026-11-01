@@ -40,7 +40,8 @@ def mcnemar_exact(b, c):
 
 
 def scenario_of(run, policy):
-    return run.split(f'kinematic_{policy}_', 1)[1]
+    """Nombre del escenario a partir del directorio <backend>_<política>_<escenario> (cinemático o Gazebo)."""
+    return run.split(f'_{policy}_', 1)[1]
 
 
 def load(root: Path):
