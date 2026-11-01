@@ -18,8 +18,8 @@ instantáneo de joint4):
      físicas de branch_feasibility: IK, orientación de éxito, sin colisión con el cuerpo/propia/mesa a lo largo del
      camino del experto, muñeca lejos de sus límites, cubo visible en la cámara de muñeca al llegar).
   4. Respaldo explícito: si ninguna es viable, la IK global original de ScriptedExpert (se registra el motivo).
-  5. Fase cercana (< 4 cm): IK local con el eje de aproximación de la inclinación ELEGIDA (el experto original usa
-     siempre 20°, que no existe para B en parte del dominio).
+  5. En reach, la etiqueta es siempre el paso articular acotado hacia la solución verificada (que es el punto de
+     éxito); sin la fase cercana de IK local del experto original (ver act()).
 
 Usa la verdad del simulador (pose del cubo) igual que ScriptedExpert: es un ETIQUETADOR, no una política. La política
 entrenada con sus etiquetas ve solo la observación de 31 dimensiones.
@@ -93,27 +93,36 @@ class BranchConsistentLabelExpert(ScriptedExpert):
         q = np.array([e._joints()[j] for j in e.arm_joints])
         best = self._solutions(q, p)
         com = self.committed_family(q, best)
-        if self.family is not None and com is not None and com != self.family:
-            # la muñeca medida se comprometió con la otra familia (p. ej. en DAgger): continuidad, sin forzar el regreso
+        if com is not None and (self.family is None or com != self.family):
+            # la muñeca medida ya está comprometida con una familia (arranque girado, o la otra familia en DAgger):
+            # continuidad, sin forzar el regreso. El objetivo también se VERIFICA (antes se tomaba la solución barata
+            # sin verificar y podía quedar en un límite articular: estancamientos a 31-40 mm con joint4 inicial >= 0.25)
             self.family, self.decision = com, 'continuidad'
-            self.tilt = next((t for (f, t) in best if f == com), self.tilt)
-        if self.family is None:
-            if com is not None:
-                self.family, self.decision = com, 'continuidad'
+            self.viability = {}
+            self.tilt = None
+            for tilt in (20, 30):
+                r = self._viable(q, p, com, tilt)
+                self.viability[f'{com}@{tilt}'] = r.get('reason')
+                if r['viable']:
+                    self.tilt = tilt
+                    best[(com, tilt)] = np.asarray(r['q'], float)
+                    break
+            if self.tilt is None:                # ninguna verificada: la más cercana de esa familia (se registra)
+                self.decision = 'continuidad_sin_verificar'
                 self.tilt = min((t for (f, t) in best if f == com), default=20)
-            else:
-                self.viability = {}
-                for fam, tilt in self.preference:
-                    r = self._viable(q, p, fam, tilt)
-                    self.viability[f'{fam}@{tilt}'] = r.get('reason')
-                    if r['viable']:
-                        self.family, self.tilt, self.decision = fam, tilt, 'preferencia'
-                        # el objetivo es EXACTAMENTE la solución verificada (no una búsqueda distinta que podría no
-                        # encontrarla: eso caía al respaldo y cambiaba de familia en silencio, semilla 121128)
-                        best[(fam, tilt)] = np.asarray(r['q'], float)
-                        break
-                if self.family is None:
-                    self.decision = 'respaldo'
+        if self.family is None:
+            self.viability = {}
+            for fam, tilt in self.preference:
+                r = self._viable(q, p, fam, tilt)
+                self.viability[f'{fam}@{tilt}'] = r.get('reason')
+                if r['viable']:
+                    self.family, self.tilt, self.decision = fam, tilt, 'preferencia'
+                    # el objetivo es EXACTAMENTE la solución verificada (no una búsqueda distinta que podría no
+                    # encontrarla: eso caía al respaldo y cambiaba de familia en silencio, semilla 121128)
+                    best[(fam, tilt)] = np.asarray(r['q'], float)
+                    break
+            if self.family is None:
+                self.decision = 'respaldo'
         self.decisions.append({'step': len(self.log), 'family': self.family, 'tilt': self.tilt,
                                'decision': self.decision, 'committed_measured': com})
         if self.decision == 'respaldo':
@@ -154,22 +163,20 @@ class BranchConsistentLabelExpert(ScriptedExpert):
         self.p_goal, self.q_goal = p.copy(), np.asarray(q_goal, float)
         return self.q_goal
 
-    # ------------------------------------------------------------------------------------- fase cercana de reach
+    # -------------------------------------------------------------------------- reach: siempre hacia el objetivo
     def act(self) -> np.ndarray:
+        """En `reach`, con una familia decidida, la etiqueta es SIEMPRE el paso articular acotado hacia la solución
+        verificada del pre-agarre (que es el punto de éxito), revisando la continuidad en cada paso. Sin la fase cercana
+        de ScriptedExpert (IK local a < 4 cm): cerca de un límite articular, su paso con recorte por articulación alejaba
+        el TCP y entraba en un ciclo con la fase lejana (también en ScriptedExpert: 28/50 con joint4 inicial 0.5). La
+        fase cercana existe para descensos rectos junto a la mesa (agarre), que reach no tiene."""
         e = self.env
-        if (e.params.goal == 'reach' and self.phase == 'pregrasp' and self.tilt is not None
-                and self.family is not None and self.decision != 'respaldo'):
-            s = e._state
-            p = e.backend.object_pose_truth() + np.array([0, 0, e.params.pregrasp_height])
-            if np.linalg.norm(p - s.tcp_pos) < 0.04:
-                # igual que ScriptedExpert (pasos cartesianos de 1 cm con IK local) pero con el eje de la inclinación
-                # elegida, para no empujar hacia una solución de 20° que en esa familia puede no existir
-                d = p - s.tcp_pos
-                n = np.linalg.norm(d)
-                step = s.tcp_pos + (d if n < 0.01 else d / n * 0.01)
-                q, _ = solve_ik(e.chain, 'tcp_link', e.arm_joints, e._q_cmd, step, None, self._fixed(),
-                                approach_axis=BA.approach_axis(self.tilt), rot_weight=0.5, reg=0.02)
-                a = np.clip((q - e._q_cmd) / e.delta, -1.0, 1.0)
+        if e.params.goal == 'reach' and self.phase == 'pregrasp':
+            p = e.backend.object_pose_truth() + np.array([0.0, 0.0, e.params.pregrasp_height])
+            q_goal = self._ik(p)
+            if self.family is not None and self.decision != 'respaldo':
+                a = np.clip((np.asarray(q_goal) - e._q_cmd) / e.delta, -1.0, 1.0)
+                self.q_goal = np.asarray(q_goal, float)
                 self.log.append({'phase': self.phase})
                 return np.append(a, -1.0).astype(np.float32)
         return super().act()

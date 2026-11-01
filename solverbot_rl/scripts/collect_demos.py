@@ -51,6 +51,8 @@ def main():
     ap.add_argument('--labeler', choices=['scripted', 'local', 'consistent'], default='scripted',
                     help='scripted = ScriptedExpert validado; local = ReachLabelExpert (IK local en cada paso); '
                          'consistent = BranchConsistentLabelExpert (rama de muñeca consistente, preferencia B)')
+    ap.add_argument('--start-j4-range', default=None,
+                    help='lo,hi: joint4 inicial uniforme (solo cinemático; cobertura de arranques girados)')
     args = ap.parse_args()
 
     exp = load_experiment(args.experiment)
@@ -58,6 +60,10 @@ def main():
     if env.object_source != 'perception':
         raise SystemExit(f'object_source={env.object_source}: las demostraciones deben usar perception')
     lvl = level_index(env, args.level)
+    if args.start_j4_range:
+        from solverbot_rl.imitation.start_override import override_start_j4
+        lo_j4, hi_j4 = (float(v) for v in args.start_j4_range.split(','))
+        override_start_j4(env, low=lo_j4, high=hi_j4)
     if args.labeler == 'local':
         from solverbot_rl.imitation.label_expert import ReachLabelExpert
         expert = ReachLabelExpert(env)
@@ -76,6 +82,7 @@ def main():
     meta = {'experiment': exp['name'], 'level': env.levels[lvl], 'level_index': lvl, 'backend': args.backend,
             'physical': env.backend.physical, 'object_source': env.object_source, 'source': source,
             'policy': args.policy, 'labeler': args.labeler, 'beta': args.beta if act is not None else 1.0, 'commit': git_commit(),
+            'start_j4_range': args.start_j4_range,
             'obs_dim': int(env.observation_space.shape[0]), 'act_dim': int(env.action_space.shape[0]),
             'control': env.cfg['control'], 'task': env.cfg['task'], 'reward': env.cfg['reward']}
     if os.path.exists(meta_path):

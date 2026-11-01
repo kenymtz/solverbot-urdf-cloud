@@ -184,29 +184,8 @@ def cmd_rollouts(args):
 
 
 def _override_start_j4(env, j4):
-    """Arnés de EVALUACIÓN (solo cinemático): misma semilla (cubo, yaw, demás articulaciones) pero joint4 inicial
-    fijado en `j4`, para probar arranques próximos a la frontera de compromiso entre familias. La política sigue
-    viendo solo la observación; no cambia el entorno ni sus niveles."""
-    from solverbot_rl import task as T
-    if env.unwrapped.backend.physical:
-        raise SystemExit('--start-j4 solo en el backend cinemático')
-    orig = env.reset
-
-    def reset(*a, **k):
-        obs, info = orig(*a, **k)
-        u = env.unwrapped
-        q = np.array(u.start_q, float)
-        q[3] = j4
-        q = np.clip(q, u.lo + 0.02, u.hi - 0.02)
-        b = u.backend
-        r = u.cfg['robot']
-        b.reset(b.rng, u.start_obj_xy, b.obj_yaw, q, r['gripper_open'], r['lift'], r['head'])
-        u.start_q = q
-        u._q_cmd = q.copy()
-        u._state = u._task_state(u._joints())
-        u.flags.best_phi = T.potential(u._state, u.params)
-        return u._obs(u._state), info
-    env.reset = reset
+    from solverbot_rl.imitation.start_override import override_start_j4
+    override_start_j4(env, value=j4)
 
 
 # ========================================================================================================== analyze
@@ -224,7 +203,7 @@ def _episode_arrays(d, seed):
 
 
 def _reps_cache(env, cache, s):
-    key = (s['level'], s['seed'])
+    key = (s['level'], s['seed'], tuple(np.round(s['start_q'], 3)))      # la pose inicial puede cambiar (--start-j4)
     if key not in cache:
         q0 = np.asarray(s['start_q'], float)
         p = np.asarray(s['obj_start_truth'], float) + np.array([0, 0, s['pregrasp_height']])
