@@ -193,10 +193,11 @@ def episode_branch_record(arr, s, fc):
     lo, hi = np.asarray(s['lo']), np.asarray(s['hi'])
     q = B.denorm_q(arr['obs'], lo, hi)
     a = arr['actions']
-    ra, rb = fc['A']['q'], fc['B']['q']
-    ra, rb = np.asarray(ra), np.asarray(rb)
+    feasible = {f: fc[f] is not None for f in B.FAMILIES}
+    ra = np.asarray(fc['A']['q']) if feasible['A'] else B.mirrored_rep(fc['B']['q'])
+    rb = np.asarray(fc['B']['q']) if feasible['B'] else B.mirrored_rep(fc['A']['q'])
     aff = np.array([B.affinity(qq, ra, rb) for qq in q])
-    lab, changes = B.executed_branch(aff)
+    lab, changes = B.executed_branch(aff, dists=B.wrist_distances(q, ra, rb))
     intent = [B.intended_branch(qq, aa, ra, rb) for qq, aa in zip(q, a)]
     sc = B.sign_changes(a[:, 3])
     far = np.asarray(arr['dist']) > 0.045                     # fase lejana: la orden de muñeca decide la rama
@@ -206,9 +207,16 @@ def episode_branch_record(arr, s, fc):
            'success': s['success'], 'length': s['length'], 'dmin_mm': s['dmin_mm'], 'dfinal_mm': s['dfinal_mm'],
            'tcp_z2_final': s['tcp_z2_final'], 'tcp_z2_max': float(np.max(arr['tcp_z2'])),
            'stalled': s['stalled'], 'collision': s['collision'], 'valid_rate': s['valid_rate'],
-           'wall_s': s['wall_s'], 'tilt': fc['tilt'],
-           'cost_A_l2': fc['A']['l2'], 'cost_B_l2': fc['B']['l2'],
-           'cost_A_steps': fc['A']['steps'], 'cost_B_steps': fc['B']['steps'],
+           'wall_s': s['wall_s'], 'tilt': fc['tilt'], 'feasible_A': feasible['A'], 'feasible_B': feasible['B'],
+           'other_tilt_A': bool(feasible['A'] and fc['A']['other_tilt']),
+           'other_tilt_B': bool(feasible['B'] and fc['B']['other_tilt']),
+           'cost_A_l2': fc['A']['l2'] if feasible['A'] else None, 'cost_B_l2': fc['B']['l2'] if feasible['B'] else None,
+           'cost_A_steps': fc['A']['steps'] if feasible['A'] else None,
+           'cost_B_steps': fc['B']['steps'] if feasible['B'] else None,
+           'q0': [float(v) for v in s['start_q']], 'obj_xy_cmd': s['obj_xy_cmd'],
+           'a0': [float(v) for v in a[0, :6]], 'intent_t0': intent[0],
+           'limit_joints_final': [int(j) for j in np.nonzero(np.any(
+               (q[-10:] <= lo + 0.02) | (q[-10:] >= hi - 0.02), axis=0))[0]],
            'executed_final': lab[-1], 'real_branch_changes': changes, 'n_real_changes': len(changes),
            'a4_sign_changes': sc, 'n_a4_sign_changes': len(sc),
            'intention_switches': isw, 'n_intention_switches': len(isw),
@@ -238,7 +246,7 @@ def cmd_analyze(args):
         for s in rows:
             arr = _episode_arrays(d, s['seed'])
             fc = _reps_cache(env, cache, s)
-            if fc['A'] is None or fc['B'] is None:
+            if fc['A'] is None and fc['B'] is None:
                 continue
             rec, tr = episode_branch_record(arr, s, fc)
             rec['run'] = name
@@ -298,10 +306,23 @@ def summarize(recs):
              'dfinal_mm_mean': float(np.mean([r['dfinal_mm'] for r in rs])),
              'length_mean': float(np.mean([r['length'] for r in rs])),
              'wall_s_mean': float(np.mean([r['wall_s'] for r in rs]))}
+        g['success_by_executed_family'] = {f: [sum(r['success'] for r in rs if r['executed_final'] == f),
+                                               sum(r['executed_final'] == f for r in rs)] for f in ('A', 'B')}
+        g['success_both_feasible'] = [sum(r['success'] for r in rs if r['feasible_A'] and r['feasible_B']),
+                                      sum(r['feasible_A'] and r['feasible_B'] for r in rs)]
+        g['success_single_family'] = [sum(r['success'] for r in rs if not (r['feasible_A'] and r['feasible_B'])),
+                                      sum(not (r['feasible_A'] and r['feasible_B']) for r in rs)]
+        lim = {}
+        for r in rs:
+            if not r['success']:
+                for j in r['limit_joints_final']:
+                    lim[f'joint{j + 1}'] = lim.get(f'joint{j + 1}', 0) + 1
+        g['failures_joint_at_limit'] = lim
         if 'expert_family' in rs[0]:
             g['expert_family'] = {f: sum(r.get('expert_family') == f for r in rs) for f in ('A', 'B')}
             g['expert_goal_family_changes'] = sum(r.get('expert_goal_family_changes', 0) > 0 for r in rs)
-            ch = [r for r in rs if r.get('expert_family')]
+            ch = [r for r in rs if r.get('expert_family') and r['feasible_A'] and r['feasible_B']]
+            g['single_family_scenarios'] = sum(not (r['feasible_A'] and r['feasible_B']) for r in rs)
             g['expert_matches_min_l2'] = sum((r['expert_family'] == ('A' if r['cost_A_l2'] < r['cost_B_l2'] else 'B'))
                                              for r in ch)
             g['expert_matches_min_steps'] = sum((r['expert_family'] == ('A' if r['cost_A_steps'] < r['cost_B_steps']
@@ -370,7 +391,8 @@ def contradictions(runs, cache, env, args):
     # primer paso: estados iniciales casi iguales con familias opuestas
     first = t_all == 0
     res0 = B.label_conflicts(Xs[first], fam[first], ep[first], a4[first], out['nn_other_episode_quantiles'][50])
-    res0.pop('has_conflict')
+    conflict0 = np.zeros(len(Xs), bool)
+    conflict0[np.nonzero(first)[0]] = res0.pop('has_conflict')
     out['first_step'] = res0
     # predicciones de BC sobre los estados del experto
     preds = {}
@@ -394,8 +416,20 @@ def contradictions(runs, cache, env, args):
             'abs_pred_a4_conflict_mean': float(np.mean(np.abs(p4[r_conf]))) if r_conf.any() else None,
             'abs_pred_a4_pure_mean': float(np.mean(np.abs(p4[r_pure]))) if r_pure.any() else None,
         }
+        # primer paso (donde se decide la rama): sobre TODOS los estados iniciales y sobre los que tienen un vecino
+        # inicial con la familia opuesta
+        f0 = first
+        c0 = conflict0 & first
+        lab_sign = np.where(fam == 'A', 1.0, -1.0)
+        out[f'bc_{name}']['t0'] = {
+            'n': int(f0.sum()), 'n_conflict': int(c0.sum()),
+            'agree_with_expert_family': float(np.mean(np.sign(p4[f0]) == lab_sign[f0])),
+            'agree_with_expert_family_conflict': float(np.mean(np.sign(p4[c0]) == lab_sign[c0])) if c0.any() else None,
+            'intermediate_frac': float(np.mean(np.abs(p4[f0]) < 0.5)),
+            'intermediate_frac_conflict': float(np.mean(np.abs(p4[c0]) < 0.5)) if c0.any() else None,
+            'pred_sign_A_frac': float(np.mean(p4[f0] > 0)), 'expert_A_frac': float(np.mean(fam[f0] == 'A'))}
     np.savez_compressed(os.path.join(args.out, 'contradiction_arrays.npz'), a4_expert=act_all[:, 3],
-                        a5_expert=act_all[:, 4], fam=fam, t=t_all, conflict=conflict_mask,
+                        a5_expert=act_all[:, 4], fam=fam, t=t_all, conflict=conflict_mask, conflict0=conflict0,
                         **{f'a4_{k}': v[:, 3] for k, v in preds.items()}, **{f'a5_{k}': v[:, 4] for k, v in preds.items()})
     return out
 
@@ -459,6 +493,24 @@ def cmd_plots(args):
     ax[1].set_title('Rama elegida según joint4 / joint6 iniciales')
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, 'map_levels.png'), dpi=110)
+    plt.close(fig)
+    # rama EJECUTADA por posición del cubo: experto vs bc_v1 vs bc_v2w (var_m + var_l)
+    eps = [json.loads(x) for x in open(os.path.join(args.out, 'episodes.jsonl'))]
+    fig, ax = plt.subplots(1, 3, figsize=(16, 5))
+    for k, pol in enumerate(('scripted', 'bc_v1', 'bc_v2w')):
+        for r in eps:
+            if r['policy'] != pol or r['level'] not in ('reach_var_m', 'reach_var_l'):
+                continue
+            xy = np.asarray(r['obj_xy_cmd'])
+            c = col.get(r['executed_final'], '#888888')
+            ax[k].scatter(100 * xy[0], 100 * xy[1], c=c, s=14 if r['success'] else 60,
+                          marker='o' if r['success'] else 'x', alpha=0.8 if r['success'] else 1.0)
+        ax[k].set_title(f'{pol}: rama EJECUTADA (var_m + var_l)\nrojo A, azul B; x = fallo')
+        ax[k].set_xlabel('x cubo (mundo) [cm]')
+        ax[k].set_ylabel('y cubo (mundo) [cm]')
+        ax[k].set_aspect('equal')
+    fig.tight_layout()
+    fig.savefig(os.path.join(args.out, 'map_executed_family.png'), dpi=110)
     plt.close(fig)
     # trazas joint4 / joint5
     _plot_traces(args, plt)

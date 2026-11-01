@@ -82,14 +82,29 @@ def family_costs(sols: list[dict], q0, delta: float, tilt: int | None = None) ->
     out = {'tilt': tilt}
     for f in FAMILIES:
         cand = [s['q'] for s in sols if s['family'] == f and s['tilt'] == tilt]
+        fallback = False
+        if not cand:                          # la familia no existe a esa inclinación: buscarla en las otras
+            cand = [s['q'] for s in sols if s['family'] == f]
+            fallback = True
         if not cand:
             out[f] = None
             continue
         best = min(cand, key=lambda q: float(np.linalg.norm(q - q0)))
         dq = best - q0
         out[f] = {'q': best, 'l2': float(np.linalg.norm(dq)), 'l2_wrist': float(np.linalg.norm(dq[WRIST])),
-                  'steps': float(np.max(np.abs(dq)) / delta), 'dj4': float(dq[J4]), 'dj5': float(dq[J5])}
+                  'steps': float(np.max(np.abs(dq)) / delta), 'dj4': float(dq[J4]), 'dj5': float(dq[J5]),
+                  'other_tilt': fallback}
     return out
+
+
+def mirrored_rep(q) -> np.ndarray:
+    """Volteo de muñeca de una solución (joint4 ∓ pi, -joint5): referencia de la familia que NO tiene solución
+    factible (fuera de los límites articulares). Sirve para medir si una política se dirige hacia una rama
+    inexistente; no es una configuración alcanzable."""
+    m = np.asarray(q, float).copy()
+    m[J4] -= np.sign(m[J4]) * np.pi
+    m[J5] = -m[J5]
+    return m
 
 
 def affinity(q, rep_a, rep_b) -> float:
@@ -99,13 +114,30 @@ def affinity(q, rep_a, rep_b) -> float:
     return (db - da) / max(da + db, 1e-9)
 
 
-def executed_branch(aff: np.ndarray, commit: float = COMMIT) -> tuple[list, list[int]]:
+APPROACH = 0.25                          # rad: acercamiento mínimo a la solución para comprometerse con su familia
+
+
+def wrist_distances(q, rep_a, rep_b) -> np.ndarray:
+    """Distancias de la muñeca medida (joint4, joint5) a cada solución: columnas (d_A, d_B) por paso."""
+    q = np.atleast_2d(np.asarray(q, float))
+    return np.stack([np.linalg.norm(q[:, WRIST] - rep_a[WRIST], axis=1),
+                     np.linalg.norm(q[:, WRIST] - rep_b[WRIST], axis=1)], axis=1)
+
+
+def executed_branch(aff: np.ndarray, commit: float = COMMIT, dists: np.ndarray | None = None,
+                    approach: float = APPROACH) -> tuple[list, list[int]]:
     """Familia ejecutada por paso con histéresis: se compromete con A si afinidad > commit, con B si < -commit, y
-    conserva la última mientras está en la banda intermedia. Devuelve (etiquetas, pasos de CAMBIO REAL de rama:
-    paso de comprometido con una familia a comprometido con la otra)."""
+    conserva la última mientras está en la banda intermedia. Con `dists` (wrist_distances), además exige haberse
+    ACERCADO a esa solución al menos `approach` rad respecto del arranque: la pose inicial puede quedar cerca de una
+    solución sin que el robot haya elegido nada (falso "compromiso" en t = 0). Devuelve (etiquetas, pasos de CAMBIO
+    REAL de rama: de comprometido con una familia a comprometido con la otra)."""
     lab, cur, changes = [], None, []
     for t, s in enumerate(aff):
-        new = 'A' if s > commit else 'B' if s < -commit else cur
+        okA = okB = True
+        if dists is not None:
+            okA = dists[t, 0] <= dists[0, 0] - approach
+            okB = dists[t, 1] <= dists[0, 1] - approach
+        new = 'A' if (s > commit and okA) else 'B' if (s < -commit and okB) else cur
         if cur is not None and new != cur:
             changes.append(t)
         cur = new

@@ -67,6 +67,18 @@ def test_detour_and_wrist_limit():
     assert B.wrist_limit_frac(q, lo, hi) == 0.5
 
 
+def test_no_false_commitment_at_start():
+    """Arranque cerca de la solución B (sin haber elegido nada) y movimiento monótono hacia A: un solo
+    compromiso (A), ningún cambio de rama."""
+    rep_b = np.array([0.2, 1.0, -0.8, -1.16, 0.57, 0.5])
+    traj = np.array([_q(j, 0.84) for j in np.linspace(-0.5, 1.5, 15)])
+    aff = np.array([B.affinity(q, REP_A, rep_b) for q in traj])
+    lab_naive, ch_naive = B.executed_branch(aff)
+    assert lab_naive[0] == 'B' and len(ch_naive) == 1            # la versión sin acercamiento lo contaba
+    lab, changes = B.executed_branch(aff, dists=B.wrist_distances(traj, REP_A, rep_b))
+    assert lab[-1] == 'A' and changes == []
+
+
 def test_label_conflicts_counts_only_cross_episode_opposite_pairs():
     X = np.array([[0.0], [0.01], [0.02], [5.0]])
     fam = np.array(['A', 'B', 'A', 'B'])
