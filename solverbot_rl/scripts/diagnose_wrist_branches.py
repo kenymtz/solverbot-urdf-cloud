@@ -446,15 +446,23 @@ def cmd_plots(args):
     # mapa por posición del cubo (home exacto)
     cube = [r for r in rows if r['map'] == 'cube']
     fig, ax = plt.subplots(1, 3, figsize=(15, 4.6))
+    sc = None
     for r in cube:
-        ax[0].scatter(100 * r['dx'], 100 * r['dy'], c=col[r['expert_family']], s=55, marker='s')
+        single = not (r['A'] and r['B'])
+        ax[0].scatter(100 * r['dx'], 100 * r['dy'], c=col[r['expert_family']], s=55, marker='s',
+                      edgecolors='k' if single else 'none', linewidths=1.2)
         if r.get('dl2_A_minus_B') is not None:
-            ax[1].scatter(100 * r['dx'], 100 * r['dy'], c=r['dl2_A_minus_B'], cmap='coolwarm', vmin=-1, vmax=1, s=55,
-                          marker='s')
+            sc = ax[1].scatter(100 * r['dx'], 100 * r['dy'], c=r['dl2_A_minus_B'], cmap='coolwarm', vmin=-1, vmax=1,
+                               s=55, marker='s')
             ax[2].scatter(100 * r['dx'], 100 * r['dy'], c=col[r['min_l2_family']], s=55, marker='s')
-    ax[0].set_title('Rama ELEGIDA por el experto (home exacto)\nrojo A: joint4>0 · azul B: joint4<0')
+        else:
+            for a in ax[1:]:
+                a.scatter(100 * r['dx'], 100 * r['dy'], c='#bbbbbb', s=55, marker='x')
+    if sc is not None:
+        fig.colorbar(sc, ax=ax[1], shrink=0.8)
+    ax[0].set_title('Rama ELEGIDA por el experto (home exacto)\nrojo A: joint4>0 · azul B: joint4<0 · borde: solo 1 familia a 20°')
     ax[1].set_title('Coste L2(A) - L2(B) desde home [rad]\n(<0: A más barata)')
-    ax[2].set_title('Rama de MENOR coste L2 (todas las soluciones)')
+    ax[2].set_title('Rama de MENOR coste L2 (x gris: solo existe una)')
     for a in ax:
         a.set_xlabel('dx cubo [cm]')
         a.set_ylabel('dy cubo [cm]')
@@ -514,6 +522,7 @@ def cmd_plots(args):
     plt.close(fig)
     # trazas joint4 / joint5
     _plot_traces(args, plt)
+    _plot_gazebo_vs_kin(args, plt)
     _plot_bc_hist(args, plt)
     print('[plots] listo', args.out)
 
@@ -540,6 +549,40 @@ def _plot_traces(args, plt):
         ax[1, k].set_xlabel('paso')
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, 'traces_j4_j5_var_m.png'), dpi=110)
+    plt.close(fig)
+
+
+def _plot_gazebo_vs_kin(args, plt):
+    """Episodios de Gazebo frente al mismo escenario (semilla) en cinemático: joint4/joint5 y distancia."""
+    runs = _load_runs(args.root)
+    gz = [(n, d, r) for n, (d, rows) in runs.items() if n.startswith('gazebo_') for r in rows]
+    if not gz:
+        return
+    fig, ax = plt.subplots(len(gz), 3, figsize=(15, 2.3 * len(gz)), squeeze=False)
+    for i, (name, d, s) in enumerate(gz):
+        kin = 'kinematic_' + name[len('gazebo_'):]
+        for label, (dd, rows), style in (('Gazebo', (d, [s]), '-'),
+                                          ('cinemático', runs.get(kin, (None, [])), '--')):
+            row = [r for r in rows if r['seed'] == s['seed']]
+            if not row or dd is None:
+                continue
+            arr = _episode_arrays(dd, s['seed'])
+            q = B.denorm_q(arr['obs'], np.asarray(row[0]['lo']), np.asarray(row[0]['hi']))
+            ok = 'éxito' if row[0]['success'] else 'FALLO'
+            ax[i, 0].plot(q[:, 3], style, label=f'{label} ({ok})')
+            ax[i, 1].plot(q[:, 4], style)
+            ax[i, 2].plot(1000 * arr['dist'], style)
+            if label == 'Gazebo':
+                inv = np.nonzero(arr['obs'][:, 16] < 0.5)[0]
+                ax[i, 2].scatter(inv, 1000 * arr['dist'][inv], s=6, c='#e07a00', zorder=3)
+        ax[i, 0].set_ylabel(f"{name.replace('gazebo_', '')}\n{s['seed']}", fontsize=8)
+        ax[i, 0].legend(fontsize=7)
+        ax[i, 2].axhline(30, c='k', lw=0.5)
+    ax[0, 0].set_title('joint4 [rad]')
+    ax[0, 1].set_title('joint5 [rad]')
+    ax[0, 2].set_title('distancia al objetivo [mm] (puntos: detección inválida en Gazebo)')
+    fig.tight_layout()
+    fig.savefig(os.path.join(args.out, 'gazebo_vs_kinematic.png'), dpi=95)
     plt.close(fig)
 
 
