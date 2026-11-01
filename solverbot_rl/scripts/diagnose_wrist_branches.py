@@ -157,6 +157,8 @@ def cmd_rollouts(args):
         else:
             raise SystemExit(f'política desconocida: {args.policy}')
         act = load_policy(path, deterministic=True)
+    if args.start_j4 is not None:
+        _override_start_j4(env, args.start_j4)
     out = os.path.join(args.out, f'{args.backend}_{args.policy}_{args.level}' + (f'_{args.tag}' if args.tag else ''))
     os.makedirs(out, exist_ok=True)
     done = {r['seed'] for r in D.read_index(out)}
@@ -179,6 +181,32 @@ def cmd_rollouts(args):
         print(f'[rollouts] {i + 1}/{len(seeds)} seed={seed} éxito={s["success"]} pasos={s["length"]} '
               f'dfin={s["dfinal_mm"]:.1f} zf={s["tcp_z2_final"]:.2f} det={s["valid_rate"]:.2f}', flush=True)
     env.close()
+
+
+def _override_start_j4(env, j4):
+    """Arnés de EVALUACIÓN (solo cinemático): misma semilla (cubo, yaw, demás articulaciones) pero joint4 inicial
+    fijado en `j4`, para probar arranques próximos a la frontera de compromiso entre familias. La política sigue
+    viendo solo la observación; no cambia el entorno ni sus niveles."""
+    from solverbot_rl import task as T
+    if env.unwrapped.backend.physical:
+        raise SystemExit('--start-j4 solo en el backend cinemático')
+    orig = env.reset
+
+    def reset(*a, **k):
+        obs, info = orig(*a, **k)
+        u = env.unwrapped
+        q = np.array(u.start_q, float)
+        q[3] = j4
+        q = np.clip(q, u.lo + 0.02, u.hi - 0.02)
+        b = u.backend
+        r = u.cfg['robot']
+        b.reset(b.rng, u.start_obj_xy, b.obj_yaw, q, r['gripper_open'], r['lift'], r['head'])
+        u.start_q = q
+        u._q_cmd = q.copy()
+        u._state = u._task_state(u._joints())
+        u.flags.best_phi = T.potential(u._state, u.params)
+        return u._obs(u._state), info
+    env.reset = reset
 
 
 # ========================================================================================================== analyze
@@ -788,6 +816,7 @@ def main():
     p.add_argument('--seeds', required=True)
     p.add_argument('--out', required=True)
     p.add_argument('--tag', default='')
+    p.add_argument('--start-j4', type=float, default=None, help='joint4 inicial fijo (solo cinemático, evaluación)')
     p = sub.add_parser('analyze')
     p.add_argument('--root', required=True)
     p.add_argument('--out', required=True)
