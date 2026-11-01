@@ -61,3 +61,13 @@ def test_scripted_expert_is_still_the_default():
     from solverbot_rl.expert import ScriptedExpert
     assert not issubclass(ScriptedExpert, BranchConsistentLabelExpert)
     assert ScriptedExpert._ik is not BranchConsistentLabelExpert._ik
+
+
+def test_regression_121128_goal_is_the_verified_solution(env):
+    """Regresión: B@30 era viable pero la búsqueda barata del objetivo no la encontraba y el etiquetador caía a la IK
+    original (familia A) sin registrarlo. Ahora el objetivo es la solución verificada y la familia no cambia."""
+    ex = BranchConsistentLabelExpert(env)
+    arrays, s = run_episode(env, 121128, level_index(env, 'reach_var_m'), expert=ex)
+    assert ex.family == 'B' and ex.tilt == 30 and ex.decision == 'preferencia'
+    assert {d['family'] for d in ex.decisions} == {'B'}
+    assert s['success']

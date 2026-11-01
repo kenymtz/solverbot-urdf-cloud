@@ -652,6 +652,9 @@ def cmd_plots(args):
     # trazas joint4 / joint5
     _plot_traces(args, plt)
     _plot_gazebo_vs_kin(args, plt)
+    feas = os.path.join(args.root, 'feasibility', 'feasibility.json')
+    if os.path.exists(feas):
+        plot_feasibility(feas, os.path.join(args.out, 'feasibility_map.png'), plt)
     _plot_bc_hist(args, plt)
     print('[plots] listo', args.out)
 
@@ -678,6 +681,38 @@ def _plot_traces(args, plt):
         ax[1, k].set_xlabel('paso')
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, 'traces_j4_j5_var_m.png'), dpi=110)
+    plt.close(fig)
+
+
+def plot_feasibility(path, out, plt):
+    """B0: viabilidad por celda (dx, dy) para cada (familia, inclinación) y la elección de la regla B@20 > B@30 > A@20 >
+    A@30 (home exacto)."""
+    F = json.load(open(path))
+    rows = [r for r in F['rows'] if r['map'] == 'cube_home']
+    cells = {}
+    for r in rows:
+        cells.setdefault((round(r['dx'], 3), round(r['dy'], 3)), {})[(r['family'], r['tilt'])] = r
+    combos = [('A', 20), ('A', 30), ('B', 20), ('B', 30)]
+    fig, ax = plt.subplots(1, 5, figsize=(22, 4.6))
+    mark = {None: ('#2a9d8f', 'o'), 'sin_solucion_ik': ('#bbbbbb', 'x'), 'muneca_en_limite': ('#e76f51', 's')}
+    for k, (fam, tilt) in enumerate(combos):
+        for (dx, dy), c in cells.items():
+            r = c[(fam, tilt)]
+            reason = None if r['viable'] else (r['reason'] if r['reason'] in mark else 'sin_solucion_ik')
+            col, m = mark.get(reason, ('#264653', 'D'))
+            ax[k].scatter(100 * dx, 100 * dy, c=col, marker=m, s=45)
+        ax[k].set_title(f'{fam} @ {tilt}°\nverde viable · x sin IK · cuadrado muñeca en límite')
+    colors = {('B', 20): '#00798c', ('B', 30): '#7fc8d3', ('A', 20): '#d1495b', ('A', 30): '#f2a3ad', None: '#000000'}
+    for (dx, dy), c in cells.items():
+        ch = next((k for k in [('B', 20), ('B', 30), ('A', 20), ('A', 30)] if c[k]['viable']), None)
+        ax[4].scatter(100 * dx, 100 * dy, c=colors[ch], marker='s', s=55)
+    ax[4].set_title('Elección de la regla (B0)\nazul B@20 · celeste B@30 · rojo A@20 (respaldo) · rosa A@30')
+    for a in ax:
+        a.set_xlabel('dx cubo [cm]')
+        a.set_ylabel('dy cubo [cm]')
+        a.set_aspect('equal')
+    fig.tight_layout()
+    fig.savefig(out, dpi=100)
     plt.close(fig)
 
 

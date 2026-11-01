@@ -108,6 +108,9 @@ class BranchConsistentLabelExpert(ScriptedExpert):
                     self.viability[f'{fam}@{tilt}'] = r.get('reason')
                     if r['viable']:
                         self.family, self.tilt, self.decision = fam, tilt, 'preferencia'
+                        # el objetivo es EXACTAMENTE la solución verificada (no una búsqueda distinta que podría no
+                        # encontrarla: eso caía al respaldo y cambiaba de familia en silencio, semilla 121128)
+                        best[(fam, tilt)] = np.asarray(r['q'], float)
                         break
                 if self.family is None:
                     self.decision = 'respaldo'
@@ -118,6 +121,13 @@ class BranchConsistentLabelExpert(ScriptedExpert):
         q_goal = best.get((self.family, self.tilt))
         if q_goal is None:                      # esa inclinación ya no existe desde aquí: la otra de la misma familia
             alt = [(t, v) for (f, t), v in best.items() if f == self.family]
+            if not alt:                         # buscarla explícitamente antes de rendirse (nunca cambiar de familia)
+                for t in (self.tilt, 30 if self.tilt == 20 else 20):
+                    sol = F.family_solution(self.env, q, p, t, self.family)
+                    if sol is not None:
+                        alt = [(t, sol)]
+                        best[(self.family, t)] = sol
+                        break
             if not alt:
                 return None
             self.tilt, q_goal = alt[0]
@@ -135,8 +145,12 @@ class BranchConsistentLabelExpert(ScriptedExpert):
                 return self.q_goal
         q_goal = self.choose(p)
         if q_goal is None:
-            self.family = None
-            return super()._ik(p)                # respaldo explícito: IK global original
+            if self.decision == 'respaldo':
+                return super()._ik(p)            # respaldo explícito (ninguna opción viable desde el inicio)
+            # familia ya elegida pero sin solución desde aquí: conservar el objetivo anterior (nunca cambiar de familia
+            # en silencio por la IK original)
+            self.decisions[-1]['sin_solucion'] = True
+            return self.q_goal if self.q_goal is not None else super()._ik(p)
         self.p_goal, self.q_goal = p.copy(), np.asarray(q_goal, float)
         return self.q_goal
 
@@ -144,7 +158,7 @@ class BranchConsistentLabelExpert(ScriptedExpert):
     def act(self) -> np.ndarray:
         e = self.env
         if (e.params.goal == 'reach' and self.phase == 'pregrasp' and self.tilt is not None
-                and self.decision != 'respaldo'):
+                and self.family is not None and self.decision != 'respaldo'):
             s = e._state
             p = e.backend.object_pose_truth() + np.array([0, 0, e.params.pregrasp_height])
             if np.linalg.norm(p - s.tcp_pos) < 0.04:
