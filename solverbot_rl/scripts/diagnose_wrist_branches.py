@@ -36,7 +36,9 @@ from solverbot_rl.imitation.rollout import run_episode  # noqa: E402
 
 _MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs', 'resultados',
                           'reach_bc_v1', 'modelos')
-MODELS = {'bc_v1': os.path.join(_MODEL_DIR, 'bc_v1.zip'), 'bc_v2w': os.path.join(_MODEL_DIR, 'bc_v2w.zip')}
+MODELS = {'bc_v1': os.path.join(_MODEL_DIR, 'bc_v1.zip'), 'bc_v2w': os.path.join(_MODEL_DIR, 'bc_v2w.zip'),
+          # Fase C: candidato (etiquetador de IK recalculada + 1 ronda de corrección); copia de runs/wrist_c2/bc_e2
+          'bc_e2': os.path.join(os.path.dirname(_MODEL_DIR), '..', 'wrist_branches', 'fase_c', 'modelos', 'bc_e2.zip')}
 
 
 def make_env(backend='kinematic', experiment='reach_bc_v1'):
