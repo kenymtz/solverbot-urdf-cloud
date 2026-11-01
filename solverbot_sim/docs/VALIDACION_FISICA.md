@@ -100,15 +100,16 @@ sala, ida y vuelta por las 4 puertas transitables. Se usa la navegación de prod
 
 | Backend | Tramos | Cruces | Contactos | Holgura mínima | Error lateral máx. | Error de rumbo máx. | Error de localización medio / máx. |
 |---|---|---|---|---|---|---|---|
-| Gazebo (`puertas_gz.json`, 2 vueltas) | 14/14 | 13 | 0 | **3.6 mm** | 15.1 mm | 1.7° | 6.8 / 40.7 mm |
-| Cinemático (`puertas_kin.json`, 3 vueltas) | 21/21 | 19 | 0 | **4.8 mm** | 13.5 mm | 1.6° | 5.4 / 45.2 mm |
+| Gazebo (`puertas_gz.json`, 2 vueltas) | 14/14 | 13 | 0 | **4.1 mm** | 12.7 mm | 1.7° | 6.2 / 32.3 mm |
+| Cinemático (`puertas_kin.json`, 3 vueltas) | 21/21 | 19 | 0 | **4.5 mm** | 14.1 mm | 1.6° | 5.3 / 45.2 mm |
 
 - El error lateral máximo incluye los bordes de entrada y salida del vano.
 - El error de localización máximo ocurre lejos de las puertas.
 
 **Conclusión.**
 
-- El cruce es físicamente viable sin contacto, pero **ajustado**: la holgura mínima medida es de 3.6 mm.
+- El cruce es físicamente viable sin contacto, pero **ajustado**: la holgura mínima medida es de 4.1 mm (versión
+  actual del controlador, §8.5). En las corridas de Gazebo de este trabajo el mínimo varió entre 1.6 y 4.1 mm.
 - El factor limitante es el error de localización en el vano (4–9 mm de media por cruce).
 - Experimento descartado: bajar la corrección de rumbo a 0.75° **empeoró** la holgura mínima, a 2.2 mm en Gazebo y
   0.3 mm en el backend cinemático.
@@ -152,7 +153,7 @@ sala, ida y vuelta por las 4 puertas transitables. Se usa la navegación de prod
 - el freno por LiDAR ahora solo frena lo que **acerca** la huella al obstáculo, igual que el freno por personas.
   Antes congelaba al robot junto a un invitado.
 
-**Resultado cinemático del nivel 5** (`kin_hri_L5_expert.json`): **18/20, 0 contactos**.
+**Resultado cinemático del nivel 5** (`kin_hri_L5_expert.json`, versión final, §8.5): **19/20, 0 contactos**.
 
 - Las semillas 1000 y 1012 se corrigieron.
 - Fallan 1006 y 1019: aproximación a la mano `bloqueado`. La ruta hacia la pose previa pasa junto a un invitado
@@ -337,8 +338,8 @@ Verificado:
 | Categoría | Contenido |
 |---|---|
 | **Entornos Gymnasium implementados** | HRI (6 niveles), GPSR (4), Doing Laundry (4): API de Gymnasium, `reset` reproducible, verdad fuera de la observación, curriculum, experto de referencia |
-| **Verificado en Gazebo** | - Navegación y puertas: 13 cruces sin contacto, holgura mínima de 3.6 mm<br>- HRI N0–N1<br>- GPSR N1, 2/3 en la iteración anterior: `go` y `object_yesno`<br>- Laundry hasta la localización de prendas con la cámara de muñeca, y el pre-agarre (2/3, iteración anterior)<br>- Regresión A/B de P&P<br>- Pipeline de PPO (entrenar + reanudar) en los 3 desafíos |
-| **Verificado solo en cinemático** | HRI N2–N5 (N5: 18/20), GPSR N2–N3 (N3: 13/20), Laundry N3 (19/20). Todos sin contactos con la verificación exacta |
+| **Verificado en Gazebo** | - Navegación y puertas: 13 cruces sin contacto, holgura mínima de 4.1 mm<br>- HRI N0–N1<br>- GPSR N1, 2/3 en la iteración anterior: `go` y `object_yesno`<br>- Laundry hasta la localización de prendas con la cámara de muñeca, y el pre-agarre (2/3, iteración anterior)<br>- Regresión A/B de P&P<br>- Pipeline de PPO (entrenar + reanudar) en los 3 desafíos |
+| **Verificado solo en cinemático** | HRI N2–N5 (N5: 19/20), GPSR N2–N3 (N3: 13/20), Laundry N3 (19/20). Todos sin contactos con la verificación exacta |
 | **Pendiente por límites físicos** | - Agarre y transporte de la bolsa (HRI)<br>- `bring` (GPSR)<br>- Fondo del cesto de piso y tambor del lavarropas (Laundry, alcance)<br>- Doblado (no hay simulación de tela) |
 | **Entrenamiento** | **Probado:** pipeline de PPO en cinemático (iteración anterior) y en Gazebo (esta). **No probado:** aprendizaje, es decir, política entrenada y evaluada |
 | **Fallas restantes** | - HRI N5: 1006 y 1019 (persona sentada junto a la ruta)<br>- GPSR N3: 7, por sin ruta, personas en pasos angostos, búsqueda y percepción<br>- GPSR Gazebo, semilla 2000: falso positivo resuelto, pero el episodio no completa<br>- Laundry N3: 1017 |
@@ -425,7 +426,7 @@ Ninguno lee posiciones ni estados reales. No son políticas aprendidas.
 
 ### 8.4 Pruebas
 
-`tests/test_no_privileged_leaks.py` (20 tests):
+`tests/test_no_privileged_leaks.py` (21 tests: 20 de fugas + 1 de regresión del controlador de puertas, §8.5):
 
 - **Estático:** todo `SkillResult(...)` declara `belief`, y el patrón `.get('belief'` no puede volver.
 - **`MissingBelief`:** un resultado sin `belief` es un error, nunca la verdad.
@@ -439,8 +440,49 @@ Ninguno lee posiciones ni estados reales. No son políticas aprendidas.
 - **`detect_names`** no depende de la presencia real.
 - **`nav_pose_source`:** `'estimate'` por defecto; inválidos rechazados; `'truth'` explícito y reportado.
 
-Contra el código anterior (`468497f`), 11 de los 20 tests fallan.
+Contra el código anterior (`468497f`), 11 de los 20 tests de fugas fallan; el de puertas también falla con el
+controlador anterior.
 
 ### 8.5 Efecto en los resultados
 
-PENDIENTE_FUGAS
+**Revalidación** (cinemático, 20 semillas por nivel, solo los niveles que cambian):
+
+| Nivel | Antes de la auditoría (`468497f`) | Con las correcciones de fugas | + corrección del controlador de puertas (final) |
+|---|---|---|---|
+| HRI N5 | 18/20, 0 contactos | 18/20, **1 contacto** (semilla 1004) | **19/20, 0 contactos** |
+| GPSR N3 | 13/20, 0 contactos | 13/20, 0 contactos | **13/20, 0 contactos** |
+| Laundry N3 | 19/20, 0 contactos | 19/20, 0 contactos | **19/20, 0 contactos** |
+
+**Qué cambió y por qué.**
+
+- **Laundry:** idéntico. La creencia (pose estimada) y la verdad coinciden a menos de 1 cm en este escenario.
+- **GPSR:** la misma tasa. Cambiaron los motivos de 2 de las 7 fallas, porque las decisiones ahora usan la creencia:
+  - semilla 1017: `guide` con la persona no percibida o lejos;
+  - semilla 1012: `search_room` bloqueado.
+- **HRI:**
+  - Las precondiciones y memorias perceptivas cambiaron las trayectorias.
+  - La semilla 1004 **chocó con la jamba** de la puerta lavadero–sala. La causa era un **bug previo del
+    `NavController`**, no la verdad:
+    - al llegar girando al punto previo de la puerta, el rumbo pasaba por la tolerancia de 0.5° en el mismo llamado;
+    - el controlador saltaba a `cross` sin la pausa de convergencia y con giro residual;
+    - resultado: 13° de desvío.
+  - La localización era correcta (error < 5 mm).
+  - **Corrección:** nunca pasar a `cross` en el mismo llamado en que se entra en `align`. Test de regresión
+    `test_door_align_is_never_skipped_while_turning`, que falla con el controlador anterior.
+  - Final: 19/20. Falla la semilla 1001 (`follow`).
+
+**Puertas en Gazebo** (dominio 47, una sola simulación, mismo mundo; 13 cruces por corrida, 0 contactos en todas):
+
+| Corrida | Holgura mínima | Holgura media | Error de localización medio |
+|---|---|---|---|
+| Controlador previo (A/B) | 3.0 mm | 6.4 mm | 6.4 mm |
+| Primera corrección: detención al entrar en `align`; dos corridas | 1.8 / 1.6 mm | 5.1 / 5.5 mm | 9.6 / 6.8 mm |
+| **Versión final:** misma dinámica que antes, solo prohíbe el salto | **4.1 mm** | **6.8 mm** | 6.2 mm |
+| Corrida con 3 barridos cinemáticos en paralelo (descartada por contención de CPU) | 1.6 mm | — | 12.9 mm |
+
+- La primera corrección se reemplazó porque redujo la holgura de forma consistente.
+- Con la versión final, la holgura volvió al rango previo.
+- El mínimo entre corridas varía 1–2 mm. Con la holgura de diseño de 15.5 mm por lado, el margen físico real es
+  de unos 2–8 mm, y lo limita la localización en el vano.
+
+**Pruebas:** 101 tests pasan (80 previos + 21 nuevos). `git diff --check` está limpio.

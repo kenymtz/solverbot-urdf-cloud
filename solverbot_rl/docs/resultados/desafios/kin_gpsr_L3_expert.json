@@ -7,10 +7,10 @@
  "level": 3,
  "seed0": 1000,
  "nav_pose_source": "estimate",
- "wall_s": 3012.1,
+ "wall_s": 2038.1,
  "host": "vm",
- "ros_domain_id": null,
- "gz_partition": null,
+ "ros_domain_id": "47",
+ "gz_partition": "solverbot_val",
  "error": null,
  "summary": {
   "episodes": 20,
@@ -19,9 +19,9 @@
   "success_ci95": 0.2090411442754751,
   "collisions": 0,
   "tipped": 0,
-  "mean_return": 7.46345,
-  "mean_sim_time": 463.32000000000005,
-  "loc_err_mean": 0.006275,
+  "mean_return": 6.8161000000000005,
+  "mean_sim_time": 426.785,
+  "loc_err_mean": 0.006305000000000001,
   "loc_err_max": 0.0662
  },
  "episodes": [
@@ -30,7 +30,7 @@
    "success": true,
    "return": 14.461,
    "skills": 12,
-   "wall_s": 190.5,
+   "wall_s": 83.0,
    "level": 3,
    "progress": {
     "door": true,
@@ -84,7 +84,7 @@
    "success": false,
    "return": -14.945,
    "skills": 80,
-   "wall_s": 80.8,
+   "wall_s": 36.6,
    "level": 3,
    "progress": {
     "door": true,
@@ -213,7 +213,7 @@
    "success": false,
    "return": 5.63,
    "skills": 80,
-   "wall_s": 275.7,
+   "wall_s": 132.4,
    "level": 3,
    "progress": {
     "door": true,
@@ -363,7 +363,7 @@
    "success": false,
    "return": -14.947,
    "skills": 80,
-   "wall_s": 95.3,
+   "wall_s": 42.7,
    "level": 3,
    "progress": {
     "door": true,
@@ -492,7 +492,7 @@
    "success": true,
    "return": 14.87,
    "skills": 10,
-   "wall_s": 129.8,
+   "wall_s": 66.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -546,7 +546,7 @@
    "success": true,
    "return": 14.876,
    "skills": 13,
-   "wall_s": 115.9,
+   "wall_s": 74.1,
    "level": 3,
    "progress": {
     "door": true,
@@ -600,7 +600,7 @@
    "success": true,
    "return": 15.991,
    "skills": 11,
-   "wall_s": 85.0,
+   "wall_s": 58.8,
    "level": 3,
    "progress": {
     "door": true,
@@ -659,7 +659,7 @@
    "success": true,
    "return": 14.006,
    "skills": 9,
-   "wall_s": 77.4,
+   "wall_s": 56.1,
    "level": 3,
    "progress": {
     "door": true,
@@ -707,7 +707,7 @@
    "success": false,
    "return": 5.328,
    "skills": 80,
-   "wall_s": 89.4,
+   "wall_s": 84.9,
    "level": 3,
    "progress": {
     "door": true,
@@ -858,7 +858,7 @@
    "success": true,
    "return": 13.678,
    "skills": 10,
-   "wall_s": 74.4,
+   "wall_s": 67.9,
    "level": 3,
    "progress": {
     "door": true,
@@ -906,7 +906,7 @@
    "success": false,
    "return": -3.19,
    "skills": 80,
-   "wall_s": 271.0,
+   "wall_s": 239.7,
    "level": 3,
    "progress": {
     "door": true,
@@ -1043,7 +1043,7 @@
    "success": true,
    "return": 15.353,
    "skills": 11,
-   "wall_s": 98.9,
+   "wall_s": 93.0,
    "level": 3,
    "progress": {
     "door": true,
@@ -1101,8 +1101,8 @@
    "seed": 1012,
    "success": false,
    "return": -16.318,
-   "skills": 73,
-   "wall_s": 166.9,
+   "skills": 72,
+   "wall_s": 151.5,
    "level": 3,
    "progress": {
     "door": true,
@@ -1144,62 +1144,62 @@
    "contact_with": "",
    "last_steps": [
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ],
     [
-     "go_target",
-     0,
+     "search_room",
+     3,
      false,
      "bloqueado"
     ]
@@ -1239,7 +1239,7 @@
    "success": true,
    "return": 15.27,
    "skills": 11,
-   "wall_s": 97.3,
+   "wall_s": 90.6,
    "level": 3,
    "progress": {
     "door": true,
@@ -1298,7 +1298,7 @@
    "success": true,
    "return": 15.601,
    "skills": 11,
-   "wall_s": 75.0,
+   "wall_s": 69.9,
    "level": 3,
    "progress": {
     "door": true,
@@ -1357,7 +1357,7 @@
    "success": true,
    "return": 14.728,
    "skills": 11,
-   "wall_s": 73.0,
+   "wall_s": 65.5,
    "level": 3,
    "progress": {
     "door": true,
@@ -1411,7 +1411,7 @@
    "success": true,
    "return": 15.337,
    "skills": 14,
-   "wall_s": 107.6,
+   "wall_s": 95.9,
    "level": 3,
    "progress": {
     "door": true,
@@ -1468,17 +1468,15 @@
   {
    "seed": 1017,
    "success": false,
-   "return": -5.141,
-   "skills": 17,
-   "wall_s": 612.1,
+   "return": -18.088,
+   "skills": 80,
+   "wall_s": 259.1,
    "level": 3,
    "progress": {
     "door": true,
     "instruction": true,
     "received": 3,
-    "complete": [
-     1
-    ],
+    "complete": [],
     "n": 3,
     "mode": "all",
     "reports": {}
@@ -1493,18 +1491,18 @@
     "go",
     "where_person"
    ],
-   "sim_time": 1508.2,
+   "sim_time": 777.5,
    "contact": false,
    "tipped": false,
    "fault": null,
-   "loc_err_mean": 0.0039,
+   "loc_err_mean": 0.0045,
    "loc_err_max": 0.0462,
    "nav_pose_source": "estimate",
    "backend": "kinematic",
    "physical": false,
    "stale": {},
    "safety_halts": {
-    "person": 10837,
+    "person": 5020,
     "scan": 0,
     "map": 0
    },
@@ -1512,90 +1510,93 @@
    "contact_with": "",
    "last_steps": [
     [
-     "select_command",
-     2,
-     true,
-     null
-    ],
-    [
      "search_room",
-     2,
-     true,
+     3,
+     false,
+     "bloqueado"
+    ],
+    [
+     "guide",
+     0,
+     false,
      null
     ],
     [
-     "search_room",
+     "guide",
      0,
-     true,
+     false,
      null
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     null
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ],
     [
-     "go_instruction",
+     "guide",
      0,
      false,
-     "bloqueado"
+     "persona_lejos_o_no_percibida"
     ]
    ],
    "last_events": [
     {
-     "t": 90.9999999999991,
-     "ev": "command",
+     "t": 532.5000000000525,
+     "ev": "guide",
      "k": 0,
-     "text": "and\u00e1 a la habitaci\u00f3n, encontr\u00e1 a la persona de camiseta verde y guiala a la heladera",
-     "parsed_ok": true
+     "ok": false
     },
     {
-     "t": 90.9999999999991,
-     "ev": "command",
-     "k": 1,
-     "text": "ten\u00e9s que ir hasta el lavarropas",
-     "parsed_ok": true
+     "t": 546.0000000000556,
+     "ev": "guide",
+     "k": 0,
+     "ok": false
     },
     {
-     "t": 90.9999999999991,
-     "ev": "command",
-     "k": 2,
-     "text": "decime en qu\u00e9 habitaci\u00f3n est\u00e1 la persona de camiseta naranja",
-     "parsed_ok": true
+     "t": 753.7000000001028,
+     "ev": "guide",
+     "k": 0,
+     "ok": false
     },
     {
-     "t": 126.1999999999971,
+     "t": 764.2000000001052,
+     "ev": "guide",
+     "k": 0,
+     "ok": false
+    },
+    {
+     "t": 773.9000000001074,
      "ev": "guide",
      "k": 0,
      "ok": false
@@ -1607,7 +1608,7 @@
    "success": true,
    "return": 15.311,
    "skills": 13,
-   "wall_s": 162.9,
+   "wall_s": 153.5,
    "level": 3,
    "progress": {
     "door": true,
@@ -1671,7 +1672,7 @@
    "success": true,
    "return": 13.37,
    "skills": 12,
-   "wall_s": 105.0,
+   "wall_s": 97.9,
    "level": 3,
    "progress": {
     "door": true,

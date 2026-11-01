@@ -7,10 +7,10 @@
  "level": 3,
  "seed0": 1000,
  "nav_pose_source": "estimate",
- "wall_s": 1057.4,
+ "wall_s": 557.1,
  "host": "vm",
- "ros_domain_id": null,
- "gz_partition": null,
+ "ros_domain_id": "47",
+ "gz_partition": "solverbot_val",
  "error": null,
  "summary": {
   "episodes": 20,
@@ -30,7 +30,7 @@
    "success": true,
    "return": 11.486,
    "skills": 8,
-   "wall_s": 56.3,
+   "wall_s": 23.0,
    "level": 3,
    "progress": {
     "door": true,
@@ -70,7 +70,7 @@
    "success": true,
    "return": 11.493,
    "skills": 8,
-   "wall_s": 51.8,
+   "wall_s": 22.7,
    "level": 3,
    "progress": {
     "door": true,
@@ -110,7 +110,7 @@
    "success": true,
    "return": 11.487,
    "skills": 8,
-   "wall_s": 53.7,
+   "wall_s": 23.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -150,7 +150,7 @@
    "success": true,
    "return": 11.483,
    "skills": 8,
-   "wall_s": 52.7,
+   "wall_s": 23.6,
    "level": 3,
    "progress": {
     "door": true,
@@ -190,7 +190,7 @@
    "success": true,
    "return": 11.493,
    "skills": 8,
-   "wall_s": 49.8,
+   "wall_s": 22.5,
    "level": 3,
    "progress": {
     "door": true,
@@ -230,7 +230,7 @@
    "success": true,
    "return": 11.485,
    "skills": 8,
-   "wall_s": 51.7,
+   "wall_s": 23.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -270,7 +270,7 @@
    "success": true,
    "return": 11.484,
    "skills": 8,
-   "wall_s": 50.8,
+   "wall_s": 23.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -310,7 +310,7 @@
    "success": true,
    "return": 11.49,
    "skills": 8,
-   "wall_s": 51.3,
+   "wall_s": 24.1,
    "level": 3,
    "progress": {
     "door": true,
@@ -350,7 +350,7 @@
    "success": true,
    "return": 11.499,
    "skills": 8,
-   "wall_s": 55.4,
+   "wall_s": 24.1,
    "level": 3,
    "progress": {
     "door": true,
@@ -390,7 +390,7 @@
    "success": true,
    "return": 11.497,
    "skills": 8,
-   "wall_s": 51.2,
+   "wall_s": 24.0,
    "level": 3,
    "progress": {
     "door": true,
@@ -430,7 +430,7 @@
    "success": true,
    "return": 11.498,
    "skills": 8,
-   "wall_s": 52.7,
+   "wall_s": 33.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -470,7 +470,7 @@
    "success": true,
    "return": 11.48,
    "skills": 8,
-   "wall_s": 55.4,
+   "wall_s": 25.7,
    "level": 3,
    "progress": {
     "door": true,
@@ -510,7 +510,7 @@
    "success": true,
    "return": 11.478,
    "skills": 8,
-   "wall_s": 52.2,
+   "wall_s": 25.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -550,7 +550,7 @@
    "success": true,
    "return": 11.483,
    "skills": 8,
-   "wall_s": 54.3,
+   "wall_s": 25.4,
    "level": 3,
    "progress": {
     "door": true,
@@ -590,7 +590,7 @@
    "success": true,
    "return": 11.486,
    "skills": 8,
-   "wall_s": 45.0,
+   "wall_s": 27.6,
    "level": 3,
    "progress": {
     "door": true,
@@ -630,7 +630,7 @@
    "success": true,
    "return": 11.495,
    "skills": 8,
-   "wall_s": 37.7,
+   "wall_s": 25.0,
    "level": 3,
    "progress": {
     "door": true,
@@ -670,7 +670,7 @@
    "success": true,
    "return": 11.485,
    "skills": 8,
-   "wall_s": 38.4,
+   "wall_s": 26.3,
    "level": 3,
    "progress": {
     "door": true,
@@ -710,7 +710,7 @@
    "success": false,
    "return": -2.104,
    "skills": 40,
-   "wall_s": 122.7,
+   "wall_s": 83.6,
    "level": 3,
    "progress": {
     "door": true,
@@ -852,7 +852,7 @@
    "success": true,
    "return": 11.488,
    "skills": 8,
-   "wall_s": 37.5,
+   "wall_s": 25.2,
    "level": 3,
    "progress": {
     "door": true,
@@ -892,7 +892,7 @@
    "success": true,
    "return": 11.487,
    "skills": 8,
-   "wall_s": 36.5,
+   "wall_s": 26.2,
    "level": 3,
    "progress": {
     "door": true,

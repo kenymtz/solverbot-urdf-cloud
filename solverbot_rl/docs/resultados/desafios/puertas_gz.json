@@ -24,13 +24,13 @@
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 22.6
+   "sim_time": 22.4
   },
   {
    "goal": "kitchen",
    "ok": true,
    "reason": null,
-   "sim_time": 48.5
+   "sim_time": 48.7
   },
   {
    "goal": "bedroom",
@@ -42,184 +42,184 @@
    "goal": "kitchen",
    "ok": true,
    "reason": null,
-   "sim_time": 135.9
+   "sim_time": 135.5
   },
   {
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 167.2
+   "sim_time": 165.9
   },
   {
    "goal": "laundry",
    "ok": true,
    "reason": null,
-   "sim_time": 198.0
+   "sim_time": 196.8
   },
   {
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 228.5
+   "sim_time": 227.1
   },
   {
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 228.6
+   "sim_time": 227.2
   },
   {
    "goal": "kitchen",
    "ok": true,
    "reason": null,
-   "sim_time": 256.5
+   "sim_time": 254.7
   },
   {
    "goal": "bedroom",
    "ok": true,
    "reason": null,
-   "sim_time": 300.5
+   "sim_time": 298.8
   },
   {
    "goal": "kitchen",
    "ok": true,
    "reason": null,
-   "sim_time": 344.1
+   "sim_time": 342.1
   },
   {
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 375.4
+   "sim_time": 372.5
   },
   {
    "goal": "laundry",
    "ok": true,
    "reason": null,
-   "sim_time": 406.1
+   "sim_time": 403.5
   },
   {
    "goal": "living_room",
    "ok": true,
    "reason": null,
-   "sim_time": 436.1
+   "sim_time": 433.8
   }
  ],
  "crossings": [
   {
    "door": "entrance_living",
-   "min_clearance_mm": 6.41,
+   "min_clearance_mm": 7.9,
+   "max_abs_lat_mm": 6.19,
+   "max_abs_yaw_deg": 1.44,
+   "loc_err_mean_mm": 3.49,
+   "dur_s": 5.9,
+   "contact": false
+  },
+  {
+   "door": "living_kitchen",
+   "min_clearance_mm": 4.56,
    "max_abs_lat_mm": 6.58,
-   "max_abs_yaw_deg": 1.5,
-   "loc_err_mean_mm": 3.93,
-   "dur_s": 5.8,
-   "contact": false
-  },
-  {
-   "door": "living_kitchen",
-   "min_clearance_mm": 6.58,
-   "max_abs_lat_mm": 6.61,
    "max_abs_yaw_deg": 1.48,
-   "loc_err_mean_mm": 3.78,
+   "loc_err_mean_mm": 4.41,
+   "dur_s": 5.8,
+   "contact": false
+  },
+  {
+   "door": "bedroom_kitchen",
+   "min_clearance_mm": 5.76,
+   "max_abs_lat_mm": 12.69,
+   "max_abs_yaw_deg": 1.71,
+   "loc_err_mean_mm": 7.11,
    "dur_s": 5.9,
    "contact": false
   },
   {
    "door": "bedroom_kitchen",
-   "min_clearance_mm": 4.74,
-   "max_abs_lat_mm": 14.15,
-   "max_abs_yaw_deg": 1.7,
-   "loc_err_mean_mm": 7.76,
-   "dur_s": 5.8,
-   "contact": false
-  },
-  {
-   "door": "bedroom_kitchen",
-   "min_clearance_mm": 6.19,
-   "max_abs_lat_mm": 6.05,
-   "max_abs_yaw_deg": 1.51,
-   "loc_err_mean_mm": 5.96,
-   "dur_s": 5.8,
-   "contact": false
-  },
-  {
-   "door": "living_kitchen",
-   "min_clearance_mm": 7.87,
-   "max_abs_lat_mm": 14.33,
-   "max_abs_yaw_deg": 1.53,
-   "loc_err_mean_mm": 3.09,
-   "dur_s": 5.8,
-   "contact": false
-  },
-  {
-   "door": "laundry_living",
-   "min_clearance_mm": 3.57,
-   "max_abs_lat_mm": 6.6,
-   "max_abs_yaw_deg": 1.5,
-   "loc_err_mean_mm": 8.08,
-   "dur_s": 5.8,
-   "contact": false
-  },
-  {
-   "door": "laundry_living",
-   "min_clearance_mm": 7.35,
-   "max_abs_lat_mm": 5.03,
+   "min_clearance_mm": 6.36,
+   "max_abs_lat_mm": 5.72,
    "max_abs_yaw_deg": 1.52,
-   "loc_err_mean_mm": 5.15,
+   "loc_err_mean_mm": 6.08,
    "dur_s": 5.8,
    "contact": false
   },
   {
    "door": "living_kitchen",
-   "min_clearance_mm": 7.16,
-   "max_abs_lat_mm": 6.53,
+   "min_clearance_mm": 8.27,
+   "max_abs_lat_mm": 6.77,
    "max_abs_yaw_deg": 1.49,
-   "loc_err_mean_mm": 3.47,
+   "loc_err_mean_mm": 6.07,
+   "dur_s": 5.8,
+   "contact": false
+  },
+  {
+   "door": "laundry_living",
+   "min_clearance_mm": 7.58,
+   "max_abs_lat_mm": 6.5,
+   "max_abs_yaw_deg": 1.2,
+   "loc_err_mean_mm": 8.73,
+   "dur_s": 5.8,
+   "contact": false
+  },
+  {
+   "door": "laundry_living",
+   "min_clearance_mm": 7.38,
+   "max_abs_lat_mm": 4.07,
+   "max_abs_yaw_deg": 1.51,
+   "loc_err_mean_mm": 5.42,
+   "dur_s": 5.8,
+   "contact": false
+  },
+  {
+   "door": "living_kitchen",
+   "min_clearance_mm": 7.03,
+   "max_abs_lat_mm": 7.05,
+   "max_abs_yaw_deg": 1.5,
+   "loc_err_mean_mm": 3.75,
    "dur_s": 5.9,
    "contact": false
   },
   {
    "door": "bedroom_kitchen",
-   "min_clearance_mm": 6.27,
-   "max_abs_lat_mm": 15.13,
+   "min_clearance_mm": 4.14,
+   "max_abs_lat_mm": 12.23,
    "max_abs_yaw_deg": 1.7,
-   "loc_err_mean_mm": 7.39,
+   "loc_err_mean_mm": 7.06,
    "dur_s": 5.8,
    "contact": false
   },
   {
    "door": "bedroom_kitchen",
-   "min_clearance_mm": 8.34,
-   "max_abs_lat_mm": 3.7,
-   "max_abs_yaw_deg": 1.51,
-   "loc_err_mean_mm": 5.65,
+   "min_clearance_mm": 7.89,
+   "max_abs_lat_mm": 6.54,
+   "max_abs_yaw_deg": 1.52,
+   "loc_err_mean_mm": 7.37,
    "dur_s": 5.8,
    "contact": false
   },
   {
    "door": "living_kitchen",
-   "min_clearance_mm": 7.65,
-   "max_abs_lat_mm": 14.46,
-   "max_abs_yaw_deg": 1.53,
-   "loc_err_mean_mm": 3.05,
+   "min_clearance_mm": 6.04,
+   "max_abs_lat_mm": 7.05,
+   "max_abs_yaw_deg": 1.49,
+   "loc_err_mean_mm": 5.5,
    "dur_s": 5.8,
    "contact": false
   },
   {
    "door": "laundry_living",
-   "min_clearance_mm": 7.6,
+   "min_clearance_mm": 7.96,
    "max_abs_lat_mm": 5.89,
-   "max_abs_yaw_deg": 1.09,
-   "loc_err_mean_mm": 8.65,
+   "max_abs_yaw_deg": 1.03,
+   "loc_err_mean_mm": 9.05,
    "dur_s": 5.8,
    "contact": false
   },
   {
    "door": "laundry_living",
-   "min_clearance_mm": 6.5,
-   "max_abs_lat_mm": 6.92,
-   "max_abs_yaw_deg": 1.54,
-   "loc_err_mean_mm": 5.03,
+   "min_clearance_mm": 7.58,
+   "max_abs_lat_mm": 6.79,
+   "max_abs_yaw_deg": 1.48,
+   "loc_err_mean_mm": 6.23,
    "dur_s": 5.8,
    "contact": false
   }
@@ -230,15 +230,16 @@
   "crossings": 13,
   "contacts": 0,
   "contact_with": "",
-  "min_clearance_mm": 3.57,
-  "max_abs_lat_mm": 15.13,
-  "max_abs_yaw_deg": 1.7,
-  "loc_err_mean_m": 0.0068,
-  "loc_err_max_m": 0.0407,
+  "min_clearance_mm": 4.14,
+  "max_abs_lat_mm": 12.69,
+  "max_abs_yaw_deg": 1.71,
+  "loc_err_mean_m": 0.0062,
+  "loc_err_max_m": 0.0323,
   "safety_halts": {
    "person": 0,
-   "scan": 0
+   "scan": 0,
+   "map": 0
   },
-  "wall_s": 1076.4
+  "wall_s": 1331.3
  }
 }
