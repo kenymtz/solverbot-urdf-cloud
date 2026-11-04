@@ -20,8 +20,10 @@ están marcados **[robot real]**: conviene verificarlos físicamente.
    requerirán agarre lateral o tomarlos más arriba.
 5. **`tcp_link` está en las puntas de los dedos** (las mallas de los dedos ocupan z ∈ [−0.076, 0] en ese frame).
 6. **Deriva de la base.** Con ruedas locas sin fricción, la reacción del brazo desplaza/gira la base (hasta 3.5 cm y
-   6° observados). Las recompensas se calculan en el frame de la base (pose real del modelo) y el reset la devuelve a
-   su pose si derivó > 1 cm o 1°.
+   6° observados). Las recompensas se calculan en el frame de la base (pose real del modelo). El reset la devuelve a
+   su pose de aparición en cada episodio, con el brazo ya quieto, y lo verifica con una muestra posterior: tolerancias
+   de 5 mm, 0.5° de yaw y 0.5° de inclinación, o `RuntimeError`. Si derivó más de 1 cm o 1°, además la suelta desde 1 cm
+   antes de mover el brazo. Esto fija la pose inicial de cada episodio; no elimina la deriva durante el episodio.
 7. **Agarre en Gazebo.** Validado: dedos detenidos por el objeto (j7 = 0.023 m, media anchura 0.020), objeto
    levantado 10 cm y sostenido. En algunos episodios el cubo rota dentro de la pinza (agarre por la arista, j7 ≈ 7 mm)
    y se mantiene sujeto; el criterio "sujeto" lo contempla (dedos no cerrados del todo + objeto junto al TCP +
