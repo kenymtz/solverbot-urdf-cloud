@@ -347,7 +347,10 @@ class GazeboBackend(Backend):
         # Se lleva el robot a la pose inicial con sus controladores (sin teletransportar articulaciones). Recién con el
         # brazo quieto se devuelve la base a su pose de aparición: el regreso del brazo es lo que la desliza (medido: hasta
         # ~20 mm y 3.5°, con joint1 saturado a 5 rad/s). Por último se ubica el objeto: el estado anterior no se arrastra.
-        if self._base_error(self._base())[2] > self.base_tol[2]:   # volcada: se endereza antes, el brazo podría no volver
+        xy, yaw, tilt = self._base_error(self._base())
+        # Derivada o volcada: se la suelta desde 1 cm antes de mover el brazo. Con joint1 junto a su límite y la base derivada
+        # el brazo no vuelve; lo destraba esta caída, no la corrección de yaw (medido; causa física sin determinar).
+        if xy > 0.01 or yaw > np.radians(1) or tilt > self.base_tol[2]:
             self.set_pose('robot_v3', [0.0, 0.0, 0.01], 0.0)
             self.advance(0.4)
         self.set_pose_in_base(self.obj_name, [obj_xy[0], -0.8, self.obj_half_h + 0.002], obj_yaw)   # al piso, lejos

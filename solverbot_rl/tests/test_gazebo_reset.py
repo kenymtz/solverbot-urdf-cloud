@@ -161,14 +161,14 @@ def test_reubicacion_conserva_altura_e_inclinacion_de_reposo():
 
 
 def test_exito_del_servicio_no_es_pose_verificada():
-    be = FakeWorld(xy=(-0.02, 0.0), obeys=lambda n: False)
+    be = FakeWorld(xy=(-0.008, 0.0), obeys=lambda n: False)
     with pytest.raises(RuntimeError, match='base'):
         be.run_reset()
     assert len(be.robot_calls()) == 3           # intentos acotados
 
 
 def test_segundo_intento_corrige_un_pedido_perdido():
-    be = FakeWorld(xy=(-0.02, 0.0), obeys=lambda n: n >= 2)
+    be = FakeWorld(xy=(-0.008, 0.0), obeys=lambda n: n >= 2)
     be.run_reset()
     assert len(be.robot_calls()) == 2
     assert np.linalg.norm(be._base_pose[:2, 3]) <= 0.005
@@ -194,6 +194,28 @@ def test_base_volcada_se_endereza_antes_de_mover_el_brazo():
     be.run_reset()
     assert be.robot_calls()[0].arm_err > 0.02   # se enderezó con el brazo todavía lejos de la pose inicial
     assert abs(be.tilt[0]) <= np.radians(0.5)
+
+
+def test_base_derivada_se_suelta_antes_de_mover_el_brazo():
+    class TrabadoHastaLaCaida(FakeWorld):
+        """Medido con joint1 junto a su límite: no vuelve hasta que la base cae desde 1 cm; corregir el yaw no lo destraba."""
+
+        def blocked(self):
+            return not any(c.xyz[2] >= 0.01 for c in self.robot_calls())
+
+    be = TrabadoHastaLaCaida(yaw=np.radians(2.3))
+    be.run_reset()
+    calls = be.robot_calls()
+    assert calls[0].xyz[2] >= 0.01 and calls[0].arm_err > 0.02
+    assert tilt_of(calls[-1].q) == pytest.approx((ROLL, PITCH), abs=1e-6)
+    assert np.linalg.norm(be._base_pose[:2, 3]) == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.parametrize('xy, yaw, dropped', [(0.009, 0.0, False), (0.011, 0.0, True), (0.0, 0.9, False), (0.0, 1.1, True)])
+def test_umbral_de_la_suelta_previa(xy, yaw, dropped):
+    be = FakeWorld(xy=(xy, 0.0), yaw=np.radians(yaw), slide=0.0)
+    be.run_reset()
+    assert (be.robot_calls()[0].xyz[2] >= 0.01) == dropped
 
 
 def test_objeto_se_ubica_respecto_de_la_base_ya_reubicada():
@@ -334,7 +356,7 @@ def test_una_muestra_perdida_no_aborta_el_reset():
                 return
             self.emit_pose()
 
-    be = MuestraPerdida(xy=(-0.02, 0.0))
+    be = MuestraPerdida(xy=(-0.008, 0.0))
     be.run_reset()
     assert be.dropped and np.linalg.norm(be._base_pose[:2, 3]) <= 0.005
 
