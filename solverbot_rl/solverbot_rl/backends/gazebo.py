@@ -48,6 +48,8 @@ def _image_to_np(msg) -> np.ndarray:
 
 class GazeboBackend(Backend):
     physical = True
+    base_max_age = 0.02                         # s de tiempo simulado: antigüedad máxima de una pose de base verificada
+    base_tol = (0.005, np.radians(0.5), np.radians(0.5))   # reset: error de xy (m), yaw e inclinación (rad)
 
     def __init__(self, cfg: dict, world: str = 'pick_place_training', images: tuple[str, ...] = (),
                  perception: bool = True, timeout: float = 30.0):
@@ -65,8 +67,6 @@ class GazeboBackend(Backend):
         self.use_perception = perception
         self.timeout = timeout
         self.max_image_age = 0.2                # s de tiempo simulado
-        self.base_max_age = 0.02                # s de tiempo simulado: antigüedad máxima de una pose de base verificada
-        self.base_tol = (0.005, np.radians(0.5), np.radians(0.5))  # reset: error de xy (m), yaw e inclinación (rad)
         self._g_logic = cfg['robot']['gripper_open']
         self.grip_squeeze = cfg['robot'].get('gripper_squeeze', 0.002)
         self.grip_coupling_dt = cfg['robot'].get('gripper_coupling_dt', 0.02)
