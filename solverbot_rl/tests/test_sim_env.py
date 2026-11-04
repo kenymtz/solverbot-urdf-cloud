@@ -11,9 +11,14 @@ ACTIVATE = 'source "$HOME/solverbot_venv/bin/activate"'
 pytestmark = pytest.mark.skipif(shutil.which('bash') is None, reason='requiere bash')
 
 
+def make_venv(path):
+    subprocess.run([sys.executable, '-m', 'venv', '--without-pip', str(path)], check=True)
+    return path
+
+
 @pytest.fixture
 def home(tmp_path):
-    subprocess.run([sys.executable, '-m', 'venv', '--without-pip', str(tmp_path / 'solverbot_venv')], check=True)
+    make_venv(tmp_path / 'solverbot_venv')
     ros = tmp_path / 'ros'
     (ros / 'bin').mkdir(parents=True)
     (ros / 'bin' / 'ros2').write_text('#!/bin/sh\n')
@@ -40,4 +45,22 @@ def test_venv_ya_activo_no_pierde_ros2(home):
 
 
 def test_cargar_dos_veces_no_pierde_ros2(home):
-    assert load(home, f'source "{SIM_ENV}" 0', f'source "{SIM_ENV}" 0')[0] == str(home / 'ros' / 'bin' / 'ros2')
+    assert load(home, f'source "{SIM_ENV}" 0', f'source "{SIM_ENV}" 0') == (str(home / 'ros' / 'bin' / 'ros2'),
+                                                                             str(home / 'solverbot_venv'))
+
+
+def test_venv_ajeno_se_conserva_si_no_existe_el_propio(home):
+    other = make_venv(home / 'otro_venv')
+    shutil.rmtree(home / 'solverbot_venv')
+    assert load(home, f'source "{other}/bin/activate"', f'source "{SIM_ENV}" 0') == (str(home / 'ros' / 'bin' / 'ros2'), str(other))
+
+
+def test_venv_ajeno_se_reemplaza_si_existe_el_propio(home):
+    other = make_venv(home / 'otro_venv')
+    assert load(home, f'source "{other}/bin/activate"', f'source "{SIM_ENV}" 0') == (str(home / 'ros' / 'bin' / 'ros2'),
+                                                                                     str(home / 'solverbot_venv'))
+
+
+def test_sin_ningun_venv(home):
+    shutil.rmtree(home / 'solverbot_venv')
+    assert load(home, f'source "{SIM_ENV}" 0') == (str(home / 'ros' / 'bin' / 'ros2'), '')
