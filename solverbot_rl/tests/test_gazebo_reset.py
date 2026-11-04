@@ -57,12 +57,13 @@ class FakeWorld(GazeboBackend):
                  offset=(0.0, 0.0)):
         self.obj_name, self.obj_half_h, self.table_h, self.arm_joints = 'obj', 0.02, 0.4, JOINTS
         self.timeout, self.cli_pose, self._lock = 0.2, 'cli_pose', threading.Lock()
-        self._clock, self._js, self._js_t = 10.0, {}, -1.0
+        self._clock, self._js, self._js_vel, self._js_t = 10.0, {}, {}, -1.0
         self._base_pose, self._base_q, self._base_t = None, np.array([0.0, 0.0, 0.0, 1.0]), -1.0
         self.q, self.target, self.speed = np.ones(6), np.ones(6), 0.0
         self.xyz, self.yaw, self.tilt, self.rest_tilt = np.array([*xy, REST_Z]), yaw, tilt, rest_tilt
         self.slide, self.obeys, self.offset = slide, obeys, offset
         self.landing, self.log, self.advances, self.obj_table_base = None, [], 0, None
+        self.lift_speed, self.joint_speeds = 0.0, True
         self.emit_joints()
         self.emit_pose()
 
@@ -76,7 +77,8 @@ class FakeWorld(GazeboBackend):
 
     def emit_joints(self):
         names = [*JOINTS, 'torso_lift_joint']
-        self._on_js(NS(name=names, position=[*self.q, 0.0], velocity=[self.speed] * 7, header=NS(stamp=stamp(self._clock))))
+        velocity = [*[self.speed] * 6, self.lift_speed] if self.joint_speeds else []
+        self._on_js(NS(name=names, position=[*self.q, 0.0], velocity=velocity, header=NS(stamp=stamp(self._clock))))
 
     def publish_pose(self):
         self.emit_pose()
@@ -94,6 +96,8 @@ class FakeWorld(GazeboBackend):
         if self.speed > 1.0:                    # el brazo rápido desliza la base
             self.xyz[0] -= self.slide
             self.yaw += np.radians(200 * self.slide)
+        elif self.speed > 0.01:                 # el brazo que todavía frena la desliza un poco
+            self.xyz[0] -= self.slide / 20
         if self.landing is not None:
             self.xyz, self.yaw, self.tilt = self.landing
             self.landing = None
@@ -219,6 +223,90 @@ def test_error_si_las_articulaciones_no_convergen_sin_tocar_la_base():
         be.run_reset()
     assert not be.robot_calls()
     assert be.advances == 150                   # hasta 15 s simulados, no indefinido
+
+
+def test_base_se_reubica_con_el_brazo_quieto():
+    be = FakeWorld(xy=(-0.02, 0.0))
+    be.run_reset()
+    assert all(c.speed <= 0.01 for c in be.robot_calls())
+    assert np.linalg.norm(be._base_pose[:2, 3]) == pytest.approx(0.0, abs=1e-9)   # sin deslizamiento tras reubicar
+    assert be.reset_error < 0.002               # refleja la posición ya aquietada, no la de la primera convergencia
+
+
+class Residual(FakeWorld):
+    """Tras converger en posición, el brazo mantiene `floor` rad/s durante las primeras `steps` esperas."""
+
+    converge = 6                                # avances que tarda el brazo en entrar en la banda de 0.02 rad
+
+    def __init__(self, floor, steps=10 ** 6):
+        self.floor, self.steps = floor, steps
+        super().__init__()
+
+    def advance(self, dt):
+        super().advance(dt)
+        if self.advances < self.converge + self.steps:
+            self.speed = max(self.speed, self.floor)
+            self.emit_joints()
+
+
+@pytest.mark.parametrize('floor, ok', [(0.009, True), (0.011, False)])
+def test_umbral_de_velocidad(floor, ok):
+    be = Residual(floor)
+    if ok:
+        be.run_reset()
+    else:
+        with pytest.raises(RuntimeError, match='aquietó'):
+            be.run_reset()
+
+
+@pytest.mark.parametrize('steps, ok', [(10, True), (11, False)])
+def test_la_espera_dura_a_lo_sumo_un_segundo(steps, ok):
+    be = Residual(0.5, steps)
+    if ok:
+        be.run_reset()
+        assert be.robot_calls()
+    else:
+        with pytest.raises(RuntimeError, match='aquietó'):
+            be.run_reset()
+        assert be.advances == be.converge + 10
+
+
+def test_brazo_en_movimiento_no_reubica_la_base():
+    be = Residual(0.5)
+    with pytest.raises(RuntimeError, match='aquietó'):
+        be.run_reset()
+    assert not be.robot_calls()
+
+
+def test_torso_en_movimiento_no_reubica_la_base():
+    be = FakeWorld()
+    be.lift_speed = 0.5
+    with pytest.raises(RuntimeError, match='aquietó'):
+        be.run_reset()
+    assert not be.robot_calls()
+
+
+def test_sin_velocidades_en_joint_states_no_reubica_la_base():
+    be = FakeWorld()
+    be.joint_speeds = False
+    with pytest.raises(RuntimeError, match='aquietó'):
+        be.run_reset()
+    assert not be.robot_calls()
+
+
+def test_posicion_perdida_durante_la_espera_no_reubica_la_base():
+    class Empujado(FakeWorld):
+        def advance(self, dt):
+            super().advance(dt)
+            if self.advances >= 7:              # ya en la banda de 0.02 rad: algo lo saca y queda quieto
+                self.target = self.q = np.full(6, 0.05)
+                self.speed = 0.0
+                self.emit_joints()
+
+    be = Empujado()
+    with pytest.raises(RuntimeError, match='aquietó'):
+        be.run_reset()
+    assert not be.robot_calls()
 
 
 class Congelada(FakeWorld):

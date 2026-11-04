@@ -50,6 +50,8 @@ class GazeboBackend(Backend):
     physical = True
     base_max_age = 0.02                         # s de tiempo simulado: antigüedad máxima de una pose de base verificada
     base_tol = (0.005, np.radians(0.5), np.radians(0.5))   # reset: error de xy (m), yaw e inclinación (rad)
+    arm_still_speed = 0.01                      # rad/s (m/s en el torso): por debajo el brazo cuenta como quieto
+    arm_still_steps = 10                        # pasos de 0.1 s: espera máxima de 1 s simulado
 
     def __init__(self, cfg: dict, world: str = 'pick_place_training', images: tuple[str, ...] = (),
                  perception: bool = True, timeout: float = 30.0):
@@ -75,6 +77,7 @@ class GazeboBackend(Backend):
         self._lock = threading.Lock()
         self._clock = 0.0
         self._js: dict[str, float] = {}
+        self._js_vel: dict[str, float] = {}
         self._js_t = -1.0
         self._obj_pose: np.ndarray | None = None
         self._base_pose: np.ndarray | None = None      # 4x4 base del robot en el mundo (verdad)
@@ -162,6 +165,7 @@ class GazeboBackend(Backend):
     def _on_js(self, m):
         with self._lock:
             self._js.update(zip(m.name, m.position))
+            self._js_vel = dict(zip(m.name, m.velocity))    # sin velocidades queda vacío: no se confía en datos viejos
             self._js_t = _stamp(m)
 
     def _on_poses(self, m):
@@ -305,6 +309,24 @@ class GazeboBackend(Backend):
     def _base_ok(self, b):
         return all(e <= tol for e, tol in zip(self._base_error(b), self.base_tol))
 
+    def _arm_error(self, arm_q, lift):
+        q = np.array([self._js.get(j, 0.0) for j in self.arm_joints])
+        return float(max(np.max(np.abs(q - arm_q)), abs(self._js.get('torso_lift_joint', 0) - lift)))
+
+    def _arm_speed(self):
+        with self._lock:                        # sin datos de velocidad no se puede afirmar que esté quieto
+            return max(abs(self._js_vel.get(j, np.inf)) for j in (*self.arm_joints, 'torso_lift_joint'))
+
+    def _wait_arm_still(self, arm_q, lift):
+        """Entrar en la banda de posición no implica estar quieto: la inercia residual desliza la base recién reubicada
+        (medido: 0.66 mm y 0.18° en 1 de 30 resets). Si no se detiene a tiempo, falla sin reubicar."""
+        for _ in range(self.arm_still_steps):
+            self.advance(0.1)
+            self.reset_error = self._arm_error(arm_q, lift)
+            if self._arm_speed() <= self.arm_still_speed and self.reset_error < 0.02:
+                return
+        raise RuntimeError(f'reset: el brazo no se aquietó (velocidad {self._arm_speed():.3f}, error {self.reset_error:.3f})')
+
     def _return_base(self):
         """Devuelve la base a su pose de aparición (el mundo de entrenamiento la crea en el origen) y lo verifica."""
         for _ in range(3):
@@ -335,12 +357,12 @@ class GazeboBackend(Backend):
         self.reset_error = np.inf
         for _ in range(150):                    # hasta 15 s simulados
             self.advance(0.1)
-            q = np.array([self._js.get(j, 0.0) for j in self.arm_joints])
-            self.reset_error = float(max(np.max(np.abs(q - arm_q)), abs(self._js.get('torso_lift_joint', 0) - lift)))
+            self.reset_error = self._arm_error(arm_q, lift)
             if self.reset_error < 0.02:
                 break
         if self.reset_error >= 0.02:
             raise RuntimeError(f'reset: el robot no alcanzó la pose inicial (error {self.reset_error:.3f} rad/m)')
+        self._wait_arm_still(arm_q, lift)
         self._return_base()
         self.set_pose_in_base(self.obj_name, [obj_xy[0], obj_xy[1], self.table_h + self.obj_half_h + 0.003], obj_yaw)
         self.advance(0.2)                       # el objeto se asienta sobre la mesa (0.3 s con el paso de _fresh_base)
