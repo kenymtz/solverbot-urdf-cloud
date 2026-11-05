@@ -20,8 +20,20 @@ están marcados **[robot real]**: conviene verificarlos físicamente.
    requerirán agarre lateral o tomarlos más arriba.
 5. **`tcp_link` está en las puntas de los dedos** (las mallas de los dedos ocupan z ∈ [−0.076, 0] en ese frame).
 6. **Deriva de la base.** Con ruedas locas sin fricción, la reacción del brazo desplaza/gira la base (hasta 3.5 cm y
-   6° observados). Las recompensas se calculan en el frame de la base (pose real del modelo) y el reset la devuelve a
-   su pose si derivó > 1 cm o 1°.
+   6° observados). Las recompensas se calculan en el frame de la base (pose real del modelo). El reset la devuelve a
+   su pose de aparición en cada episodio, con el brazo ya quieto, y lo verifica con una muestra posterior: tolerancias
+   de 5 mm, 0.5° de yaw y 0.5° de inclinación, o `RuntimeError`. Esto fija la pose inicial de cada episodio; no elimina
+   la deriva durante el episodio.
+
+   **Suelta previa.** *Condición de activación:* al entrar al reset, con la base a más de 1 cm del origen, a más de 1°
+   de yaw o con más de 0.5° de inclinación (en reposo mide 0.29°; el límite detecta una base volcada), se la suelta
+   desde 1 cm antes de mover el brazo. *Mecanismo que mitiga:* un escalón rápido puede llevar una articulación contra
+   su tope, donde queda clavada e ignora las órdenes. Medido con `joint1`: ordenada a 2.598 rad llega a 2.618 y no
+   vuelve. En los experimentos la libera una caída desde 2 mm y, en 7 de 10 casos, la reacción de otra articulación;
+   un teletransporte sin impacto no la libera, y a 0.05 rad por paso, la velocidad de las políticas, no se traba.
+   Condición y mecanismo son independientes: la deriva no causa el bloqueo, solo suele acompañar al escalón que lo
+   produce (8 mm y 2.2° en lo medido). Por eso, con deriva menor al umbral no hay suelta y el reset puede abortar,
+   igual que antes de este cambio. No se inspeccionó el mecanismo interno de DART.
 7. **Agarre en Gazebo.** Validado: dedos detenidos por el objeto (j7 = 0.023 m, media anchura 0.020), objeto
    levantado 10 cm y sostenido. En algunos episodios el cubo rota dentro de la pinza (agarre por la arista, j7 ≈ 7 mm)
    y se mantiene sujeto; el criterio "sujeto" lo contempla (dedos no cerrados del todo + objeto junto al TCP +

@@ -1,0 +1,2 @@
+# DAgger ronda 2 (B): ejecuta BC v2, etiqueta ReachLabelExpert
+py runs/reach_bc_v1 collect_demos.py --backend gazebo --experiment reach_bc_v1 --policy runs/reach_bc_v1/bc_v2/model.zip --beta 0 --labeler local --source dagger_2 --level reach_var_m --seeds 113000-113029 --out runs/reach_bc_v1/demos/dagger2_var_m

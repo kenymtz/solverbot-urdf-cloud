@@ -1,0 +1,5 @@
+# Ronda 1 de evaluación (instancia A): BC v1 y experto en escenarios de evaluación (semillas 900000+, nunca entrenadas)
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v1/model.zip --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/bc_v1/reach
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v1/model.zip --level reach_var_m --seeds 900200-900229 --out runs/reach_bc_v1/eval/bc_v1/reach_var_m
+py runs/reach_bc_v1 eval_reach.py --policy scripted --level reach_var_m --seeds 900200-900229 --out runs/reach_bc_v1/eval/scripted/reach_var_m
+py runs/reach_bc_v1 eval_reach.py --policy scripted --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/scripted/reach

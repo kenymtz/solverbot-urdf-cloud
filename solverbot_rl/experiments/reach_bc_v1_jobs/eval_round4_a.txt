@@ -1,0 +1,3 @@
+# Ronda 4 (A): BC v3 (demostraciones + DAgger 1 y 2)
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v3/model.zip --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/bc_v3/reach
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v3/model.zip --level reach_var_s --seeds 900100-900129 --out runs/reach_bc_v1/eval/bc_v3/reach_var_s

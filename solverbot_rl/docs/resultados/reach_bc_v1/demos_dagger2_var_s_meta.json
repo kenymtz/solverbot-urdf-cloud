@@ -1,0 +1,53 @@
+{
+ "experiment": "reach_bc_v1",
+ "level": {
+  "name": "reach_var_s",
+  "goal": "reach",
+  "object_xy_range": 0.03,
+  "start": "home",
+  "start_q_noise": 0.05
+ },
+ "level_index": 6,
+ "backend": "gazebo",
+ "physical": true,
+ "object_source": "perception",
+ "source": "dagger_2",
+ "policy": "runs/reach_bc_v1/bc_v2/model.zip",
+ "labeler": "local",
+ "beta": 0.0,
+ "commit": "9381ede",
+ "obs_dim": 31,
+ "act_dim": 7,
+ "control": {
+  "dt": 0.1,
+  "arm_delta_max": 0.05,
+  "max_episode_steps": 150
+ },
+ "task": {
+  "table_height": 0.74,
+  "pregrasp_height": 0.08,
+  "grasp_dz": -0.006,
+  "grasp_radius": 0.03,
+  "lift_height": 0.06,
+  "place_tolerance": 0.05,
+  "release_clearance": 0.05,
+  "drop_height_margin": 0.05,
+  "no_progress_steps": 40
+ },
+ "reward": {
+  "gamma": 0.99,
+  "w_reach": 2.0,
+  "w_align": 0.5,
+  "w_lift": 2.0,
+  "w_transport": 2.0,
+  "bonus_grasp": 2.0,
+  "bonus_lift": 3.0,
+  "bonus_success": 10.0,
+  "pen_time": 0.01,
+  "pen_action_rate": 0.05,
+  "pen_limit": 0.1,
+  "pen_collision": 2.0,
+  "pen_drop": 5.0,
+  "pen_no_progress": 1.0
+ }
+}

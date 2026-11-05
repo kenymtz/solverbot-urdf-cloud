@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy", "pyyaml", "scipy", "gymnasium>=0.29", "stable-baselines3>=2.3"]
 
 [tool.setuptools]
-packages = ["solverbot_rl", "solverbot_rl.backends", "solverbot_rl.envs"]
+packages = ["solverbot_rl", "solverbot_rl.backends", "solverbot_rl.envs", "solverbot_rl.imitation"]
 
 [tool.setuptools.package-data]
 solverbot_rl = ["data/*.urdf"]

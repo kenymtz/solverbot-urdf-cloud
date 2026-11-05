@@ -1,0 +1,28 @@
+# =====================================================================================
+#  Experimento reach_bc_v1: Behavior Cloning del experto guionado en el nivel `reach` y fine-tuning SAC.
+#
+#  NO modifica física, recompensas, criterios de éxito ni los niveles originales del curriculum:
+#  la configuración base es solverbot_sim/config/pick_place.yaml sin cambios y los niveles de abajo se AGREGAN
+#  al final de la lista (los índices 0..5 originales quedan idénticos).
+#
+#  Variación controlada (solo en estos niveles nuevos):
+#    object_xy_range  posición del cubo uniforme en un cuadrado ±r alrededor de world.object.xy (como reach_rand)
+#    start_q_noise    perturbación uniforme ±n rad de cada articulación del brazo respecto de robot.home
+#  Ambas sobre la misma mesa y el mismo criterio de éxito de `reach` (task.success).
+# =====================================================================================
+name: reach_bc_v1
+base_config: null            # null = solverbot_sim/config/pick_place.yaml
+overrides: {}                # sin cambios de recompensa / física / control
+
+extra_levels:
+  - {name: reach_var_s, goal: reach, object_xy_range: 0.03, start: home, start_q_noise: 0.05}
+  - {name: reach_var_m, goal: reach, object_xy_range: 0.05, start: home, start_q_noise: 0.10}
+  # Solo EVALUACIÓN de extrapolación: más allá del rango de todas las demostraciones y de DAgger (nunca entrenado)
+  - {name: reach_var_l, goal: reach, object_xy_range: 0.07, start: home, start_q_noise: 0.15}
+
+# Rangos de semillas DISJUNTOS. Con object_xy_range > 0 cada semilla es una geometría distinta (posición del cubo,
+# pose inicial y yaw). En `reach` (object_xy_range 0) las semillas solo cambian el yaw del cubo: NO son escenarios
+# geométricos distintos y se reportan aparte.
+seeds:
+  train: 100000              # demostraciones / DAgger
+  eval: 900000               # evaluación independiente (nunca usada para entrenar)

@@ -1,0 +1,6 @@
+# Ronda 1 de evaluación (instancia B): BC v1 variación pequeña + líneas base (SAC desde cero, aleatoria)
+py runs/reach_bc_v1 eval_reach.py --policy runs/reach_bc_v1/bc_v1/model.zip --level reach_var_s --seeds 900100-900129 --out runs/reach_bc_v1/eval/bc_v1/reach_var_s
+py runs/reach_bc_v1 eval_reach.py --policy runs/sac_reach_baseline_v1/model_final.zip --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/sac_scratch_5k/reach
+py runs/reach_bc_v1 eval_reach.py --policy random --level reach --seeds 900000-900019 --out runs/reach_bc_v1/eval/random/reach
+py runs/reach_bc_v1 eval_reach.py --policy runs/sac_reach_baseline_v1/model_final.zip --level reach_var_m --seeds 900200-900229 --out runs/reach_bc_v1/eval/sac_scratch_5k/reach_var_m
+py runs/reach_bc_v1 eval_reach.py --policy random --level reach_var_m --seeds 900200-900229 --out runs/reach_bc_v1/eval/random/reach_var_m

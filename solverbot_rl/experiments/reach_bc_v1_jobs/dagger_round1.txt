@@ -1,0 +1,3 @@
+# DAgger ronda 1: ejecuta BC v1 (beta=0), etiqueta el experto local (ReachLabelExpert). Semillas 110000+ / 111000+.
+py runs/reach_bc_v1 collect_demos.py --backend gazebo --experiment reach_bc_v1 --level reach_var_m --seeds 110000-110039 --policy runs/reach_bc_v1/bc_v1/model.zip --beta 0 --labeler local --source dagger_1 --out runs/reach_bc_v1/demos/dagger1_var_m
+py runs/reach_bc_v1 collect_demos.py --backend gazebo --experiment reach_bc_v1 --level reach_var_s --seeds 111000-111019 --policy runs/reach_bc_v1/bc_v1/model.zip --beta 0 --labeler local --source dagger_1 --out runs/reach_bc_v1/demos/dagger1_var_s

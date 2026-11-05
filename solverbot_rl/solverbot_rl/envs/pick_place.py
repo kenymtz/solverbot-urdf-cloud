@@ -137,6 +137,12 @@ class SolverBotPickPlaceEnv(gym.Env):
         rng = self.np_random
         obj_xy = np.asarray(wd['object']['xy'], float) + rng.uniform(-1, 1, 2) * lv['object_xy_range']
         q0 = self._start_q(obj_xy)
+        # Perturbación opcional de la pose inicial (solo niveles experimentales con `start_q_noise` > 0, en rad por
+        # articulación). Sin la clave no se consume la RNG: los niveles originales y sus semillas no cambian.
+        noise = float(lv.get('start_q_noise', 0.0))
+        if noise > 0:
+            q0 = np.clip(q0 + rng.uniform(-noise, noise, len(q0)), self.lo + 0.02, self.hi - 0.02)
+        self.start_q, self.start_obj_xy = np.array(q0, float), np.array(obj_xy, float)
         self.backend.reset(rng, obj_xy, float(rng.uniform(-0.3, 0.3)), q0, r['gripper_open'], r['lift'], r['head'])
         js = self._joints()
         self._q_cmd = np.array([js[j] for j in self.arm_joints])
