@@ -1,6 +1,9 @@
 #!/bin/bash
 # source tools/wsl/sim_env.sh <instancia>  -> entorno ROS/Gazebo aislado para esa instancia de simulación
 INSTANCE=${1:-0}
+# Con el venv ya activo, el `activate` de abajo restauraría el PATH previo a ROS (_OLD_VIRTUAL_PATH) y `ros2` desaparecería.
+# Sin ese `activate` no hay nada que proteger: un venv ajeno debe seguir activo.
+[ -f "$HOME/solverbot_venv/bin/activate" ] && declare -F deactivate >/dev/null && deactivate
 ROS_SETUP=${SOLVERBOT_ROS_SETUP:-/opt/ros/jazzy/setup.bash}
 if [ -f "$ROS_SETUP" ]; then source "$ROS_SETUP"
 elif ! command -v ros2 >/dev/null; then echo "[sim_env] ROS 2 no encontrado ($ROS_SETUP)" >&2; return 1 2>/dev/null || exit 1; fi

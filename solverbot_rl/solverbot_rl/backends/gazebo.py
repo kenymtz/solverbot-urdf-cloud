@@ -48,6 +48,10 @@ def _image_to_np(msg) -> np.ndarray:
 
 class GazeboBackend(Backend):
     physical = True
+    base_max_age = 0.02                         # s de tiempo simulado: antigüedad máxima de una pose de base verificada
+    base_tol = (0.005, np.radians(0.5), np.radians(0.5))   # reset: error de xy (m), yaw e inclinación (rad)
+    arm_still_speed = 0.01                      # rad/s (m/s en el torso): por debajo el brazo cuenta como quieto
+    arm_still_steps = 10                        # pasos de 0.1 s: espera máxima de 1 s simulado
 
     def __init__(self, cfg: dict, world: str = 'pick_place_training', images: tuple[str, ...] = (),
                  perception: bool = True, timeout: float = 30.0):
@@ -73,9 +77,12 @@ class GazeboBackend(Backend):
         self._lock = threading.Lock()
         self._clock = 0.0
         self._js: dict[str, float] = {}
+        self._js_vel: dict[str, float] = {}
         self._js_t = -1.0
         self._obj_pose: np.ndarray | None = None
         self._base_pose: np.ndarray | None = None      # 4x4 base del robot en el mundo (verdad)
+        self._base_q = np.array([0.0, 0.0, 0.0, 1.0])  # su orientación (x, y, z, w)
+        self._base_t = -1.0                            # y su sello de tiempo simulado
         self._img: dict[str, tuple[float, np.ndarray]] = {}
         self._k: np.ndarray | None = None
         self._urdf: str | None = None
@@ -158,6 +165,7 @@ class GazeboBackend(Backend):
     def _on_js(self, m):
         with self._lock:
             self._js.update(zip(m.name, m.position))
+            self._js_vel = dict(zip(m.name, m.velocity))    # sin velocidades queda vacío: no se confía en datos viejos
             self._js_t = _stamp(m)
 
     def _on_poses(self, m):
@@ -173,7 +181,9 @@ class GazeboBackend(Backend):
                               [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
                               [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]]
                 m4[:3, 3] = [p.x, p.y, p.z]
+                self._base_q = np.array([x, y, z, w])
                 self._base_pose = m4
+                self._base_t = t.header.stamp.sec + t.header.stamp.nanosec * 1e-9
 
     def _on_img(self, key, m):
         self._img[key] = (_stamp(m), _image_to_np(m))
@@ -270,22 +280,80 @@ class GazeboBackend(Backend):
         w = b @ np.append(np.asarray(xyz, float), 1.0)
         return self.set_pose(name, [w[0], w[1], xyz[2]], yaw + float(np.arctan2(b[1, 0], b[0, 0])))
 
-    def set_pose(self, name, xyz, yaw=0.0):
+    def set_pose(self, name, xyz, yaw=0.0, quat=None):
+        """Pide la pose al simulador. `success` solo dice que el pedido se aceptó, no que el modelo haya quedado ahí."""
         req = SetEntityPose.Request()
         req.entity.name = name
         req.entity.type = 2                     # MODEL
         req.pose.position.x, req.pose.position.y, req.pose.position.z = map(float, xyz)
-        req.pose.orientation.z, req.pose.orientation.w = float(np.sin(yaw / 2)), float(np.cos(yaw / 2))
+        o = req.pose.orientation
+        o.x, o.y, o.z, o.w = map(float, quat if quat is not None else (0.0, 0.0, np.sin(yaw / 2), np.cos(yaw / 2)))
         return self._call(self.cli_pose, req).success
 
+    def _fresh_base(self):
+        """Avanza y devuelve la pose de la base: en pausa no se publica, tras set_pose _base_pose sigue siendo la anterior."""
+        for attempt in range(5):                # tópico best-effort: si se perdió la última muestra, un paso más
+            self.advance(0.1)
+            try:
+                self._wait(lambda: self._clock - self._base_t <= self.base_max_age, 'pose reciente de robot_v3', timeout=1.0)
+                return self._base_pose.copy()
+            except TimeoutError:
+                if attempt == 4:
+                    raise
+
+    def _base_error(self, b):
+        """Error de la pose b respecto de la aparición (origen, yaw 0): xy (m), yaw e inclinación (rad)."""
+        return (float(np.linalg.norm(b[:2, 3])), abs(float(np.arctan2(b[1, 0], b[0, 0]))),
+                float(np.arccos(np.clip(b[2, 2], -1.0, 1.0))))
+
+    def _base_ok(self, b):
+        return all(e <= tol for e, tol in zip(self._base_error(b), self.base_tol))
+
+    def _arm_error(self, arm_q, lift):
+        q = np.array([self._js.get(j, 0.0) for j in self.arm_joints])
+        return float(max(np.max(np.abs(q - arm_q)), abs(self._js.get('torso_lift_joint', 0) - lift)))
+
+    def _arm_speed(self):
+        with self._lock:                        # sin datos de velocidad no se puede afirmar que esté quieto
+            return max(abs(self._js_vel.get(j, np.inf)) for j in (*self.arm_joints, 'torso_lift_joint'))
+
+    def _wait_arm_still(self, arm_q, lift):
+        """Entrar en la banda de posición no implica estar quieto: la inercia residual desliza la base recién reubicada
+        (medido: 0.66 mm y 0.18° en 1 de 30 resets). Si no se detiene a tiempo, falla sin reubicar."""
+        for _ in range(self.arm_still_steps):
+            self.advance(0.1)
+            self.reset_error = self._arm_error(arm_q, lift)
+            if self._arm_speed() <= self.arm_still_speed and self.reset_error < 0.02:
+                return
+        raise RuntimeError(f'reset: el brazo no se aquietó (velocidad {self._arm_speed():.3f}, error {self.reset_error:.3f})')
+
+    def _return_base(self):
+        """Devuelve la base a su pose de aparición (el mundo de entrenamiento la crea en el origen) y lo verifica."""
+        for _ in range(3):
+            b = self._base()
+            # Solo se corrigen x, y, yaw: forzar roll=pitch=0 la hace reacomodarse a su inclinación de reposo y girar ~0.7°
+            # (medido, a cualquier altura de suelta). Con z e inclinación actuales no hay aterrizaje.
+            x, y, z, w = self._base_q
+            yaw = np.arctan2(b[1, 0], b[0, 0])
+            c, s = np.cos(yaw / 2), np.sin(yaw / 2)
+            self.set_pose('robot_v3', [0.0, 0.0, float(b[2, 3])],
+                          quat=(c * x + s * y, c * y - s * x, c * z - s * w, c * w + s * z))
+            b = self._fresh_base()
+            if self._base_ok(b):
+                return
+        raise RuntimeError(f'reset: la base no volvió a su pose de aparición (xy, yaw, inclinación: {self._base_error(b)})')
+
     def reset(self, rng, obj_xy, obj_yaw, arm_q, gripper, lift, head):
-        # Se lleva el robot a la pose inicial con sus controladores (sin teletransportar articulaciones) y
-        # luego se reubica el objeto: el estado del episodio anterior no se arrastra. Si la base derivó (>1 cm o >1°)
-        # se la devuelve a su pose de aparición (el mundo de entrenamiento la crea en el origen).
-        b = self._base()
-        if np.linalg.norm(b[:2, 3]) > 0.01 or abs(np.arctan2(b[1, 0], b[0, 0])) > np.radians(1):
+        # Se lleva el robot a la pose inicial con sus controladores (sin teletransportar articulaciones). Recién con el
+        # brazo quieto se devuelve la base a su pose de aparición: el regreso del brazo es lo que la desliza (medido: hasta
+        # ~20 mm y 3.5°, con joint1 saturado a 5 rad/s). Por último se ubica el objeto: el estado anterior no se arrastra.
+        xy, yaw, tilt = self._base_error(self._base())
+        # Derivada o volcada: se la suelta desde 1 cm antes de mover el brazo. Un escalón rápido puede dejar una
+        # articulación clavada contra su tope, ignorando las órdenes; el impacto de la caída la libera y un
+        # teletransporte sin impacto no (medido con joint1). La deriva no causa el bloqueo: solo activa la suelta.
+        if xy > 0.01 or yaw > np.radians(1) or tilt > self.base_tol[2]:
             self.set_pose('robot_v3', [0.0, 0.0, 0.01], 0.0)
-            self.advance(0.2)
+            self.advance(0.4)
         self.set_pose_in_base(self.obj_name, [obj_xy[0], -0.8, self.obj_half_h + 0.002], obj_yaw)   # al piso, lejos
         self._pub(self.pub_lift, [lift])
         self._pub(self.pub_head, [head['pan_joint'], head['tilt_joint']])
@@ -293,14 +361,18 @@ class GazeboBackend(Backend):
         self.reset_error = np.inf
         for _ in range(150):                    # hasta 15 s simulados
             self.advance(0.1)
-            q = np.array([self._js.get(j, 0.0) for j in self.arm_joints])
-            self.reset_error = float(max(np.max(np.abs(q - arm_q)), abs(self._js.get('torso_lift_joint', 0) - lift)))
+            self.reset_error = self._arm_error(arm_q, lift)
             if self.reset_error < 0.02:
                 break
         if self.reset_error >= 0.02:
             raise RuntimeError(f'reset: el robot no alcanzó la pose inicial (error {self.reset_error:.3f} rad/m)')
+        self._wait_arm_still(arm_q, lift)
+        self._return_base()
         self.set_pose_in_base(self.obj_name, [obj_xy[0], obj_xy[1], self.table_h + self.obj_half_h + 0.003], obj_yaw)
-        self.advance(0.3)                       # el objeto se asienta sobre la mesa
+        self.advance(0.2)                       # el objeto se asienta sobre la mesa (0.3 s con el paso de _fresh_base)
+        b = self._fresh_base()
+        if not self._base_ok(b):
+            raise RuntimeError(f'reset: la base se movió tras reubicarla (xy, yaw, inclinación: {self._base_error(b)})')
         self._last_est = np.zeros(3)
 
     def object_yaw_truth(self):
