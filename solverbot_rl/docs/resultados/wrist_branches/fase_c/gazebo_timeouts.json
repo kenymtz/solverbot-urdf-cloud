@@ -1,0 +1,385 @@
+{
+ "nota": "TimeoutError del backend de Gazebo (joint_states no alcanza el reloj simulado tras un paso); el episodio interrumpido no se registra y se repite desde cero con la misma semilla al reintentar el trabajo",
+ "pase_1": [
+  {
+   "policy": "bc_e2",
+   "level": "reach",
+   "pass": 1,
+   "episodes_in_job": 6,
+   "last_seed": 962005,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_161159_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_s",
+   "pass": 1,
+   "episodes_in_job": 12,
+   "last_seed": 962111,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_161527_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_m",
+   "pass": 1,
+   "episodes_in_job": 27,
+   "last_seed": 962226,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_161841_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_l",
+   "pass": 1,
+   "episodes_in_job": 3,
+   "last_seed": 962302,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_162413_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach",
+   "pass": 1,
+   "episodes_in_job": 1,
+   "last_seed": 962000,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_162611_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_s",
+   "pass": 1,
+   "episodes_in_job": 0,
+   "last_seed": null,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_162759_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "pass": 1,
+   "episodes_in_job": 7,
+   "last_seed": 962206,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_162925_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "pass": 1,
+   "episodes_in_job": 3,
+   "last_seed": 962302,
+   "timeout": true,
+   "log": "py_diagnose_wrist_branches_20261101_163211_i2.log"
+  }
+ ],
+ "reintentos": [
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_s",
+   "attempt": 1,
+   "episodes_before": 12,
+   "episodes_after": 25,
+   "interrupted_seed": 962125,
+   "log": "py_diagnose_wrist_branches_20261101_164819_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_l",
+   "attempt": 1,
+   "episodes_before": 3,
+   "episodes_after": 19,
+   "interrupted_seed": 962319,
+   "log": "py_diagnose_wrist_branches_20261101_165424_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_l",
+   "attempt": 2,
+   "episodes_before": 19,
+   "episodes_after": 24,
+   "interrupted_seed": 962324,
+   "log": "py_diagnose_wrist_branches_20261101_165800_i2.log"
+  },
+  {
+   "policy": "bc_e2",
+   "level": "reach_var_l",
+   "attempt": 3,
+   "episodes_before": 24,
+   "episodes_after": 24,
+   "interrupted_seed": 962324,
+   "log": "py_diagnose_wrist_branches_20261101_165955_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach",
+   "attempt": 1,
+   "episodes_before": 1,
+   "episodes_after": 1,
+   "interrupted_seed": 962001,
+   "log": "py_diagnose_wrist_branches_20261101_170303_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_s",
+   "attempt": 1,
+   "episodes_before": 0,
+   "episodes_after": 0,
+   "interrupted_seed": 962100,
+   "log": "py_diagnose_wrist_branches_20261101_170737_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_s",
+   "attempt": 2,
+   "episodes_before": 0,
+   "episodes_after": 7,
+   "interrupted_seed": 962107,
+   "log": "py_diagnose_wrist_branches_20261101_170905_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_s",
+   "attempt": 3,
+   "episodes_before": 7,
+   "episodes_after": 25,
+   "interrupted_seed": 962125,
+   "log": "py_diagnose_wrist_branches_20261101_171150_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_s",
+   "attempt": 4,
+   "episodes_before": 25,
+   "episodes_after": 28,
+   "interrupted_seed": 962128,
+   "log": "py_diagnose_wrist_branches_20261101_171700_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 1,
+   "episodes_before": 7,
+   "episodes_after": 8,
+   "interrupted_seed": 962208,
+   "log": "py_diagnose_wrist_branches_20261101_172020_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 2,
+   "episodes_before": 8,
+   "episodes_after": 10,
+   "interrupted_seed": 962210,
+   "log": "py_diagnose_wrist_branches_20261101_172159_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 3,
+   "episodes_before": 10,
+   "episodes_after": 10,
+   "interrupted_seed": 962210,
+   "log": "py_diagnose_wrist_branches_20261101_172355_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 4,
+   "episodes_before": 10,
+   "episodes_after": 19,
+   "interrupted_seed": 962219,
+   "log": "py_diagnose_wrist_branches_20261101_172520_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 5,
+   "episodes_before": 19,
+   "episodes_after": 19,
+   "interrupted_seed": 962219,
+   "log": "py_diagnose_wrist_branches_20261101_172910_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 6,
+   "episodes_before": 19,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 7,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 8,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 9,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 10,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 11,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_m",
+   "attempt": 12,
+   "episodes_before": 29,
+   "episodes_after": 29,
+   "interrupted_seed": 962229,
+   "log": "py_diagnose_wrist_branches_20261101_173041_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 1,
+   "episodes_before": 3,
+   "episodes_after": 12,
+   "interrupted_seed": 962312,
+   "log": "py_diagnose_wrist_branches_20261101_173558_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 2,
+   "episodes_before": 12,
+   "episodes_after": 12,
+   "interrupted_seed": 962312,
+   "log": "py_diagnose_wrist_branches_20261101_173856_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 3,
+   "episodes_before": 12,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174032_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 4,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 5,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 6,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 7,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 8,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 9,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 10,
+   "episodes_before": 18,
+   "episodes_after": 18,
+   "interrupted_seed": 962318,
+   "log": "py_diagnose_wrist_branches_20261101_174328_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 11,
+   "episodes_before": 18,
+   "episodes_after": 19,
+   "interrupted_seed": 962319,
+   "log": "py_diagnose_wrist_branches_20261101_174525_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 12,
+   "episodes_before": 19,
+   "episodes_after": 20,
+   "interrupted_seed": 962320,
+   "log": "py_diagnose_wrist_branches_20261101_174711_i2.log"
+  },
+  {
+   "policy": "bc_v2w",
+   "level": "reach_var_l",
+   "attempt": 13,
+   "episodes_before": 20,
+   "episodes_after": 23,
+   "interrupted_seed": 962323,
+   "log": "py_diagnose_wrist_branches_20261101_174853_i2.log"
+  }
+ ]
+}

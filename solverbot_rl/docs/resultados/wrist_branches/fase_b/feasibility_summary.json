@@ -1,0 +1,227 @@
+{
+ "grid": "cubo en grilla 11x11 alrededor de su posici\u00f3n de home (paso 14 mm; dx, dy en m), brazo en home exacto; m\u00e1s 200 escenarios reach_var_l (semillas 915600+)",
+ "positive_control_random_configs_flagged": 0.15666666666666668,
+ "cells_by_rule": {
+  "B@20": 88,
+  "B@30": 27,
+  "solo_A": 6
+ },
+ "cells_list": {
+  "B@30": [
+   [
+    -0.07,
+    0.0
+   ],
+   [
+    -0.07,
+    0.014
+   ],
+   [
+    -0.07,
+    0.028
+   ],
+   [
+    -0.07,
+    0.042
+   ],
+   [
+    -0.07,
+    0.056
+   ],
+   [
+    -0.07,
+    0.07
+   ],
+   [
+    -0.056,
+    0.014
+   ],
+   [
+    -0.056,
+    0.028
+   ],
+   [
+    -0.056,
+    0.042
+   ],
+   [
+    -0.056,
+    0.056
+   ],
+   [
+    -0.056,
+    0.07
+   ],
+   [
+    -0.042,
+    0.028
+   ],
+   [
+    -0.042,
+    0.042
+   ],
+   [
+    -0.042,
+    0.056
+   ],
+   [
+    -0.042,
+    0.07
+   ],
+   [
+    0.014,
+    -0.056
+   ],
+   [
+    0.028,
+    -0.056
+   ],
+   [
+    0.028,
+    -0.042
+   ],
+   [
+    0.042,
+    -0.07
+   ],
+   [
+    0.042,
+    -0.056
+   ],
+   [
+    0.042,
+    -0.042
+   ],
+   [
+    0.056,
+    -0.07
+   ],
+   [
+    0.056,
+    -0.056
+   ],
+   [
+    0.056,
+    -0.042
+   ],
+   [
+    0.07,
+    -0.07
+   ],
+   [
+    0.07,
+    -0.056
+   ],
+   [
+    0.07,
+    -0.042
+   ]
+  ],
+  "solo_A": [
+   [
+    -0.028,
+    0.042
+   ],
+   [
+    -0.028,
+    0.056
+   ],
+   [
+    -0.028,
+    0.07
+   ],
+   [
+    -0.014,
+    0.056
+   ],
+   [
+    -0.014,
+    0.07
+   ],
+   [
+    0.0,
+    0.07
+   ]
+  ]
+ },
+ "reasons": {
+  "cube_home A 20 muneca_en_limite": 9,
+  "cube_home A 20 sin_solucion_ik": 23,
+  "cube_home A 20 viable": 89,
+  "cube_home A 30 muneca_en_limite": 5,
+  "cube_home A 30 sin_solucion_ik": 51,
+  "cube_home A 30 viable": 65,
+  "cube_home A 40 inclinacion_fuera_de_exito": 76,
+  "cube_home A 40 inclinacion_fuera_de_exito,muneca_en_limite": 4,
+  "cube_home A 40 sin_solucion_ik": 41,
+  "cube_home B 20 muneca_en_limite": 5,
+  "cube_home B 20 sin_solucion_ik": 28,
+  "cube_home B 20 viable": 88,
+  "cube_home B 30 muneca_en_limite": 6,
+  "cube_home B 30 sin_solucion_ik": 28,
+  "cube_home B 30 viable": 87,
+  "cube_home B 40 inclinacion_fuera_de_exito": 88,
+  "cube_home B 40 inclinacion_fuera_de_exito,muneca_en_limite": 5,
+  "cube_home B 40 sin_solucion_ik": 28,
+  "level A 20 muneca_en_limite": 17,
+  "level A 20 sin_solucion_ik": 23,
+  "level A 20 viable": 160,
+  "level A 30 muneca_en_limite": 15,
+  "level A 30 sin_solucion_ik": 79,
+  "level A 30 viable": 106,
+  "level B 20 muneca_en_limite": 4,
+  "level B 20 sin_solucion_ik": 39,
+  "level B 20 viable": 157,
+  "level B 30 muneca_en_limite": 15,
+  "level B 30 sin_solucion_ik": 44,
+  "level B 30 viable": 141
+ },
+ "viable_aggregates": {
+  "A@20": {
+   "n_viable": 249,
+   "margin_min_mean": 0.224,
+   "margin_j4_mean": 0.227,
+   "margin_j5_mean": 0.383,
+   "cube_visible_frac_mean": 0.45,
+   "collision_body": 0,
+   "collision_self": 0,
+   "table_contact": 0
+  },
+  "A@30": {
+   "n_viable": 171,
+   "margin_min_mean": 0.378,
+   "margin_j4_mean": 0.459,
+   "margin_j5_mean": 0.776,
+   "cube_visible_frac_mean": 0.715,
+   "collision_body": 0,
+   "collision_self": 0,
+   "table_contact": 0
+  },
+  "B@20": {
+   "n_viable": 245,
+   "margin_min_mean": 0.2,
+   "margin_j4_mean": 0.227,
+   "margin_j5_mean": 0.342,
+   "cube_visible_frac_mean": 0.641,
+   "collision_body": 0,
+   "collision_self": 0,
+   "table_contact": 0
+  },
+  "B@30": {
+   "n_viable": 228,
+   "margin_min_mean": 0.407,
+   "margin_j4_mean": 0.492,
+   "margin_j5_mean": 0.735,
+   "cube_visible_frac_mean": 0.871,
+   "collision_body": 0,
+   "collision_self": 0,
+   "table_contact": 0
+  }
+ },
+ "reach_var_l_rule_choice": {
+  "A@20": 8,
+  "B@20": 157,
+  "B@30": 35
+ },
+ "note_40deg": "40\u00b0 nunca es viable: el criterio de \u00e9xito exige tcp_z[2] < -0.8 (inclinaci\u00f3n < 36,9\u00b0)."
+}

@@ -1,0 +1,693 @@
+{
+ "seeds": "943000-943449 (nuevas, verificaci\u00f3n de etiquetas)",
+ "label_quality": {
+  "consistent": {
+   "reach": {
+    "n": 20,
+    "success": 20,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.217,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 20
+    },
+    "length_mean": 34.0,
+    "dfinal_mm_mean": 26.2,
+    "detection_rate_mean": 0.947,
+    "action_rate_mean": 0.09
+   },
+   "reach_var_l": {
+    "n": 100,
+    "success": 99,
+    "collisions": 1,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 2,
+    "margin_j45_min_p05": 0.064,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.207,
+    "episodes_goal_jump_gt_0p1": 1,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 5,
+     "B": 95
+    },
+    "length_mean": 30.1,
+    "dfinal_mm_mean": 25.1,
+    "detection_rate_mean": 0.946,
+    "action_rate_mean": 0.086
+   },
+   "reach_var_m": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 1,
+    "margin_j45_min_p05": 0.062,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.803,
+    "episodes_goal_jump_gt_0p1": 1,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.008,
+    "final_family": {
+     "A": 2,
+     "B": 98
+    },
+    "length_mean": 31.7,
+    "dfinal_mm_mean": 23.8,
+    "detection_rate_mean": 0.949,
+    "action_rate_mean": 0.082
+   },
+   "reach_var_m_j4_-0.3": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 3,
+    "margin_j45_min_p05": 0.063,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 2.194,
+    "episodes_goal_jump_gt_0p1": 2,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.044,
+    "final_family": {
+     "A": 5,
+     "B": 45
+    },
+    "length_mean": 31.0,
+    "dfinal_mm_mean": 24.9,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.079
+   },
+   "reach_var_m_j4_0.0": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.147,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 2.192,
+    "episodes_goal_jump_gt_0p1": 2,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.044,
+    "final_family": {
+     "A": 6,
+     "B": 44
+    },
+    "length_mean": 27.9,
+    "dfinal_mm_mean": 24.8,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.071
+   },
+   "reach_var_m_j4_0.25": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.197,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.096,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 13,
+     "B": 37
+    },
+    "length_mean": 28.1,
+    "dfinal_mm_mean": 23.9,
+    "detection_rate_mean": 0.947,
+    "action_rate_mean": 0.075
+   },
+   "reach_var_m_j4_0.5": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 3,
+    "margin_j45_min_p05": 0.048,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 34,
+     "B": 16
+    },
+    "length_mean": 28.0,
+    "dfinal_mm_mean": 22.4,
+    "detection_rate_mean": 0.953,
+    "action_rate_mean": 0.082
+   },
+   "reach_var_s": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.117,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 100
+    },
+    "length_mean": 34.1,
+    "dfinal_mm_mean": 23.9,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.077
+   }
+  },
+  "dynamic": {
+   "reach": {
+    "n": 20,
+    "success": 20,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.304,
+    "goal_jump_max_p95": 0.001,
+    "goal_jump_max_max": 0.001,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 20
+    },
+    "length_mean": 24.0,
+    "dfinal_mm_mean": 26.1,
+    "detection_rate_mean": 0.942,
+    "action_rate_mean": 0.111
+   },
+   "reach_var_l": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.178,
+    "goal_jump_max_p95": 0.007,
+    "goal_jump_max_max": 0.057,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 4,
+     "B": 96
+    },
+    "length_mean": 23.1,
+    "dfinal_mm_mean": 23.7,
+    "detection_rate_mean": 0.945,
+    "action_rate_mean": 0.101
+   },
+   "reach_var_m": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.198,
+    "goal_jump_max_p95": 0.041,
+    "goal_jump_max_max": 0.054,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 100
+    },
+    "length_mean": 24.1,
+    "dfinal_mm_mean": 23.0,
+    "detection_rate_mean": 0.946,
+    "action_rate_mean": 0.095
+   },
+   "reach_var_m_j4_-0.3": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.209,
+    "goal_jump_max_p95": 0.049,
+    "goal_jump_max_max": 0.066,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 4,
+     "B": 46
+    },
+    "length_mean": 22.4,
+    "dfinal_mm_mean": 23.9,
+    "detection_rate_mean": 0.946,
+    "action_rate_mean": 0.095
+   },
+   "reach_var_m_j4_0.0": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.212,
+    "goal_jump_max_p95": 0.055,
+    "goal_jump_max_max": 0.068,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 5,
+     "B": 45
+    },
+    "length_mean": 22.6,
+    "dfinal_mm_mean": 23.7,
+    "detection_rate_mean": 0.946,
+    "action_rate_mean": 0.096
+   },
+   "reach_var_m_j4_0.25": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.222,
+    "goal_jump_max_p95": 0.056,
+    "goal_jump_max_max": 0.068,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 4,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 12,
+     "B": 38
+    },
+    "length_mean": 21.5,
+    "dfinal_mm_mean": 24.0,
+    "detection_rate_mean": 0.945,
+    "action_rate_mean": 0.098
+   },
+   "reach_var_m_j4_0.5": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.155,
+    "goal_jump_max_p95": 0.047,
+    "goal_jump_max_max": 0.049,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 3,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 33,
+     "B": 17
+    },
+    "length_mean": 21.0,
+    "dfinal_mm_mean": 22.4,
+    "detection_rate_mean": 0.945,
+    "action_rate_mean": 0.117
+   },
+   "reach_var_s": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.24,
+    "goal_jump_max_p95": 0.003,
+    "goal_jump_max_max": 0.05,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 100
+    },
+    "length_mean": 27.1,
+    "dfinal_mm_mean": 22.4,
+    "detection_rate_mean": 0.948,
+    "action_rate_mean": 0.092
+   }
+  },
+  "scripted": {
+   "reach": {
+    "n": 20,
+    "success": 20,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.217,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 0,
+     "B": 20
+    },
+    "length_mean": 35.0,
+    "dfinal_mm_mean": 14.9,
+    "detection_rate_mean": 0.949,
+    "action_rate_mean": 0.861
+   },
+   "reach_var_l": {
+    "n": 100,
+    "success": 99,
+    "collisions": 1,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 1,
+    "margin_j45_min_p05": 0.154,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.207,
+    "episodes_goal_jump_gt_0p1": 1,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 66,
+     "B": 34
+    },
+    "length_mean": 36.9,
+    "dfinal_mm_mean": 19.1,
+    "detection_rate_mean": 0.948,
+    "action_rate_mean": 0.453
+   },
+   "reach_var_m": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.105,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 66,
+     "B": 34
+    },
+    "length_mean": 37.6,
+    "dfinal_mm_mean": 17.6,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.436
+   },
+   "reach_var_m_j4_-0.3": {
+    "n": 50,
+    "success": 50,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.135,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 46,
+     "B": 4
+    },
+    "length_mean": 35.3,
+    "dfinal_mm_mean": 18.8,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.368
+   },
+   "reach_var_m_j4_0.0": {
+    "n": 50,
+    "success": 47,
+    "collisions": 0,
+    "stalled": 3,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.095,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 48,
+     "B": 2
+    },
+    "length_mean": 32.6,
+    "dfinal_mm_mean": 22.9,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.984
+   },
+   "reach_var_m_j4_0.25": {
+    "n": 50,
+    "success": 32,
+    "collisions": 0,
+    "stalled": 18,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0058,
+    "episodes_wrist_margin_lt_0p05": 4,
+    "margin_j45_min_p05": 0.045,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 48,
+     "B": 2
+    },
+    "length_mean": 41.7,
+    "dfinal_mm_mean": 28.8,
+    "detection_rate_mean": 0.952,
+    "action_rate_mean": 3.54
+   },
+   "reach_var_m_j4_0.5": {
+    "n": 50,
+    "success": 22,
+    "collisions": 0,
+    "stalled": 28,
+    "stuck_at_wrist_limit": 2,
+    "wrist_limit_frac_mean": 0.0442,
+    "episodes_wrist_margin_lt_0p05": 8,
+    "margin_j45_min_p05": 0.0,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.0,
+    "episodes_goal_jump_gt_0p1": 0,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 48,
+     "B": 2
+    },
+    "length_mean": 49.2,
+    "dfinal_mm_mean": 31.4,
+    "detection_rate_mean": 0.948,
+    "action_rate_mean": 5.134
+   },
+   "reach_var_s": {
+    "n": 100,
+    "success": 100,
+    "collisions": 0,
+    "stalled": 0,
+    "stuck_at_wrist_limit": 0,
+    "wrist_limit_frac_mean": 0.0,
+    "episodes_wrist_margin_lt_0p05": 0,
+    "margin_j45_min_p05": 0.164,
+    "goal_jump_max_p95": 0.0,
+    "goal_jump_max_max": 0.122,
+    "episodes_goal_jump_gt_0p1": 1,
+    "episodes_goal_family_change": 0,
+    "goal_j6_travel_mean": 0.0,
+    "final_family": {
+     "A": 67,
+     "B": 33
+    },
+    "length_mean": 39.5,
+    "dfinal_mm_mean": 17.7,
+    "detection_rate_mean": 0.95,
+    "action_rate_mean": 0.363
+   }
+  }
+ },
+ "noise": {
+  "consistent": {
+   "n_pairs": 768,
+   "sigma_rad": 0.005,
+   "family_flip_rate": 0.0,
+   "tilt_flip_rate": 0.0,
+   "goal_delta_p50": 1.8082308700904126e-06,
+   "goal_delta_p95": 7.903150383972263e-06,
+   "goal_delta_gt_0p1": 0.0,
+   "action_delta_p50": 0.09451767423954927,
+   "action_delta_p95": 0.22512981784462568,
+   "none_pairs": 0
+  },
+  "dynamic": {
+   "n_pairs": 768,
+   "sigma_rad": 0.005,
+   "family_flip_rate": 0.0,
+   "tilt_flip_rate": 0.0026041666666666665,
+   "goal_delta_p50": 2.044851578642505e-06,
+   "goal_delta_p95": 2.1177829837803922e-05,
+   "goal_delta_gt_0p1": 0.0026041666666666665,
+   "action_delta_p50": 0.0270857366101529,
+   "action_delta_p95": 0.188094263897547,
+   "none_pairs": 0
+  }
+ },
+ "contradictions": {
+  "consistent": {
+   "n_steps": 16025,
+   "n_episodes": 520,
+   "by_radius": {
+    "p10": {
+     "radius": 0.3064099499704047,
+     "pairs_conflict": 0,
+     "pairs_same": 3149,
+     "conflict_rate": 0.0
+    },
+    "p25": {
+     "radius": 0.4163991001149344,
+     "pairs_conflict": 0,
+     "pairs_same": 9138,
+     "conflict_rate": 0.0
+    },
+    "p50": {
+     "radius": 0.5501033853478209,
+     "pairs_conflict": 9,
+     "pairs_same": 29268,
+     "conflict_rate": 0.0003074085459575776
+    }
+   },
+   "first_step": {
+    "pairs_conflict": 2,
+    "pairs_same": 488,
+    "conflict_rate": 0.004081632653061225
+   }
+  },
+  "dynamic": {
+   "n_steps": 12298,
+   "n_episodes": 520,
+   "by_radius": {
+    "p10": {
+     "radius": 0.37868177243945444,
+     "pairs_conflict": 0,
+     "pairs_same": 2549,
+     "conflict_rate": 0.0
+    },
+    "p25": {
+     "radius": 0.5278900309897426,
+     "pairs_conflict": 2,
+     "pairs_same": 6940,
+     "conflict_rate": 0.0002881014116969173
+    },
+    "p50": {
+     "radius": 0.7308974157642736,
+     "pairs_conflict": 26,
+     "pairs_same": 28340,
+     "conflict_rate": 0.0009165902841429881
+    }
+   },
+   "first_step": {
+    "pairs_conflict": 0,
+    "pairs_same": 481,
+    "conflict_rate": 0.0
+   }
+  }
+ },
+ "orientation_and_goal_margins": {
+  "scripted": {
+   "home": {
+    "tcp_z2_final_mean": -0.922,
+    "frac_tcp_z2_final_gt_-0.82": 0.025,
+    "goal_wrist_margin_frac_lt_0.1": 0.216,
+    "goal_wrist_margin_frac_lt_0.2": 0.453
+   },
+   "girados": {
+    "tcp_z2_final_mean": -0.952,
+    "frac_tcp_z2_final_gt_-0.82": 0.0,
+    "goal_wrist_margin_frac_lt_0.1": 0.252,
+    "goal_wrist_margin_frac_lt_0.2": 0.618
+   }
+  },
+  "consistent": {
+   "home": {
+    "tcp_z2_final_mean": -0.892,
+    "frac_tcp_z2_final_gt_-0.82": 0.047,
+    "goal_wrist_margin_frac_lt_0.1": 0.099,
+    "goal_wrist_margin_frac_lt_0.2": 0.406
+   },
+   "girados": {
+    "tcp_z2_final_mean": -0.907,
+    "frac_tcp_z2_final_gt_-0.82": 0.045,
+    "goal_wrist_margin_frac_lt_0.1": 0.114,
+    "goal_wrist_margin_frac_lt_0.2": 0.396
+   }
+  },
+  "dynamic": {
+   "home": {
+    "tcp_z2_final_mean": -0.836,
+    "frac_tcp_z2_final_gt_-0.82": 0.472,
+    "goal_wrist_margin_frac_lt_0.1": 0.0,
+    "goal_wrist_margin_frac_lt_0.2": 0.053
+   },
+   "girados": {
+    "tcp_z2_final_mean": -0.856,
+    "frac_tcp_z2_final_gt_-0.82": 0.3,
+    "goal_wrist_margin_frac_lt_0.1": 0.0,
+    "goal_wrist_margin_frac_lt_0.2": 0.037
+   }
+  }
+ }
+}

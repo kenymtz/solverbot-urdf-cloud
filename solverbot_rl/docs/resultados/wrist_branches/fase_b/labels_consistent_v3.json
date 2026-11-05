@@ -1,0 +1,107 @@
+{
+ "kinematic_consistent_reach": {
+  "n": 20,
+  "success": 20,
+  "executed_final": {
+   "A": 0,
+   "B": 20,
+   "null": 0
+  },
+  "episodes_with_real_change": 0,
+  "episodes_with_intention_switch": 0,
+  "expert_goal_family_changes": 0,
+  "expert_family": {
+   "A": 0,
+   "B": 20
+  },
+  "dfinal_mm_mean": 26.202717590424793,
+  "length_mean": 34.0
+ },
+ "kinematic_consistent_reach_var_l": {
+  "n": 100,
+  "success": 100,
+  "executed_final": {
+   "A": 4,
+   "B": 93,
+   "null": 3
+  },
+  "episodes_with_real_change": 0,
+  "episodes_with_intention_switch": 0,
+  "expert_goal_family_changes": 0,
+  "expert_family": {
+   "A": 4,
+   "B": 96
+  },
+  "dfinal_mm_mean": 24.304802312110464,
+  "length_mean": 29.48
+ },
+ "kinematic_consistent_reach_var_m": {
+  "n": 100,
+  "success": 100,
+  "executed_final": {
+   "A": 3,
+   "B": 94,
+   "null": 3
+  },
+  "episodes_with_real_change": 0,
+  "episodes_with_intention_switch": 0,
+  "expert_goal_family_changes": 0,
+  "expert_family": {
+   "A": 3,
+   "B": 97
+  },
+  "dfinal_mm_mean": 24.289943791139198,
+  "length_mean": 31.33
+ },
+ "kinematic_consistent_reach_var_s": {
+  "n": 100,
+  "success": 100,
+  "executed_final": {
+   "A": 0,
+   "B": 100,
+   "null": 0
+  },
+  "episodes_with_real_change": 0,
+  "episodes_with_intention_switch": 0,
+  "expert_goal_family_changes": 0,
+  "expert_family": {
+   "A": 0,
+   "B": 100
+  },
+  "dfinal_mm_mean": 23.867038350692063,
+  "length_mean": 33.89
+ },
+ "contradictions": {
+  "n_steps": 10150,
+  "n_episodes": 320,
+  "family_steps": {
+   "A": 257,
+   "B": 9893
+  },
+  "by_radius": {
+   "p10": {
+    "radius": 0.3377429830574849,
+    "pairs_conflict": 0,
+    "pairs_same": 2566,
+    "conflict_rate": 0.0
+   },
+   "p25": {
+    "radius": 0.45127966598080377,
+    "pairs_conflict": 0,
+    "pairs_same": 6756,
+    "conflict_rate": 0.0
+   },
+   "p50": {
+    "radius": 0.5975638728982304,
+    "pairs_conflict": 10,
+    "pairs_same": 20008,
+    "conflict_rate": 0.0004995504046358277
+   }
+  },
+  "first_step": {
+   "pairs_conflict": 8,
+   "pairs_same": 362,
+   "conflict_rate": 0.021621621621621623
+  }
+ }
+}

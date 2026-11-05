@@ -1,0 +1,17 @@
+{
+ "time_utc": "2026-11-01T15:53:07Z",
+ "selected": "bc_e2",
+ "candidates": [
+  "bc_e1",
+  "bc_e2"
+ ],
+ "basis": "conjunto de selecci\u00f3n 944xxx + banco 945xxx (465 episodios sin reach)",
+ "sel_totals_sin_reach": {
+  "bc_e1": 441,
+  "bc_e2": 460,
+  "bc_v2w": 454,
+  "bc_c2": 364,
+  "bc_d1": 443
+ },
+ "note": "decisi\u00f3n registrada ANTES de ejecutar la confirmaci\u00f3n 960000+/961000+"
+}
