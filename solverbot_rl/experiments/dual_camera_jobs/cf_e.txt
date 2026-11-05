@@ -1,0 +1,2 @@
+py runs/dual_camera diag_obs_counterfactual.py --mode oracle --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v1.zip --level reach_var_l --seeds 900300-900329 --out runs/dual_camera/cf/bc_v1_var_l/oracle
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v1.zip --level reach_var_l --seeds 900300-900329 --out runs/dual_camera/cf/bc_v1_var_l/perception

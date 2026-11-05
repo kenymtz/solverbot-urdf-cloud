@@ -33,10 +33,12 @@ def _metrics(env):
 
 
 def run_episode(env, seed: int, level: int, act=None, expert=None, beta: float = 1.0,
-                rng: np.random.Generator | None = None) -> tuple[dict, dict]:
+                rng: np.random.Generator | None = None, on_step=None) -> tuple[dict, dict]:
     """Un episodio. act(obs) -> acción de la política (None = ejecutar el experto). expert: ScriptedExpert (o None).
     beta: probabilidad de EJECUTAR la acción del experto en cada paso cuando también hay política (DAgger: beta=0
-    ejecuta la política y el experto solo etiqueta). Devuelve (arrays por paso, resumen del episodio)."""
+    ejecuta la política y el experto solo etiqueta). on_step(env, obs_siguiente, acción): gancho de diagnóstico
+    después de cada env.step (p. ej. camera_probe); no puede cambiar la observación ni la acción.
+    Devuelve (arrays por paso, resumen del episodio)."""
     if act is None and expert is None:
         raise ValueError('se necesita una política o un experto')
     rng = rng or np.random.default_rng(seed)
@@ -45,6 +47,8 @@ def run_episode(env, seed: int, level: int, act=None, expert=None, beta: float =
     u = env.unwrapped
     if expert is not None:
         expert.reset()
+    if on_step is not None:
+        on_step(env, obs.copy(), None)
     rec: dict[str, list] = defaultdict(list)
     d0, z0, obj0, _ = _metrics(env)
     done = False
@@ -59,6 +63,8 @@ def run_episode(env, seed: int, level: int, act=None, expert=None, beta: float =
         a = np.clip(np.asarray(a, np.float32), -1.0, 1.0)
         _, _, _, tcp_before = _metrics(env)
         obs2, r, term, trunc, info = env.step(a)
+        if on_step is not None:
+            on_step(env, obs2.copy(), a.copy())
         d, z, obj, tcp = _metrics(env)
         est = obs[OBS_SLICES['obj_rel']] + obs[OBS_SLICES['tcp']]     # estimación que vio la política
         valid = bool(obs[16] > 0.5)

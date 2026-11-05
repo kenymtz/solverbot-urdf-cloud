@@ -1,0 +1,2 @@
+# Prueba pareada ampliada en semillas reservadas nuevas: memoria de la primera detección (sin verdad) vs percepción
+py runs/dual_camera diag_obs_counterfactual.py --mode perception --policy solverbot_rl/docs/resultados/reach_bc_v1/modelos/bc_v2w.zip --level reach_var_s --seeds 905000-905059 --out runs/dual_camera/cf/bc_v2w_var_s_905k/perception
