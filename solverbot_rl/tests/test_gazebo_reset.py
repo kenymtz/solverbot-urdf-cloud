@@ -198,7 +198,7 @@ def test_base_volcada_se_endereza_antes_de_mover_el_brazo():
 
 def test_base_derivada_se_suelta_antes_de_mover_el_brazo():
     class TrabadoHastaLaCaida(FakeWorld):
-        """Medido con joint1 junto a su límite: no vuelve hasta que la base cae desde 1 cm; corregir el yaw no lo destraba."""
+        """Medido con joint1 clavado contra su tope: lo libera el impacto de la caída; corregir el yaw no."""
 
         def blocked(self):
             return not any(c.xyz[2] >= 0.01 for c in self.robot_calls())
